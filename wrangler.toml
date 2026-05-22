@@ -1,0 +1,3 @@
+name = "openleadacademy"
+compatibility_date = "2024-05-22"
+pages_build_output_dir = ".vercel/output/static"
