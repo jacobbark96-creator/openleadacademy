@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     toast.success("Successfully logged in!")
     router.push("/dashboard")
-    router.refresh()
+    setLoading(false)
   }
 
   return (

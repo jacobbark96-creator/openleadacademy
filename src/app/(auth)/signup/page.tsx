@@ -47,6 +47,7 @@ export default function SignupPage() {
 
     toast.success("Account created! You can now log in.")
     router.push("/login")
+    setLoading(false)
   }
 
   return (
