@@ -21,8 +21,8 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
     async function loadDashboardData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
         if (mounted) {
           setLoading(false)
           router.push('/login')
@@ -31,7 +31,7 @@ export default function DashboardPage() {
       }
 
       if (mounted) {
-        setUser(user)
+        setUser(session.user)
         
         // Fetch courses
         const { data: courseData } = await supabase.from('courses').select('*')
@@ -60,7 +60,7 @@ export default function DashboardPage() {
              const { data: userProgress } = await supabase
                .from('lesson_progress')
                .select('*')
-               .eq('user_id', user.id)
+               .eq('user_id', session.user.id)
                
              if (mounted) setProgressData(userProgress || [])
           }

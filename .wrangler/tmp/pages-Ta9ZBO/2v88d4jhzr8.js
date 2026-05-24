@@ -1,10 +1,10 @@
 // <define:__ROUTES__>
-var define_ROUTES_default = { version: 1, description: "Built with @cloudflare/next-on-pages@1.13.16.", include: ["/*"], exclude: ["/_next/static/*"] };
+var define_ROUTES_default = { version: 1, include: ["/*"], exclude: [] };
 
 // ../../../../../opt/homebrew/Cellar/node/25.6.1/lib/node_modules/wrangler/templates/pages-dev-pipeline.ts
-import worker from "/Users/jake/Desktop/Kairo/Openlead Academy/.wrangler/tmp/pages-Ta9ZBO/bundledWorker-0.345598701763119.mjs";
+import worker from "/Users/jake/Desktop/Kairo/Openlead Academy/.wrangler/tmp/pages-Ta9ZBO/bundledWorker-0.11246448345816851.mjs";
 import { isRoutingRuleMatch } from "/opt/homebrew/Cellar/node/25.6.1/lib/node_modules/wrangler/templates/pages-dev-util.ts";
-export * from "/Users/jake/Desktop/Kairo/Openlead Academy/.wrangler/tmp/pages-Ta9ZBO/bundledWorker-0.345598701763119.mjs";
+export * from "/Users/jake/Desktop/Kairo/Openlead Academy/.wrangler/tmp/pages-Ta9ZBO/bundledWorker-0.11246448345816851.mjs";
 var routes = define_ROUTES_default;
 var pages_dev_pipeline_default = {
   fetch(request, env, context) {

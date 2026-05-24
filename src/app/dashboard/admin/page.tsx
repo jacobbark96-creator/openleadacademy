@@ -26,26 +26,28 @@ export default function AdminDashboardPage() {
   const [newUserPassword, setNewUserPassword] = useState("")
 
   useEffect(() => {
+    let mounted = true
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (profile) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user && mounted) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+        if (profile && mounted) {
           setRole(profile.role)
         }
       }
 
       // Load Users
       const { data: profilesData } = await supabase.from('profiles').select('*')
-      if (profilesData) setUsers(profilesData)
+      if (profilesData && mounted) setUsers(profilesData)
 
       // Load Team
       const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
-      if (teamData) setTeam(teamData)
+      if (teamData && mounted) setTeam(teamData)
 
-      setLoading(false)
+      if (mounted) setLoading(false)
     }
     loadData()
+    return () => { mounted = false }
   }, [supabase])
 
   const handleUpdateYoutube = async (userId: string, url: string) => {

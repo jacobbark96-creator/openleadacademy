@@ -42,16 +42,18 @@ export function Sidebar() {
   const [role, setRole] = useState<string>("student")
 
   useEffect(() => {
+    let mounted = true
     async function getUserRole() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-        if (profile) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user && mounted) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+        if (profile && mounted) {
           setRole(profile.role)
         }
       }
     }
     getUserRole()
+    return () => { mounted = false }
   }, [supabase])
 
   return (

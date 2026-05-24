@@ -24,16 +24,15 @@ export function Topbar() {
 
   useEffect(() => {
     let mounted = true;
-    async function getUser() {
-      const { data: { user } } = await supabase.auth.getUser()
+    async function loadUser() {
+      const { data: { session } } = await supabase.auth.getSession()
       if (mounted) {
-        setUser(user)
+        setUser(session?.user || null)
       }
     }
-    getUser()
+    loadUser()
     return () => { mounted = false; }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
