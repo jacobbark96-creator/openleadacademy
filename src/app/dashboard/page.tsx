@@ -130,9 +130,9 @@ export default function DashboardPage() {
         <p className="text-gray-500 text-xs">You&apos;re on track. Keep learning and keep growing.</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 xl:gap-6 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-4 xl:gap-6 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
         {/* Main Content Area (Curriculum & Progress) */}
-        <div className="flex flex-col min-h-0 space-y-4 overflow-hidden">
+        <div className="flex flex-col min-h-0 space-y-4 lg:overflow-hidden">
           {/* Progress Card (Fixed) */}
           <Card className="flex-none border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden">
             <CardContent className="p-4 md:p-5">
@@ -183,7 +183,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Curriculum Timeline (Scrollable) */}
-          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex-none lg:flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex-none p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-sm font-bold text-gray-900">Program Curriculum</h2>
               <Button variant="ghost" className="text-[#008080] font-semibold hover:bg-gray-100 rounded-md h-7 px-3 text-[11px]">
@@ -191,7 +191,7 @@ export default function DashboardPage() {
               </Button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-none lg:flex-1 lg:overflow-y-auto p-4 space-y-3">
               {displayCurriculum.map((week, idx) => (
                 <div key={week.id} className="flex items-start sm:items-stretch gap-3 group relative">
                   {/* Status Icon & Line */}
@@ -281,7 +281,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Sidebar Area (Scrollable independently) */}
-        <div className="flex flex-col min-h-0 space-y-4 overflow-y-auto pr-1">
+        <div className="flex-none lg:flex flex-col min-h-0 space-y-4 lg:overflow-y-auto pr-1">
           {/* Keep it up Card */}
           <Card className="flex-none border-0 shadow-sm rounded-xl bg-[#EBF5F5] overflow-hidden">
             <CardContent className="p-4 flex items-center gap-3">
