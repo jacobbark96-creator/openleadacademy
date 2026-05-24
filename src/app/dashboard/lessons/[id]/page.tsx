@@ -81,3 +81,4 @@ export default function LessonPage() {
     </div>
   )
 }
+export const runtime = 'edge';
