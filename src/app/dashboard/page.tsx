@@ -6,8 +6,10 @@ import { Lock, PlayCircle, ChevronRight, FileText, Award, Trophy, Calendar, Star
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {
+  const router = useRouter()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(true)
@@ -21,7 +23,10 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        if (mounted) setLoading(false)
+        if (mounted) {
+          setLoading(false)
+          router.push('/login')
+        }
         return
       }
 
