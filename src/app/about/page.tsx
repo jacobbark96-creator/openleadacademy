@@ -2,8 +2,21 @@ import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/server"
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const supabase = await createClient()
+  const { data: teamMembers } = await supabase
+    .from('team_members')
+    .select('*')
+    .order('order_index', { ascending: true })
+
+  const members = teamMembers?.length ? teamMembers : [
+    { name: "Sarah Jenkins", role_title: "Head of Academy", initials: "SJ" },
+    { name: "Marcus Thorne", role_title: "Lead Sales Trainer", initials: "MT" },
+    { name: "Elena Rostova", role_title: "Careers Director", initials: "ER" }
+  ];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <PublicHeader />
@@ -44,19 +57,26 @@ export default function AboutPage() {
           <section className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Meet the Leadership</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { name: "Sarah Jenkins", role: "Head of Academy", initials: "SJ" },
-                { name: "Marcus Thorne", role: "Lead Sales Trainer", initials: "MT" },
-                { name: "Elena Rostova", role: "Careers Director", initials: "ER" }
-              ].map((leader, i) => (
-                <div key={i} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full mb-4 flex items-center justify-center text-2xl font-bold text-gray-400">
-                    {leader.initials}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {members.map((leader: any, i: number) => {
+                const initials = leader.initials || leader.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                return (
+                  <div key={i} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center">
+                    {leader.image_url ? (
+                      <div className="w-24 h-24 mb-4 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={leader.image_url} alt={leader.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 bg-gray-100 rounded-full mb-4 flex items-center justify-center text-2xl font-bold text-gray-400">
+                        {initials}
+                      </div>
+                    )}
+                    <h3 className="text-xl font-bold text-gray-900">{leader.name}</h3>
+                    <p className="text-primary font-medium">{leader.role_title}</p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">{leader.name}</h3>
-                  <p className="text-primary font-medium">{leader.role}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
 

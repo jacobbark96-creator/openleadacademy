@@ -16,8 +16,11 @@ import {
   HelpCircle,
   Headphones,
   Settings,
-  ArrowRight
+  ArrowRight,
+  ShieldAlert
 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 
 const sidebarNavItems = [
   { title: "Home", href: "/dashboard", icon: Home },
@@ -35,6 +38,21 @@ const sidebarNavItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const supabase = createClient()
+  const [role, setRole] = useState<string>("student")
+
+  useEffect(() => {
+    async function getUserRole() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        if (profile) {
+          setRole(profile.role)
+        }
+      }
+    }
+    getUserRole()
+  }, [supabase])
 
   return (
     <div className="hidden md:flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0">
@@ -63,6 +81,24 @@ export function Sidebar() {
               </Link>
             )
           })}
+          
+          {(role === 'admin' || role === 'trainer') && (
+            <>
+              <div className="my-2 border-t border-gray-100" />
+              <Link
+                href="/dashboard/admin"
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
+                  pathname?.startsWith('/dashboard/admin')
+                    ? "bg-red-50 text-red-600"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                )}
+              >
+                <ShieldAlert className={cn("h-4 w-4", pathname?.startsWith('/dashboard/admin') ? "text-red-600" : "text-gray-500")} strokeWidth={pathname?.startsWith('/dashboard/admin') ? 2.5 : 2} />
+                {role === 'admin' ? 'Admin Panel' : 'Trainer Panel'}
+              </Link>
+            </>
+          )}
         </nav>
       </div>
       <div className="p-4">

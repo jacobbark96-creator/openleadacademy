@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lock, PlayCircle, ChevronRight, FileText, Award, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone } from "lucide-react"
+import { Lock, PlayCircle, ChevronRight, FileText, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
