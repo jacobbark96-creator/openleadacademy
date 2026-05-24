@@ -22,6 +22,12 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      toast.error("Environment variables missing! Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Cloudflare.")
+      setLoading(false)
+      return
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
