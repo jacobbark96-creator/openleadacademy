@@ -76,8 +76,6 @@ export default function DashboardPage() {
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Loading your dashboard...</div>
   }
-
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Student'
   
   // Calculate dynamic progress
   const totalLessons = lessons.length || 14
@@ -127,14 +125,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden pb-4">
-      {/* Welcome Section (Fixed top) */}
-      <div className="flex-none flex flex-col gap-1 mb-4">
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-          Welcome back, {firstName}! <span className="text-xl">👋</span>
-        </h1>
-        <p className="text-gray-500 text-xs">You&apos;re on track. Keep learning and keep growing.</p>
-      </div>
-
       <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-4 xl:gap-6 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
         {/* Main Content Area (Curriculum & Progress) */}
         <div className="flex flex-col min-h-0 space-y-4 lg:overflow-hidden">
