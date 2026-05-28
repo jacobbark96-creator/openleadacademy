@@ -62,54 +62,78 @@ export async function getAdminUsers() {
 }
 
 export async function adminUpdateUserPassword(userId: string, newPassword: string) {
-  await verifyAdmin()
-  const supabaseAdmin = getSupabaseAdmin()
-  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword })
-  if (error) throw new Error(error.message)
-    
-  await supabaseAdmin.from('notifications').insert({
-    user_id: userId,
-    title: "Password Updated",
-    message: "Your password was recently updated by an administrator.",
-    link: "/dashboard/settings"
-  })
-    
-  return { success: true }
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword })
+    if (error) return { error: error.message }
+      
+    await supabaseAdmin.from('notifications').insert({
+      user_id: userId,
+      title: "Password Updated",
+      message: "Your password was recently updated by an administrator.",
+      link: "/dashboard/settings"
+    })
+      
+    return { success: true }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    return { error: err.message || "Failed to update password" }
+  }
 }
 
 export async function adminSendPasswordReset(email: string) {
-  await verifyAdmin()
-  const supabaseAdmin = getSupabaseAdmin()
-  const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
-  if (error) throw new Error(error.message)
-  return { success: true }
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
+    if (error) return { error: error.message }
+    return { success: true }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    return { error: err.message || "Failed to send reset email" }
+  }
 }
 
 export async function adminCreateUser(email: string, fullName: string, role: string, temporaryPassword?: string) {
-  await verifyAdmin()
-  const supabaseAdmin = getSupabaseAdmin()
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password: temporaryPassword || 'TempPass123!',
-    email_confirm: true,
-    user_metadata: { full_name: fullName }
-  })
-  
-  if (error) throw new Error(error.message)
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
     
-  if (data.user) {
-    // The handle_new_user trigger will create the profile with 'student' role.
-    // We update it to the desired role.
-    await supabaseAdmin.from('profiles').update({ role }).eq('id', data.user.id)
+    console.log(`Admin creating user: ${email} with role: ${role}`)
     
-    // Create welcome notification
-    await supabaseAdmin.from('notifications').insert({
-      user_id: data.user.id,
-      title: "Welcome to Openlead Academy!",
-      message: `Your account has been created. Please change your temporary password.`,
-      link: "/dashboard/settings"
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: temporaryPassword || 'TempPass123!',
+      email_confirm: true,
+      user_metadata: { full_name: fullName }
     })
+    
+    if (error) {
+      console.error("Supabase Admin CreateUser Error:", error)
+      return { error: error.message }
+    }
+      
+    if (data.user) {
+      // The handle_new_user trigger will create the profile with 'student' role.
+      // We update it to the desired role.
+      const { error: profileError } = await supabaseAdmin.from('profiles').update({ role }).eq('id', data.user.id)
+      if (profileError) console.error("Profile update error:", profileError)
+      
+      // Create welcome notification
+      const { error: notifError } = await supabaseAdmin.from('notifications').insert({
+        user_id: data.user.id,
+        title: "Welcome to Openlead Academy!",
+        message: `Your account has been created. Please change your temporary password.`,
+        link: "/dashboard/settings"
+      })
+      if (notifError) console.error("Notification insert error:", notifError)
+    }
+    
+    return { success: true }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("adminCreateUser Exception:", err)
+    return { error: err.message || "An unexpected error occurred" }
   }
-  
-  return { success: true }
 }

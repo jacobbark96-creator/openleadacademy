@@ -104,7 +104,13 @@ export default function AdminDashboardPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await adminCreateUser(newUserEmail, newUserName, newUserRole, newUserPassword)
+      const result = await adminCreateUser(newUserEmail, newUserName, newUserRole, newUserPassword)
+      
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+
       toast.success("User created successfully!")
       setNewUserEmail("")
       setNewUserName("")
@@ -114,13 +120,13 @@ export default function AdminDashboardPage() {
       setUsers(adminUsers)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Failed to create user")
+      toast.error("Failed to connect to the server. Please check your internet or try again.")
     }
   }
 
   const handleUpdateTeamMember = async (id: string, field: string, value: string) => {
-    const { error } = await supabase.from('team_members').update({ [field]: value }).eq('id', id)
-    if (error) {
+    const { error: _error } = await supabase.from('team_members').update({ [field]: value }).eq('id', id)
+    if (_error) {
       toast.error(`Failed to update ${field}`)
     } else {
       toast.success(`Updated ${field}`)
@@ -286,11 +292,15 @@ export default function AdminDashboardPage() {
       return
     }
     try {
-      await adminSendPasswordReset(email)
+      const result = await adminSendPasswordReset(email)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
       toast.success(`Password reset email sent to ${email}`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Failed to send reset email")
+      toast.error("Failed to connect to the server.")
     }
   }
 
@@ -300,13 +310,17 @@ export default function AdminDashboardPage() {
       return
     }
     try {
-      await adminUpdateUserPassword(userId, newPasswordForUser)
+      const result = await adminUpdateUserPassword(userId, newPasswordForUser)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
       toast.success("Password updated successfully!")
       setSelectedUserForPassword(null)
       setNewPasswordForUser("")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Failed to update password")
+      toast.error("Failed to connect to the server.")
     }
   }
 
