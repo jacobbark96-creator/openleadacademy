@@ -24,7 +24,7 @@ export function Topbar() {
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [notifications, setNotifications] = useState<any[]>([])
+  const [notifications, setNotifications] = useState<any[]>([]) // eslint-disable-line @typescript-eslint/no-explicit-any
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {

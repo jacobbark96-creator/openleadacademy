@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 export default function DashboardPage() {
   const router = useRouter()
   const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(true)
 

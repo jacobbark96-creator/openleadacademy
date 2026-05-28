@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, ShieldAlert } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,6 +42,7 @@ export default function AdminDashboardPage() {
       try {
         const adminUsers = await getAdminUsers()
         if (mounted) setUsers(adminUsers)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.warn("Could not fetch admin users, falling back to profiles", err)
         const { data: profilesData } = await supabase.from('profiles').select('*')
@@ -79,6 +80,7 @@ export default function AdminDashboardPage() {
       // Reload users
       const adminUsers = await getAdminUsers()
       setUsers(adminUsers)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || "Failed to create user")
     }
@@ -124,6 +126,7 @@ export default function AdminDashboardPage() {
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null)
   const [newPasswordForUser, setNewPasswordForUser] = useState("")
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePasswordReset = async (email: string) => {
     if (!email) {
       toast.error("User does not have an email associated.")
@@ -132,6 +135,7 @@ export default function AdminDashboardPage() {
     try {
       await adminSendPasswordReset(email)
       toast.success(`Password reset email sent to ${email}`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || "Failed to send reset email")
     }
@@ -147,6 +151,7 @@ export default function AdminDashboardPage() {
       toast.success("Password updated successfully!")
       setSelectedUserForPassword(null)
       setNewPasswordForUser("")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || "Failed to update password")
     }
@@ -290,11 +295,13 @@ export default function AdminDashboardPage() {
                         if (open) setSelectedUserForPassword(u.id)
                         else { setSelectedUserForPassword(null); setNewPasswordForUser("") }
                       }}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700">
-                            <Key className="w-3.5 h-3.5" /> Set Password
-                          </Button>
-                        </DialogTrigger>
+                        <div onClick={() => setSelectedUserForPassword(u.id)}>
+                          <DialogTrigger>
+                            <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+                              <Key className="w-3.5 h-3.5" /> Set Password
+                            </Button>
+                          </DialogTrigger>
+                        </div>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Change Password for {u.full_name}</DialogTitle>
