@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +19,12 @@ export default function AdminDashboardPage() {
   const [users, setUsers] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [team, setTeam] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [vacancies, setVacancies] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [courses, setCourses] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [modules, setModules] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   // Form states
@@ -52,6 +58,20 @@ export default function AdminDashboardPage() {
       // Load Team
       const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
       if (teamData && mounted) setTeam(teamData)
+
+      // Load Vacancies
+      const { data: vacData } = await supabase.from('vacancies').select('*').order('created_at', { ascending: false })
+      if (vacData && mounted) setVacancies(vacData)
+
+      // Load Courses and Modules
+      const { data: coursesData } = await supabase.from('courses').select('*')
+      if (coursesData && mounted) {
+        setCourses(coursesData)
+        if (coursesData.length > 0) {
+          const { data: modData } = await supabase.from('modules').select('*').eq('course_id', coursesData[0].id).order('order_index')
+          if (modData && mounted) setModules(modData)
+        }
+      }
 
       if (mounted) setLoading(false)
     }
@@ -93,6 +113,98 @@ export default function AdminDashboardPage() {
     } else {
       toast.success(`Updated ${field}`)
       setTeam(team.map(t => t.id === id ? { ...t, [field]: value } : t))
+    }
+  }
+
+  const handleCreateModule = async () => {
+    let courseId = courses[0]?.id
+    if (!courseId) {
+      // Create a default course if none exists
+      const { data: newCourse, error: courseError } = await supabase.from('courses').insert({
+        title: 'Openlead Academy - Onboarding Program',
+        description: 'Default onboarding program.'
+      }).select().single()
+      if (courseError) {
+        toast.error("Failed to create default course")
+        return
+      }
+      courseId = newCourse.id
+      setCourses([newCourse])
+    }
+
+    const newOrderIndex = modules.length > 0 ? Math.max(...modules.map(m => m.order_index)) + 1 : 0
+    const { data: newModule, error } = await supabase.from('modules').insert({
+      course_id: courseId,
+      title: 'New Module',
+      description: 'Module description...',
+      order_index: newOrderIndex
+    }).select().single()
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("Module created")
+      setModules([...modules, newModule])
+    }
+  }
+
+  const handleUpdateModule = async (id: string, field: string, value: string | number) => {
+    const { error } = await supabase.from('modules').update({ [field]: value }).eq('id', id)
+    if (error) {
+      toast.error(`Failed to update ${field}`)
+    } else {
+      setModules(modules.map(m => m.id === id ? { ...m, [field]: value } : m))
+      toast.success("Module updated")
+    }
+  }
+
+  const handleDeleteModule = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this module? This will also delete all lessons in it.")) return
+    const { error } = await supabase.from('modules').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setModules(modules.filter(m => m.id !== id))
+      toast.success("Module deleted")
+    }
+  }
+
+  const handleCreateVacancy = async () => {
+    const { data: newVac, error } = await supabase.from('vacancies').insert({
+      title: 'New Job Title',
+      department: 'Sales',
+      location: 'London',
+      type: 'Full-time',
+      remote_hybrid: 'Remote',
+      description: 'Job description goes here...'
+    }).select().single()
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("Vacancy created")
+      setVacancies([newVac, ...vacancies])
+    }
+  }
+
+  const handleUpdateVacancy = async (id: string, field: string, value: string | boolean) => {
+    const { error } = await supabase.from('vacancies').update({ [field]: value }).eq('id', id)
+    if (error) {
+      toast.error(`Failed to update ${field}`)
+    } else {
+      setVacancies(vacancies.map(v => v.id === id ? { ...v, [field]: value } : v))
+      toast.success("Vacancy updated")
+    }
+  }
+
+  const handleDeleteVacancy = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this vacancy?")) return
+    const { error } = await supabase.from('vacancies').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setVacancies(vacancies.filter(v => v.id !== id))
+      toast.success("Vacancy deleted")
     }
   }
 
@@ -398,16 +510,94 @@ export default function AdminDashboardPage() {
       {activeTab === 'vacancies' && role === 'admin' && (
         <Card className="border-0 shadow-sm rounded-2xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Briefcase className="w-5 h-5" />
-              Manage Vacancies
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5" />
+                Manage Vacancies
+              </div>
+              <Button onClick={handleCreateVacancy} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+                <Plus className="w-4 h-4 mr-1" /> New Vacancy
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500 mb-4">You can add and manage job vacancies here.</p>
-            <Button className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">Create New Vacancy</Button>
-            <div className="mt-6 text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-              Vacancy management interface goes here...
+            <div className="space-y-6">
+              {vacancies.length === 0 && (
+                <div className="text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  No vacancies found. Click &quot;New Vacancy&quot; to add one.
+                </div>
+              )}
+              {vacancies.map((vac) => (
+                <div key={vac.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-2 lg:col-span-2">
+                      <Label>Title</Label>
+                      <Input defaultValue={vac.title} onBlur={(e) => handleUpdateVacancy(vac.id, 'title', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Department</Label>
+                      <Input defaultValue={vac.department} onBlur={(e) => handleUpdateVacancy(vac.id, 'department', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input defaultValue={vac.location} onBlur={(e) => handleUpdateVacancy(vac.id, 'location', e.target.value)} />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Type</Label>
+                      <select 
+                        defaultValue={vac.type} 
+                        onChange={(e) => handleUpdateVacancy(vac.id, 'type', e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      >
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Remote / Hybrid</Label>
+                      <select 
+                        defaultValue={vac.remote_hybrid} 
+                        onChange={(e) => handleUpdateVacancy(vac.id, 'remote_hybrid', e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      >
+                        <option value="Remote">Remote</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="On-site">On-site</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <select 
+                        defaultValue={vac.is_active ? "active" : "inactive"} 
+                        onChange={(e) => handleUpdateVacancy(vac.id, 'is_active', e.target.value === 'active')}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <textarea 
+                      defaultValue={vac.description} 
+                      onBlur={(e) => handleUpdateVacancy(vac.id, 'description', e.target.value)}
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button variant="ghost" onClick={() => handleDeleteVacancy(vac.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-3 text-xs">
+                      <Trash2 className="w-4 h-4 mr-1.5" /> Delete Vacancy
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -416,16 +606,52 @@ export default function AdminDashboardPage() {
       {activeTab === 'modules' && (role === 'admin' || role === 'trainer') && (
         <Card className="border-0 shadow-sm rounded-2xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              Manage Modules & Lessons
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Manage Modules
+              </div>
+              <Button onClick={handleCreateModule} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+                <Plus className="w-4 h-4 mr-1" /> New Module
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500 mb-4">You can add, edit, and reorganize training modules here.</p>
-            <Button className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">Add New Module</Button>
-            <div className="mt-6 text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-              Module management interface goes here...
+            <div className="space-y-6">
+              {modules.length === 0 && (
+                <div className="text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  No modules found. Click &quot;New Module&quot; to add one.
+                </div>
+              )}
+              {modules.map((mod) => (
+                <div key={mod.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col gap-4 relative group">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Module Title</Label>
+                      <Input defaultValue={mod.title} onBlur={(e) => handleUpdateModule(mod.id, 'title', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Order / Sequence</Label>
+                      <Input type="number" defaultValue={mod.order_index} onBlur={(e) => handleUpdateModule(mod.id, 'order_index', parseInt(e.target.value))} />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pr-8">
+                    <Label>Description</Label>
+                    <textarea 
+                      defaultValue={mod.description || ''} 
+                      onBlur={(e) => handleUpdateModule(mod.id, 'description', e.target.value)}
+                      className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleDeleteModule(mod.id)} 
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
