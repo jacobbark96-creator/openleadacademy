@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
             Vacancies
           </button>
         )}
-        {role === 'trainer' && (
+        {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("modules")}
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'modules' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
@@ -403,7 +403,7 @@ export default function AdminDashboardPage() {
         </Card>
       )}
 
-      {activeTab === 'modules' && role === 'trainer' && (
+      {activeTab === 'modules' && (role === 'admin' || role === 'trainer') && (
         <Card className="border-0 shadow-sm rounded-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

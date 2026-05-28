@@ -16,15 +16,19 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
   const router = useRouter()
   const supabase = createClient()
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg("")
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error("Environment variables missing! Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Cloudflare.")
+      const msg = "Environment variables missing! Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+      setErrorMsg(msg)
+      toast.error(msg)
       setLoading(false)
       return
     }
@@ -40,6 +44,7 @@ export default function SignupPage() {
     })
 
     if (error) {
+      setErrorMsg(error.message)
       toast.error(error.message)
       setLoading(false)
       return
@@ -60,6 +65,11 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSignup} className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+              {errorMsg}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
             <Input

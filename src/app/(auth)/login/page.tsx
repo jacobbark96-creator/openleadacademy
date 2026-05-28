@@ -15,15 +15,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
   const router = useRouter()
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg("")
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error("Environment variables missing! Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Cloudflare.")
+      const msg = "Environment variables missing! Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+      setErrorMsg(msg)
+      toast.error(msg)
       setLoading(false)
       return
     }
@@ -34,7 +38,12 @@ export default function LoginPage() {
     })
 
     if (error) {
-      toast.error(error.message)
+      let friendlyError = error.message
+      if (friendlyError === "Invalid login credentials") {
+        friendlyError = "Incorrect email or password. Please try again."
+      }
+      setErrorMsg(friendlyError)
+      toast.error(friendlyError)
       setLoading(false)
       return
     }
@@ -54,6 +63,11 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+              {errorMsg}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

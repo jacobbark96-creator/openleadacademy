@@ -14,14 +14,18 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
   const supabase = createClient()
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setErrorMsg("")
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error("Environment variables missing!")
+      const msg = "Environment variables missing!"
+      setErrorMsg(msg)
+      toast.error(msg)
       setLoading(false)
       return
     }
@@ -31,6 +35,7 @@ export default function ForgotPasswordPage() {
     })
 
     if (error) {
+      setErrorMsg(error.message)
       toast.error(error.message)
       setLoading(false)
       return
@@ -66,6 +71,11 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleReset} className="space-y-4">
+            {errorMsg && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+                {errorMsg}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
