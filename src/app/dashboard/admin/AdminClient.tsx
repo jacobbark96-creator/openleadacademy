@@ -349,7 +349,7 @@ export default function AdminDashboardPage() {
         return
       }
       toast.success(`Password reset email sent to ${email}`)
-    } catch (error) {
+    } catch {
       toast.error("Failed to connect to the server.")
     }
   }
@@ -373,7 +373,7 @@ export default function AdminDashboardPage() {
       toast.success("Password updated successfully!")
       setSelectedUserForPassword(null)
       setNewPasswordForUser("")
-    } catch (error) {
+    } catch {
       toast.error("Failed to connect to the server.")
     }
   }
@@ -437,8 +437,7 @@ export default function AdminDashboardPage() {
       const refreshResponse = await fetch('/api/admin/users')
       const adminUsers = await refreshResponse.json()
       setUsers(adminUsers)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch {
       toast.error("An unexpected error occurred while updating user")
     } finally {
       setIsUpdatingDetails(false)

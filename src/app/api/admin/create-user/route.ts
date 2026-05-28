@@ -23,9 +23,10 @@ export async function POST(req: Request) {
   try {
     try {
       await verifyAdmin()
-    } catch (authErr: any) {
-      console.error("API Auth Error:", authErr.message)
-      return NextResponse.json({ error: `Authentication failed: ${authErr.message}` }, { status: 401 })
+    } catch (authErr: unknown) {
+      const msg = authErr instanceof Error ? authErr.message : String(authErr)
+      console.error("API Auth Error:", msg)
+      return NextResponse.json({ error: `Authentication failed: ${msg}` }, { status: 401 })
     }
 
     const { email, fullName, role, password } = await req.json()
@@ -47,7 +48,11 @@ export async function POST(req: Request) {
       
     if (data.user) {
       console.log(`API: User created in Auth, updating profile ${data.user.id}`)
-      const { error: profileError } = await supabaseAdmin.from('profiles').update({ role }).eq('id', data.user.id)
+      const { error: profileError } = await supabaseAdmin.from('profiles').update({ 
+        role,
+        email // Also sync email to profiles table
+      }).eq('id', data.user.id)
+      
       if (profileError) {
         console.error("API Profile Update Error:", profileError.message)
         // We don't return here because the user is already created in Auth
@@ -63,8 +68,9 @@ export async function POST(req: Request) {
     }
     
     return NextResponse.json({ success: true })
-  } catch (err: any) {
-    console.error("API Unexpected Error:", err.message, err.stack)
-    return NextResponse.json({ error: `Internal server error: ${err.message}` }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("API Unexpected Error:", msg)
+    return NextResponse.json({ error: `Internal server error: ${msg}` }, { status: 500 })
   }
 }

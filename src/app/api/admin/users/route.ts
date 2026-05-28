@@ -40,15 +40,16 @@ export async function GET() {
   try {
     try {
       await verifyAdmin()
-    } catch (authErr: any) {
-      console.error("API Auth Error:", authErr.message)
-      return NextResponse.json({ error: `Authentication failed: ${authErr.message}` }, { status: 401 })
+    } catch (authErr: unknown) {
+      const msg = authErr instanceof Error ? authErr.message : String(authErr)
+      console.error("API Auth Error:", msg)
+      return NextResponse.json({ error: `Authentication failed: ${msg}` }, { status: 401 })
     }
 
     const supabaseAdmin = getSupabaseAdmin()
     console.log("API: Supabase admin client created")
     
-    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
+    const { data: usersData, error } = await supabaseAdmin.auth.admin.listUsers()
     if (error) {
       console.error("API List Users Error:", error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -62,12 +63,12 @@ export async function GET() {
 
     const { data: enrollments } = await supabaseAdmin.from('course_enrollments').select('user_id, course_id')
     
-    const result = users.map(user => {
+    const result = usersData.users.map(user => {
       const profile = profiles.find(p => p.id === user.id)
       const userEnrollments = enrollments?.filter(e => e.user_id === user.id).map(e => e.course_id) || []
       return {
         id: user.id,
-        email: user.email,
+        email: profile?.email || user.email, // Prefer email from profile table if available
         full_name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
         role: profile?.role || 'student',
         phone: profile?.phone || '',
@@ -80,8 +81,9 @@ export async function GET() {
 
     console.log(`API: Successfully fetched ${result.length} users`)
     return NextResponse.json(result)
-  } catch (err: any) {
-    console.error("API Unexpected Error:", err.message, err.stack)
-    return NextResponse.json({ error: `Internal server error: ${err.message}` }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("API Unexpected Error:", msg)
+    return NextResponse.json({ error: `Internal server error: ${msg}` }, { status: 500 })
   }
 }
