@@ -3,23 +3,24 @@
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 
-// Create a Supabase client with the service role key for admin tasks
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  serviceRoleKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
-
-async function verifyAdmin() {
+function getSupabaseAdmin() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceRoleKey) {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured on the server.")
   }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+}
+
+async function verifyAdmin() {
   const supabase = await createServerClient()
   const { data: { session } } = await supabase.auth.getSession()
   
@@ -38,6 +39,7 @@ async function verifyAdmin() {
 
 export async function getAdminUsers() {
   await verifyAdmin()
+  const supabaseAdmin = getSupabaseAdmin()
   
   const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
   if (error) throw new Error(error.message)
@@ -59,6 +61,7 @@ export async function getAdminUsers() {
 
 export async function adminUpdateUserPassword(userId: string, newPassword: string) {
   await verifyAdmin()
+  const supabaseAdmin = getSupabaseAdmin()
   const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword })
   if (error) throw new Error(error.message)
     
@@ -74,6 +77,7 @@ export async function adminUpdateUserPassword(userId: string, newPassword: strin
 
 export async function adminSendPasswordReset(email: string) {
   await verifyAdmin()
+  const supabaseAdmin = getSupabaseAdmin()
   const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
   if (error) throw new Error(error.message)
   return { success: true }
@@ -81,6 +85,7 @@ export async function adminSendPasswordReset(email: string) {
 
 export async function adminCreateUser(email: string, fullName: string, role: string, temporaryPassword?: string) {
   await verifyAdmin()
+  const supabaseAdmin = getSupabaseAdmin()
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password: temporaryPassword || 'TempPass123!',
