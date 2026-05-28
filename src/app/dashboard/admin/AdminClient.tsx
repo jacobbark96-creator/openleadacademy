@@ -193,11 +193,11 @@ export default function AdminDashboardPage() {
         const adminUsers = await refreshResponse.json()
         setUsers(adminUsers)
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.dismiss(loadingToast)
-      console.error("Create user network error:", error)
-      toast.error("Network error: Could not connect to the server. Please check your internet.")
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error("Create user network error:", msg)
+      toast.error(`Network error: ${msg}`)
     }
   }
 
@@ -477,8 +477,9 @@ export default function AdminDashboardPage() {
       const refreshResponse = await fetch('/api/admin/users')
       const adminUsers = await refreshResponse.json()
       setUsers(adminUsers)
-    } catch {
-      toast.error("An unexpected error occurred while updating user")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`An unexpected error occurred while updating user: ${msg}`)
     } finally {
       setIsUpdatingDetails(false)
     }

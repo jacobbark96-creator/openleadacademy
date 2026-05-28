@@ -19,12 +19,29 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./Sidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
+interface User {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+  };
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  link?: string;
+  created_at: string;
+}
+
 export function Topbar() {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
-  const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [notifications, setNotifications] = useState<any[]>([]) // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<User | null>(null)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {

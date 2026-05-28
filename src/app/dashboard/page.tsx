@@ -8,16 +8,33 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  week_number: number;
+  thumbnail_url?: string;
+}
+
+interface Progress {
+  lesson_id: string;
+  completed: boolean;
+  unlocked: boolean;
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const supabase = createClient()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(true)
 
   // Supabase state
-  const [lessons, setLessons] = useState<any[]>([]) // eslint-disable-line @typescript-eslint/no-explicit-any
-  const [progressData, setProgressData] = useState<any[]>([]) // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [progressData, setProgressData] = useState<Progress[]>([])
 
   useEffect(() => {
     let mounted = true;
@@ -32,8 +49,6 @@ export default function DashboardPage() {
       }
 
       if (mounted) {
-        setUser(session.user)
-        
         // Fetch courses
         const { data: courseData } = await supabase.from('courses').select('*')
         
@@ -48,14 +63,14 @@ export default function DashboardPage() {
             .order('order_index', { ascending: true })
             
           if (moduleData && moduleData.length > 0 && mounted) {
-             const moduleIds = moduleData.map((m: any) => m.id) // eslint-disable-line @typescript-eslint/no-explicit-any
+             const moduleIds = moduleData.map((m: { id: string }) => m.id)
              const { data: lessonData } = await supabase
                .from('lessons')
                .select('*')
                .in('module_id', moduleIds)
                .order('week_number', { ascending: true })
                
-             if (mounted) setLessons(lessonData || [])
+             if (mounted) setLessons((lessonData as Lesson[]) || [])
              
              // Fetch progress
              const { data: userProgress } = await supabase
@@ -63,7 +78,7 @@ export default function DashboardPage() {
                .select('*')
                .eq('user_id', session.user.id)
                
-             if (mounted) setProgressData(userProgress || [])
+             if (mounted) setProgressData((userProgress as Progress[]) || [])
           }
         }
       }
