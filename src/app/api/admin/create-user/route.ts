@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
@@ -6,33 +6,46 @@ export const runtime = "edge"
 
 async function verifyAdmin() {
   const supabase = await createServerClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user) throw new Error("Unauthorized")
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-  if (profile?.role !== 'admin' && profile?.role !== 'trainer') throw new Error("Unauthorized")
-}
-
-function getSupabaseAdmin() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  
+  if (sessionError) {
+    console.error("Auth session error:", sessionError.message)
+    throw new Error(`Auth session failed: ${sessionError.message}`)
+  }
+  
+  if (!session?.user) throw new Error("Unauthorized: No session found")
+  
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single()
+    
+  if (profileError) {
+    console.error("Profile fetch error:", profileError.message)
+    throw new Error(`Profile check failed: ${profileError.message}`)
+  }
+    
+  if (profile?.role !== 'admin' && profile?.role !== 'trainer') {
+    throw new Error("Unauthorized: Must be an admin or trainer")
+  }
 }
 
 export async function POST(req: Request) {
-  console.log("API: Creating new user...")
   try {
     try {
       await verifyAdmin()
     } catch (authErr: unknown) {
       const msg = authErr instanceof Error ? authErr.message : String(authErr)
       console.error("API Auth Error:", msg)
-      return NextResponse.json({ error: `Authentication failed: ${msg}` }, { status: 401 })
+      return NextResponse.json({ error: msg }, { status: 401 })
     }
 
-    const { email, fullName, role, password } = await req.json()
-    console.log(`API: Creating user ${email} with role ${role}`)
+    const { email, fullName, password, role } = await req.json()
+    console.log(`API: Creating user ${email}...`)
     
-    const supabaseAdmin = getSupabaseAdmin()
+    const supabaseAdmin = createAdminClient()
+    console.log("API: Supabase admin client created")
     
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
