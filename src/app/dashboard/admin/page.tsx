@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { getAdminUsers, adminCreateUser, adminSendPasswordReset, adminUpdateUserPassword } from "@/app/actions/admin"
 
 export default function AdminDashboardPage() {
   const supabase = createClient()
@@ -37,8 +39,14 @@ export default function AdminDashboardPage() {
       }
 
       // Load Users
-      const { data: profilesData } = await supabase.from('profiles').select('*')
-      if (profilesData && mounted) setUsers(profilesData)
+      try {
+        const adminUsers = await getAdminUsers()
+        if (mounted) setUsers(adminUsers)
+      } catch (err: any) {
+        console.warn("Could not fetch admin users, falling back to profiles", err)
+        const { data: profilesData } = await supabase.from('profiles').select('*')
+        if (profilesData && mounted) setUsers(profilesData)
+      }
 
       // Load Team
       const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
@@ -62,13 +70,18 @@ export default function AdminDashboardPage() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Creating users via client requires edge function or API route typically if we want to confirm them immediately, 
-    // but we can try to sign them up if email_confirm is disabled, or just insert them into profiles 
-    // (though auth.users needs them too). For now we will mock this or use an alert since auth.admin is not available on client.
-    toast.info("User creation requires a secure backend API endpoint. Currently mocking success.")
-    setNewUserEmail("")
-    setNewUserName("")
-    setNewUserPassword("")
+    try {
+      await adminCreateUser(newUserEmail, newUserName, newUserRole, newUserPassword)
+      toast.success("User created successfully!")
+      setNewUserEmail("")
+      setNewUserName("")
+      setNewUserPassword("")
+      // Reload users
+      const adminUsers = await getAdminUsers()
+      setUsers(adminUsers)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create user")
+    }
   }
 
   const handleUpdateTeamMember = async (id: string, field: string, value: string) => {
@@ -105,6 +118,37 @@ export default function AdminDashboardPage() {
       toast.error(`Failed to upload image: ${msg}`)
     } finally {
       setUploadingImage(null)
+    }
+  }
+
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null)
+  const [newPasswordForUser, setNewPasswordForUser] = useState("")
+
+  const handlePasswordReset = async (email: string) => {
+    if (!email) {
+      toast.error("User does not have an email associated.")
+      return
+    }
+    try {
+      await adminSendPasswordReset(email)
+      toast.success(`Password reset email sent to ${email}`)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset email")
+    }
+  }
+
+  const handleChangePassword = async (userId: string) => {
+    if (!newPasswordForUser || newPasswordForUser.length < 6) {
+      toast.error("Password must be at least 6 characters")
+      return
+    }
+    try {
+      await adminUpdateUserPassword(userId, newPasswordForUser)
+      toast.success("Password updated successfully!")
+      setSelectedUserForPassword(null)
+      setNewPasswordForUser("")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password")
     }
   }
 
@@ -207,22 +251,73 @@ export default function AdminDashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {users.map(u => (
-                  <div key={u.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
+                  <div key={u.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                    <div className="flex-1">
                       <p className="font-bold text-gray-900">{u.full_name || 'Unknown'}</p>
-                      <p className="text-sm text-gray-500 capitalize">Role: {u.role}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-sm text-gray-500 capitalize bg-gray-200 px-2 py-0.5 rounded-md font-medium">{u.role}</span>
+                        {u.email && <span className="text-sm text-gray-600 flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {u.email}</span>}
+                      </div>
                     </div>
-                    <div className="flex-1 max-w-sm flex items-center gap-2">
-                      <Video className="w-5 h-5 text-red-500" />
-                      <Input 
-                        placeholder="YouTube Channel URL" 
-                        defaultValue={u.youtube_url || ''}
-                        onBlur={(e) => {
-                          if (e.target.value !== u.youtube_url) {
-                            handleUpdateYoutube(u.id, e.target.value)
-                          }
-                        }}
-                      />
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-2 mr-2 w-full sm:w-auto">
+                        <Video className="w-5 h-5 text-red-500 flex-shrink-0" />
+                        <Input 
+                          className="h-8 text-xs w-full sm:w-48"
+                          placeholder="YouTube Channel URL" 
+                          defaultValue={u.youtube_url || ''}
+                          onBlur={(e) => {
+                            if (e.target.value !== u.youtube_url) {
+                              handleUpdateYoutube(u.id, e.target.value)
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      {u.email && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs flex items-center gap-1"
+                          onClick={() => handlePasswordReset(u.email)}
+                        >
+                          <Mail className="w-3.5 h-3.5" /> Send Reset
+                        </Button>
+                      )}
+
+                      <Dialog open={selectedUserForPassword === u.id} onOpenChange={(open) => {
+                        if (open) setSelectedUserForPassword(u.id)
+                        else { setSelectedUserForPassword(null); setNewPasswordForUser("") }
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+                            <Key className="w-3.5 h-3.5" /> Set Password
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Change Password for {u.full_name}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label>New Password</Label>
+                              <Input 
+                                type="password" 
+                                placeholder="Enter new password"
+                                value={newPasswordForUser}
+                                onChange={(e) => setNewPasswordForUser(e.target.value)}
+                              />
+                            </div>
+                            <Button 
+                              className="w-full bg-[#14B8A6] hover:bg-[#0D9488]"
+                              onClick={() => handleChangePassword(u.id)}
+                            >
+                              Update Password
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 ))}

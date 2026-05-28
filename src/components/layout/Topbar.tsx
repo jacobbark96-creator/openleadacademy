@@ -17,24 +17,52 @@ import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./Sidebar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function Topbar() {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null) // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     let mounted = true;
-    async function loadUser() {
+    async function loadData() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (mounted) {
-        setUser(session?.user || null)
+      if (mounted && session?.user) {
+        setUser(session.user)
+        
+        // Fetch notifications
+        const { data: notifs } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+          
+        if (notifs) {
+          setNotifications(notifs)
+          setUnreadCount(notifs.filter(n => !n.is_read).length)
+        }
       }
     }
-    loadUser()
+    loadData()
     return () => { mounted = false; }
   }, [supabase])
+
+  const handleMarkAsRead = async (id: string) => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id)
+      
+    if (!error) {
+      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -76,10 +104,61 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        <Button variant="ghost" size="icon" className="relative rounded-full text-gray-500 hover:bg-gray-100">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#008080]" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative rounded-full text-gray-500 hover:bg-gray-100">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#008080]" />
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h4 className="font-semibold text-sm text-gray-900">Notifications</h4>
+              {unreadCount > 0 && (
+                <span className="text-xs bg-[#008080]/10 text-[#008080] px-2 py-0.5 rounded-full font-medium">
+                  {unreadCount} new
+                </span>
+              )}
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  No notifications yet.
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <div 
+                    key={notif.id} 
+                    className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-[#008080]/5' : ''}`}
+                    onClick={() => {
+                      if (!notif.is_read) handleMarkAsRead(notif.id)
+                      if (notif.link) router.push(notif.link)
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      {!notif.is_read && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#008080] mt-1.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                          {notif.title}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                          {notif.message}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          {new Date(notif.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 hover:bg-gray-50 p-1.5 pr-3 rounded-full transition-colors outline-none">
             <Avatar className="h-8 w-8 md:h-9 md:w-9 bg-gray-900 text-white">
