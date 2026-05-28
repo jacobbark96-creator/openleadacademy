@@ -4,12 +4,19 @@ import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 
 function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceRoleKey) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured on the server.")
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("Missing Supabase configuration:", { 
+      url: !!supabaseUrl, 
+      key: !!serviceRoleKey 
+    })
+    throw new Error("Supabase configuration is missing. Please check your environment variables.")
   }
+  
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl,
     serviceRoleKey,
     {
       auth: {
