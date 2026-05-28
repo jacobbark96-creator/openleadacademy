@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -259,9 +259,19 @@ export default function AdminDashboardPage() {
                   <div key={u.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                     <div className="flex-1">
                       <p className="font-bold text-gray-900">{u.full_name || 'Unknown'}</p>
-                      <div className="flex items-center gap-3 mt-1">
+                      <div className="flex flex-wrap items-center gap-3 mt-1">
                         <span className="text-sm text-gray-500 capitalize bg-gray-200 px-2 py-0.5 rounded-md font-medium">{u.role}</span>
                         {u.email && <span className="text-sm text-gray-600 flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {u.email}</span>}
+                        {u.created_at && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" /> Joined: {new Date(u.created_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        {u.last_sign_in_at && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" /> Last active: {new Date(u.last_sign_in_at).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                     </div>
                     

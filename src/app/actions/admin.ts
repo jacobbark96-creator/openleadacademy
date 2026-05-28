@@ -55,6 +55,8 @@ export async function getAdminUsers() {
       full_name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
       role: profile?.role || 'student',
       youtube_url: profile?.youtube_url,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at,
     }
   })
 }
