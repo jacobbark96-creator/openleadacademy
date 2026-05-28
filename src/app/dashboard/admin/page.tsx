@@ -4,12 +4,19 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { getAdminUsers, adminCreateUser, adminSendPasswordReset, adminUpdateUserPassword } from "@/app/actions/admin"
+import { 
+  getAdminUsers, 
+  adminCreateUser, 
+  adminSendPasswordReset, 
+  adminUpdateUserPassword,
+  adminUpdateUserProfile,
+  adminManageEnrollments 
+} from "@/app/actions/admin"
 
 export default function AdminDashboardPage() {
   const supabase = createClient()
@@ -120,17 +127,18 @@ export default function AdminDashboardPage() {
       setUsers(adminUsers)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error("Failed to connect to the server. Please check your internet or try again.")
+      console.error("Create user error:", error)
+      toast.error(error?.message || "Failed to connect to the server. Please check your internet or try again.")
     }
   }
 
   const handleUpdateTeamMember = async (id: string, field: string, value: string) => {
-    const { error: _error } = await supabase.from('team_members').update({ [field]: value }).eq('id', id)
-    if (_error) {
+    const { error } = await supabase.from('team_members').update({ [field]: value }).eq('id', id)
+    if (error) {
       toast.error(`Failed to update ${field}`)
     } else {
-      toast.success(`Updated ${field}`)
       setTeam(team.map(t => t.id === id ? { ...t, [field]: value } : t))
+      toast.success("Team member updated")
     }
   }
   
@@ -285,6 +293,18 @@ export default function AdminDashboardPage() {
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null)
   const [newPasswordForUser, setNewPasswordForUser] = useState("")
 
+  // User Details Modal States
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<any | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [editingUserDetails, setEditingUserDetails] = useState({
+    full_name: "",
+    phone: "",
+    role: "",
+    enrollments: [] as string[]
+  })
+  const [isUpdatingDetails, setIsUpdatingDetails] = useState(false)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePasswordReset = async (email: string) => {
     if (!email) {
@@ -322,6 +342,66 @@ export default function AdminDashboardPage() {
     } catch (error: any) {
       toast.error("Failed to connect to the server.")
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleOpenDetails = (user: any) => {
+    setSelectedUserForDetails(user)
+    setEditingUserDetails({
+      full_name: user.full_name || "",
+      phone: user.phone || "",
+      role: user.role || "student",
+      enrollments: user.enrollments || []
+    })
+    setIsDetailsModalOpen(true)
+  }
+
+  const handleUpdateUserDetails = async () => {
+    if (!selectedUserForDetails) return
+    setIsUpdatingDetails(true)
+    try {
+      // Update profile details
+      const profileResult = await adminUpdateUserProfile(selectedUserForDetails.id, {
+        full_name: editingUserDetails.full_name,
+        phone: editingUserDetails.phone,
+        role: editingUserDetails.role
+      })
+
+      if (profileResult.error) {
+        toast.error(profileResult.error)
+        setIsUpdatingDetails(false)
+        return
+      }
+
+      // Update enrollments
+      const enrollResult = await adminManageEnrollments(selectedUserForDetails.id, editingUserDetails.enrollments)
+      if (enrollResult.error) {
+        toast.error(enrollResult.error)
+        setIsUpdatingDetails(false)
+        return
+      }
+
+      toast.success("User updated successfully")
+      setIsDetailsModalOpen(false)
+      // Refresh users list
+      const adminUsers = await getAdminUsers()
+      setUsers(adminUsers)
+    } catch (error) {
+      toast.error("An unexpected error occurred while updating user")
+    } finally {
+      setIsUpdatingDetails(false)
+    }
+  }
+
+  const toggleEnrollment = (courseId: string) => {
+    setEditingUserDetails(prev => {
+      const isEnrolled = prev.enrollments.includes(courseId)
+      if (isEnrolled) {
+        return { ...prev, enrollments: prev.enrollments.filter(id => id !== courseId) }
+      } else {
+        return { ...prev, enrollments: [...prev.enrollments, courseId] }
+      }
+    })
   }
 
   if (loading) return <div className="p-8">Loading...</div>
@@ -425,28 +505,50 @@ export default function AdminDashboardPage() {
                 {users.map(u => (
                   <div key={u.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                     <div className="flex-1">
-                      <p className="font-bold text-gray-900">{u.full_name || 'Unknown'}</p>
-                      <div className="flex flex-wrap items-center gap-3 mt-1">
-                        <span className="text-sm text-gray-500 capitalize bg-gray-200 px-2 py-0.5 rounded-md font-medium">{u.role}</span>
-                        {u.email && <span className="text-sm text-gray-600 flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {u.email}</span>}
+                      <div className="flex items-center gap-3">
+                        <p className="font-bold text-gray-900 text-lg">{u.full_name || 'Unknown'}</p>
+                        <span className="text-xs text-gray-500 capitalize bg-white border border-gray-200 px-2 py-0.5 rounded-full font-semibold shadow-sm">{u.role}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
+                        {u.email && (
+                          <div className="flex items-center gap-2 text-[#008080] font-medium bg-[#008080]/5 px-2.5 py-1 rounded-lg">
+                            <Mail className="w-4 h-4" />
+                            <span className="text-sm">{u.email}</span>
+                          </div>
+                        )}
+                        {u.phone && (
+                          <div className="flex items-center gap-2 text-gray-600 bg-white border border-gray-100 px-2.5 py-1 rounded-lg">
+                            <Phone className="w-3.5 h-3.5" />
+                            <span className="text-sm">{u.phone}</span>
+                          </div>
+                        )}
                         {u.created_at && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" /> Joined: {new Date(u.created_at).toLocaleDateString()}
+                          <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5" /> {new Date(u.created_at).toLocaleDateString()}
                           </span>
                         )}
                         {u.last_sign_in_at && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" /> Last active: {new Date(u.last_sign_in_at).toLocaleDateString()}
+                          <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" /> Last seen {new Date(u.last_sign_in_at).toLocaleDateString()}
                           </span>
                         )}
                       </div>
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-2 mr-2 w-full sm:w-auto">
+                      <Button 
+                        onClick={() => handleOpenDetails(u)}
+                        variant="default" 
+                        size="sm" 
+                        className="h-9 bg-[#008080] hover:bg-[#006666] text-white flex items-center gap-2"
+                      >
+                        <Settings className="w-4 h-4" /> Manage User
+                      </Button>
+
+                      <div className="flex items-center gap-2 mr-2 w-full sm:w-auto mt-2 xl:mt-0">
                         <Video className="w-5 h-5 text-red-500 flex-shrink-0" />
                         <Input 
-                          className="h-8 text-xs w-full sm:w-48"
+                          className="h-9 text-xs w-full sm:w-48"
                           placeholder="YouTube Channel URL" 
                           defaultValue={u.youtube_url || ''}
                           onBlur={(e) => {
@@ -457,56 +559,162 @@ export default function AdminDashboardPage() {
                         />
                       </div>
                       
-                      {u.email && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs flex items-center gap-1"
-                          onClick={() => handlePasswordReset(u.email)}
-                        >
-                          <Mail className="w-3.5 h-3.5" /> Send Reset
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-2 mt-2 xl:mt-0">
+                        {u.email && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-9 text-xs flex items-center gap-1 border-gray-200 hover:bg-gray-100"
+                            onClick={() => handlePasswordReset(u.email)}
+                          >
+                            <Mail className="w-3.5 h-3.5" /> Send Reset
+                          </Button>
+                        )}
 
-                      <Dialog open={selectedUserForPassword === u.id} onOpenChange={(open) => {
-                        if (open) setSelectedUserForPassword(u.id)
-                        else { setSelectedUserForPassword(null); setNewPasswordForUser("") }
-                      }}>
-                        <div onClick={() => setSelectedUserForPassword(u.id)}>
-                          <DialogTrigger>
-                            <Button variant="outline" size="sm" className="h-8 text-xs flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700">
+                        <Dialog open={selectedUserForPassword === u.id} onOpenChange={(open) => {
+                          if (open) setSelectedUserForPassword(u.id)
+                          else { setSelectedUserForPassword(null); setNewPasswordForUser("") }
+                        }}>
+                          <div onClick={() => setSelectedUserForPassword(u.id)}>
+                            <DialogTrigger render={<Button variant="outline" size="sm" className="h-9 text-xs flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700" />}>
                               <Key className="w-3.5 h-3.5" /> Set Password
-                            </Button>
-                          </DialogTrigger>
-                        </div>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Change Password for {u.full_name}</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label>New Password</Label>
-                              <Input 
-                                type="password" 
-                                placeholder="Enter new password"
-                                value={newPasswordForUser}
-                                onChange={(e) => setNewPasswordForUser(e.target.value)}
-                              />
-                            </div>
-                            <Button 
-                              className="w-full bg-[#14B8A6] hover:bg-[#0D9488]"
-                              onClick={() => handleChangePassword(u.id)}
-                            >
-                              Update Password
-                            </Button>
+                            </DialogTrigger>
                           </div>
-                        </DialogContent>
-                      </Dialog>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Change Password for {u.full_name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>New Password</Label>
+                                <Input 
+                                  type="password" 
+                                  placeholder="Enter new password"
+                                  value={newPasswordForUser}
+                                  onChange={(e) => setNewPasswordForUser(e.target.value)}
+                                />
+                              </div>
+                              <Button 
+                                className="w-full bg-[#14B8A6] hover:bg-[#0D9488]"
+                                onClick={() => handleChangePassword(u.id)}
+                              >
+                                Update Password
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </CardContent>
+
+            {/* User Details & Enrollment Modal */}
+            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+              <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-xl">
+                    <Settings className="w-5 h-5" />
+                    Manage User Details
+                  </DialogTitle>
+                </DialogHeader>
+                
+                {selectedUserForDetails && (
+                  <div className="space-y-6 py-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label>Full Name</Label>
+                        <Input 
+                          value={editingUserDetails.full_name}
+                          onChange={e => setEditingUserDetails({...editingUserDetails, full_name: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Email Address</Label>
+                        <Input value={selectedUserForDetails.email} disabled className="bg-gray-50 opacity-70" />
+                        <p className="text-[10px] text-gray-400">Email cannot be changed here</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Phone Number</Label>
+                        <Input 
+                          placeholder="+44 7000 000000"
+                          value={editingUserDetails.phone}
+                          onChange={e => setEditingUserDetails({...editingUserDetails, phone: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>System Role</Label>
+                        <select 
+                          value={editingUserDetails.role} 
+                          onChange={e => setEditingUserDetails({...editingUserDetails, role: e.target.value})}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        >
+                          <option value="student">Student</option>
+                          <option value="trainer">Trainer</option>
+                          {role === 'admin' && <option value="admin">Admin</option>}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-base font-bold flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-[#008080]" />
+                        Course Enrollments
+                      </Label>
+                      <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto p-1">
+                        {courses.length === 0 && (
+                          <p className="text-sm text-gray-500 italic">No courses available to assign.</p>
+                        )}
+                        {courses.map(course => {
+                          const isEnrolled = editingUserDetails.enrollments.includes(course.id)
+                          return (
+                            <div 
+                              key={course.id}
+                              onClick={() => toggleEnrollment(course.id)}
+                              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                                isEnrolled 
+                                  ? 'border-[#008080] bg-[#008080]/5' 
+                                  : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              <span className={`text-sm font-medium ${isEnrolled ? 'text-[#008080]' : 'text-gray-700'}`}>
+                                {course.title}
+                              </span>
+                              {isEnrolled ? (
+                                <CheckCircle2 className="w-5 h-5 text-[#008080]" />
+                              ) : (
+                                <Plus className="w-4 h-4 text-gray-400" />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setIsDetailsModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        className="flex-1 bg-[#008080] hover:bg-[#006666]"
+                        onClick={handleUpdateUserDetails}
+                        disabled={isUpdatingDetails}
+                      >
+                        {isUpdatingDetails ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </Card>
         </div>
       )}

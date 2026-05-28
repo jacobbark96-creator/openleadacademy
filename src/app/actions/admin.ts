@@ -38,27 +38,77 @@ async function verifyAdmin() {
 }
 
 export async function getAdminUsers() {
-  await verifyAdmin()
-  const supabaseAdmin = getSupabaseAdmin()
-  
-  const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-  if (error) throw new Error(error.message)
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
+    if (error) return []
 
-  const { data: profiles, error: profilesError } = await supabaseAdmin.from('profiles').select('*')
-  if (profilesError) throw new Error(profilesError.message)
+    const { data: profiles, error: profilesError } = await supabaseAdmin.from('profiles').select('*')
+    if (profilesError) return []
 
-  return users.map(user => {
-    const profile = profiles.find(p => p.id === user.id)
-    return {
-      id: user.id,
-      email: user.email,
-      full_name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
-      role: profile?.role || 'student',
-      youtube_url: profile?.youtube_url,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
+    const { data: enrollments, error: enrollmentsError } = await supabaseAdmin.from('course_enrollments').select('user_id, course_id')
+    if (enrollmentsError) console.error("Enrollments fetch error:", enrollmentsError)
+
+    return users.map(user => {
+      const profile = profiles.find(p => p.id === user.id)
+      const userEnrollments = enrollments?.filter(e => e.user_id === user.id).map(e => e.course_id) || []
+      return {
+        id: user.id,
+        email: user.email,
+        full_name: profile?.full_name || user.user_metadata?.full_name || 'Unknown',
+        role: profile?.role || 'student',
+        phone: profile?.phone || '',
+        youtube_url: profile?.youtube_url,
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at,
+        enrollments: userEnrollments
+      }
+    })
+  } catch (err) {
+    console.error("getAdminUsers error:", err)
+    return []
+  }
+}
+
+export async function adminUpdateUserProfile(userId: string, data: { full_name?: string, role?: string, phone?: string }) {
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    const { error } = await supabaseAdmin.from('profiles').update(data).eq('id', userId)
+    if (error) return { error: error.message }
+    
+    return { success: true }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    return { error: err.message || "Failed to update profile" }
+  }
+}
+
+export async function adminManageEnrollments(userId: string, courseIds: string[]) {
+  try {
+    await verifyAdmin()
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    // First, delete existing enrollments for this user
+    const { error: deleteError } = await supabaseAdmin.from('course_enrollments').delete().eq('user_id', userId)
+    if (deleteError) return { error: deleteError.message }
+    
+    if (courseIds.length > 0) {
+      // Then insert new enrollments
+      const { error: insertError } = await supabaseAdmin.from('course_enrollments').insert(
+        courseIds.map(courseId => ({ user_id: userId, course_id: courseId }))
+      )
+      if (insertError) return { error: insertError.message }
     }
-  })
+    
+    return { success: true }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    return { error: err.message || "Failed to manage enrollments" }
+  }
 }
 
 export async function adminUpdateUserPassword(userId: string, newPassword: string) {
