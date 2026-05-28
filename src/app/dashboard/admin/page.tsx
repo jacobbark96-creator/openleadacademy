@@ -23,6 +23,7 @@ export default function AdminDashboardPage() {
   const [vacancies, setVacancies] = useState<any[]>([])
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [courses, setCourses] = useState<any[]>([])
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [modules, setModules] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,11 +65,13 @@ export default function AdminDashboardPage() {
       if (vacData && mounted) setVacancies(vacData)
 
       // Load Courses and Modules
-      const { data: coursesData } = await supabase.from('courses').select('*')
+      const { data: coursesData } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
       if (coursesData && mounted) {
         setCourses(coursesData)
         if (coursesData.length > 0) {
-          const { data: modData } = await supabase.from('modules').select('*').eq('course_id', coursesData[0].id).order('order_index')
+          const firstCourseId = coursesData[0].id
+          setSelectedCourseId(firstCourseId)
+          const { data: modData } = await supabase.from('modules').select('*').eq('course_id', firstCourseId).order('order_index')
           if (modData && mounted) setModules(modData)
         }
       }
@@ -78,6 +81,15 @@ export default function AdminDashboardPage() {
     loadData()
     return () => { mounted = false }
   }, [supabase])
+
+  useEffect(() => {
+    async function loadModules() {
+      if (!selectedCourseId) return
+      const { data: modData } = await supabase.from('modules').select('*').eq('course_id', selectedCourseId).order('order_index')
+      if (modData) setModules(modData)
+    }
+    loadModules()
+  }, [selectedCourseId, supabase])
 
   const handleUpdateYoutube = async (userId: string, url: string) => {
     const { error } = await supabase.from('profiles').update({ youtube_url: url }).eq('id', userId)
@@ -115,26 +127,55 @@ export default function AdminDashboardPage() {
       setTeam(team.map(t => t.id === id ? { ...t, [field]: value } : t))
     }
   }
+  
+  const handleCreateCourse = async () => {
+    const { data: newCourse, error } = await supabase.from('courses').insert({
+      title: 'New Course',
+      description: 'Course description...'
+    }).select().single()
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("Course created")
+      setCourses([newCourse, ...courses])
+      setSelectedCourseId(newCourse.id)
+    }
+  }
+
+  const handleUpdateCourse = async (id: string, field: string, value: string) => {
+    const { error } = await supabase.from('courses').update({ [field]: value }).eq('id', id)
+    if (error) {
+      toast.error(`Failed to update ${field}`)
+    } else {
+      setCourses(courses.map(c => c.id === id ? { ...c, [field]: value } : c))
+      toast.success("Course updated")
+    }
+  }
+
+  const handleDeleteCourse = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this course? This will also delete all modules and lessons in it.")) return
+    const { error } = await supabase.from('courses').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setCourses(courses.filter(c => c.id !== id))
+      if (selectedCourseId === id) {
+        setSelectedCourseId(courses.length > 1 ? courses.find(c => c.id !== id)?.id : null)
+      }
+      toast.success("Course deleted")
+    }
+  }
 
   const handleCreateModule = async () => {
-    let courseId = courses[0]?.id
-    if (!courseId) {
-      // Create a default course if none exists
-      const { data: newCourse, error: courseError } = await supabase.from('courses').insert({
-        title: 'Openlead Academy - Onboarding Program',
-        description: 'Default onboarding program.'
-      }).select().single()
-      if (courseError) {
-        toast.error("Failed to create default course")
-        return
-      }
-      courseId = newCourse.id
-      setCourses([newCourse])
+    if (!selectedCourseId) {
+      toast.error("Please select or create a course first")
+      return
     }
 
     const newOrderIndex = modules.length > 0 ? Math.max(...modules.map(m => m.order_index)) + 1 : 0
     const { data: newModule, error } = await supabase.from('modules').insert({
-      course_id: courseId,
+      course_id: selectedCourseId,
       title: 'New Module',
       description: 'Module description...',
       order_index: newOrderIndex
@@ -604,57 +645,141 @@ export default function AdminDashboardPage() {
       )}
 
       {activeTab === 'modules' && (role === 'admin' || role === 'trainer') && (
-        <Card className="border-0 shadow-sm rounded-2xl">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                Manage Modules
-              </div>
-              <Button onClick={handleCreateModule} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
-                <Plus className="w-4 h-4 mr-1" /> New Module
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {modules.length === 0 && (
-                <div className="text-sm text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                  No modules found. Click &quot;New Module&quot; to add one.
-                </div>
-              )}
-              {modules.map((mod) => (
-                <div key={mod.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col gap-4 relative group">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Module Title</Label>
-                      <Input defaultValue={mod.title} onBlur={(e) => handleUpdateModule(mod.id, 'title', e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Order / Sequence</Label>
-                      <Input type="number" defaultValue={mod.order_index} onBlur={(e) => handleUpdateModule(mod.id, 'order_index', parseInt(e.target.value))} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Courses Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  Courses
+                  <Button size="sm" onClick={handleCreateCourse} className="h-8 bg-[#14B8A6] hover:bg-[#0D9488]">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {courses.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">No courses yet.</p>
+                )}
+                {courses.map(course => (
+                  <div 
+                    key={course.id}
+                    onClick={() => setSelectedCourseId(course.id)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      selectedCourseId === course.id 
+                        ? 'border-[#008080] bg-[#008080]/5 shadow-sm' 
+                        : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className={`font-semibold text-sm ${selectedCourseId === course.id ? 'text-[#008080]' : 'text-gray-900'}`}>
+                        {course.title}
+                      </p>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteCourse(course.id); }}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
-                  <div className="space-y-2 pr-8">
-                    <Label>Description</Label>
-                    <textarea 
-                      defaultValue={mod.description || ''} 
-                      onBlur={(e) => handleUpdateModule(mod.id, 'description', e.target.value)}
-                      className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                ))}
+              </CardContent>
+            </Card>
+
+            {selectedCourseId && (
+              <Card className="border-0 shadow-sm rounded-2xl">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Course Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Course Title</Label>
+                    <Input 
+                      key={`${selectedCourseId}-title`}
+                      className="h-8 text-sm"
+                      defaultValue={courses.find(c => c.id === selectedCourseId)?.title || ''}
+                      onBlur={(e) => handleUpdateCourse(selectedCourseId, 'title', e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Description</Label>
+                    <textarea 
+                      key={`${selectedCourseId}-desc`}
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background"
+                      defaultValue={courses.find(c => c.id === selectedCourseId)?.description || ''}
+                      onBlur={(e) => handleUpdateCourse(selectedCourseId, 'description', e.target.value)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Modules List */}
+          <div className="lg:col-span-2">
+            <Card className="border-0 shadow-sm rounded-2xl h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Modules in {courses.find(c => c.id === selectedCourseId)?.title || 'Selected Course'}
+                  </div>
                   <Button 
-                    variant="ghost" 
-                    onClick={() => handleDeleteModule(mod.id)} 
-                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    disabled={!selectedCourseId}
+                    onClick={handleCreateModule} 
+                    className="bg-[#14B8A6] hover:bg-[#0D9488] text-white"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Plus className="w-4 h-4 mr-1" /> New Module
                   </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {!selectedCourseId && (
+                    <div className="text-sm text-gray-500 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      Select a course on the left to manage its modules.
+                    </div>
+                  )}
+                  {selectedCourseId && modules.length === 0 && (
+                    <div className="text-sm text-gray-500 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      No modules found for this course. Click &quot;New Module&quot; to add one.
+                    </div>
+                  )}
+                  {selectedCourseId && modules.map((mod) => (
+                    <div key={mod.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col gap-4 relative group">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
+                        <div className="space-y-2 md:col-span-2">
+                          <Label className="text-xs text-gray-500">Module Title</Label>
+                          <Input defaultValue={mod.title} onBlur={(e) => handleUpdateModule(mod.id, 'title', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Order</Label>
+                          <Input type="number" defaultValue={mod.order_index} onBlur={(e) => handleUpdateModule(mod.id, 'order_index', parseInt(e.target.value))} />
+                        </div>
+                      </div>
+                      <div className="space-y-2 pr-8">
+                        <Label className="text-xs text-gray-500">Description</Label>
+                        <textarea 
+                          defaultValue={mod.description || ''} 
+                          onBlur={(e) => handleUpdateModule(mod.id, 'description', e.target.value)}
+                          className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        />
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleDeleteModule(mod.id)} 
+                        className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   )
