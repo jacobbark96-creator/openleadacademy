@@ -10,21 +10,63 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
+interface UserProfile {
+  id: string;
+  email?: string;
+  full_name?: string;
+  role: string;
+  phone?: string;
+  youtube_url?: string;
+  created_at?: string;
+  last_sign_in_at?: string;
+  enrollments?: string[];
+}
+
+interface TeamMember {
+  id: string;
+  name: string;
+  role_title: string;
+  image_url?: string;
+  order_index: number;
+}
+
+interface Vacancy {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  remote_hybrid: string;
+  description: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+}
+
+interface Module {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string;
+  order_index: number;
+}
+
 export default function AdminDashboardPage() {
   const supabase = createClient()
   const [role, setRole] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("users")
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [users, setUsers] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [team, setTeam] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [vacancies, setVacancies] = useState<any[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [courses, setCourses] = useState<any[]>([])
+  const [users, setUsers] = useState<UserProfile[]>([])
+  const [team, setTeam] = useState<TeamMember[]>([])
+  const [vacancies, setVacancies] = useState<Vacancy[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [modules, setModules] = useState<any[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
 
   // Form states
@@ -202,7 +244,7 @@ export default function AdminDashboardPage() {
     } else {
       setCourses(courses.filter(c => c.id !== id))
       if (selectedCourseId === id) {
-        setSelectedCourseId(courses.length > 1 ? courses.find(c => c.id !== id)?.id : null)
+        setSelectedCourseId(courses.length > 1 ? (courses.find(c => c.id !== id)?.id ?? null) : null)
       }
       toast.success("Course deleted")
     }
@@ -321,8 +363,7 @@ export default function AdminDashboardPage() {
   const [newPasswordForUser, setNewPasswordForUser] = useState("")
 
   // User Details Modal States
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedUserForDetails, setSelectedUserForDetails] = useState<any | null>(null)
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [editingUserDetails, setEditingUserDetails] = useState({
     full_name: "",
@@ -378,8 +419,7 @@ export default function AdminDashboardPage() {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleOpenDetails = (user: any) => {
+  const handleOpenDetails = (user: UserProfile) => {
     setSelectedUserForDetails(user)
     setEditingUserDetails({
       full_name: user.full_name || "",
@@ -616,7 +656,7 @@ export default function AdminDashboardPage() {
                             variant="outline" 
                             size="sm" 
                             className="h-9 text-xs flex items-center gap-1 border-gray-200 hover:bg-gray-100"
-                            onClick={() => handlePasswordReset(u.email)}
+                            onClick={() => u.email && handlePasswordReset(u.email)}
                           >
                             <Mail className="w-3.5 h-3.5" /> Send Reset
                           </Button>

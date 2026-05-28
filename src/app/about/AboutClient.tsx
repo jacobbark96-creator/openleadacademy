@@ -7,9 +7,18 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 
+interface TeamMember {
+  id?: string;
+  name: string;
+  role_title: string;
+  initials?: string;
+  image_url?: string;
+  order_index?: number;
+}
+
 export default function AboutClient() {
   const supabase = createClient()
-  const [members, setMembers] = useState<any[]>([
+  const [members, setMembers] = useState<TeamMember[]>([
     { name: "Sarah Jenkins", role_title: "Head of Academy", initials: "SJ" },
     { name: "Marcus Thorne", role_title: "Lead Sales Trainer", initials: "MT" },
     { name: "Elena Rostova", role_title: "Careers Director", initials: "ER" }
@@ -69,7 +78,7 @@ export default function AboutClient() {
           <section className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 mb-8">Meet the Leadership</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {members.map((leader: any, i: number) => {
+              {members.map((leader: TeamMember, i: number) => {
                 const initials = leader.initials || leader.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
                 return (
                   <div key={i} className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center">
