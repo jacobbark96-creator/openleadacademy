@@ -36,15 +36,29 @@ function getSupabaseAdmin() {
 }
 
 export async function GET() {
+  console.log("API: Fetching admin users...")
   try {
-    await verifyAdmin()
+    try {
+      await verifyAdmin()
+    } catch (authErr: any) {
+      console.error("API Auth Error:", authErr.message)
+      return NextResponse.json({ error: `Authentication failed: ${authErr.message}` }, { status: 401 })
+    }
+
     const supabaseAdmin = getSupabaseAdmin()
+    console.log("API: Supabase admin client created")
     
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error("API List Users Error:", error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     const { data: profiles, error: profilesError } = await supabaseAdmin.from('profiles').select('*')
-    if (profilesError) return NextResponse.json({ error: profilesError.message }, { status: 500 })
+    if (profilesError) {
+      console.error("API List Profiles Error:", profilesError.message)
+      return NextResponse.json({ error: profilesError.message }, { status: 500 })
+    }
 
     const { data: enrollments } = await supabaseAdmin.from('course_enrollments').select('user_id, course_id')
     
@@ -64,8 +78,10 @@ export async function GET() {
       }
     })
 
+    console.log(`API: Successfully fetched ${result.length} users`)
     return NextResponse.json(result)
-  } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 401 })
+  } catch (err: any) {
+    console.error("API Unexpected Error:", err.message, err.stack)
+    return NextResponse.json({ error: `Internal server error: ${err.message}` }, { status: 500 })
   }
 }

@@ -106,6 +106,7 @@ export default function AdminDashboardPage() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
+    const loadingToast = toast.loading("Creating user...")
     try {
       const response = await fetch('/api/admin/create-user', {
         method: 'POST',
@@ -118,6 +119,20 @@ export default function AdminDashboardPage() {
         })
       })
       
+      toast.dismiss(loadingToast)
+
+      if (!response.ok) {
+        const text = await response.text()
+        console.error("Server error response:", text)
+        try {
+          const errorData = JSON.parse(text)
+          toast.error(errorData.error || `Server error: ${response.status}`)
+        } catch {
+          toast.error(`Server error (${response.status}). Please check server logs.`)
+        }
+        return
+      }
+
       const result = await response.json()
       
       if (result.error) {
@@ -132,12 +147,15 @@ export default function AdminDashboardPage() {
       
       // Reload users
       const refreshResponse = await fetch('/api/admin/users')
-      const adminUsers = await refreshResponse.json()
-      setUsers(adminUsers)
+      if (refreshResponse.ok) {
+        const adminUsers = await refreshResponse.json()
+        setUsers(adminUsers)
+      }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error("Create user error:", error)
-      toast.error("Failed to connect to the server. Please check your internet or try again.")
+      toast.dismiss(loadingToast)
+      console.error("Create user network error:", error)
+      toast.error("Network error: Could not connect to the server. Please check your internet.")
     }
   }
 
