@@ -9,14 +9,6 @@ import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { 
-  getAdminUsers, 
-  adminCreateUser, 
-  adminSendPasswordReset, 
-  adminUpdateUserPassword,
-  adminUpdateUserProfile,
-  adminManageEnrollments 
-} from "@/app/actions/admin"
 
 export default function AdminDashboardPage() {
   const supabase = createClient()
@@ -52,12 +44,16 @@ export default function AdminDashboardPage() {
         }
       }
 
-      // Load Users
+      // Load Users via API
       try {
-        const adminUsers = await getAdminUsers()
-        if (mounted) setUsers(adminUsers)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
+        const response = await fetch('/api/admin/users')
+        const adminUsers = await response.json()
+        if (mounted && !adminUsers.error) {
+          setUsers(adminUsers)
+        } else if (adminUsers.error) {
+          console.warn("API error, falling back:", adminUsers.error)
+        }
+      } catch (err) {
         console.warn("Could not fetch admin users, falling back to profiles", err)
         const { data: profilesData } = await supabase.from('profiles').select('*')
         if (profilesData && mounted) setUsers(profilesData)
@@ -111,7 +107,18 @@ export default function AdminDashboardPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const result = await adminCreateUser(newUserEmail, newUserName, newUserRole, newUserPassword)
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail,
+          fullName: newUserName,
+          role: newUserRole,
+          password: newUserPassword
+        })
+      })
+      
+      const result = await response.json()
       
       if (result.error) {
         toast.error(result.error)
@@ -122,13 +129,15 @@ export default function AdminDashboardPage() {
       setNewUserEmail("")
       setNewUserName("")
       setNewUserPassword("")
+      
       // Reload users
-      const adminUsers = await getAdminUsers()
+      const refreshResponse = await fetch('/api/admin/users')
+      const adminUsers = await refreshResponse.json()
       setUsers(adminUsers)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Create user error:", error)
-      toast.error(error?.message || "Failed to connect to the server. Please check your internet or try again.")
+      toast.error("Failed to connect to the server. Please check your internet or try again.")
     }
   }
 
@@ -305,21 +314,24 @@ export default function AdminDashboardPage() {
   })
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePasswordReset = async (email: string) => {
     if (!email) {
       toast.error("User does not have an email associated.")
       return
     }
     try {
-      const result = await adminSendPasswordReset(email)
+      const response = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      const result = await response.json()
       if (result.error) {
         toast.error(result.error)
         return
       }
       toast.success(`Password reset email sent to ${email}`)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to connect to the server.")
     }
   }
@@ -330,7 +342,12 @@ export default function AdminDashboardPage() {
       return
     }
     try {
-      const result = await adminUpdateUserPassword(userId, newPasswordForUser)
+      const response = await fetch('/api/admin/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, password: newPasswordForUser })
+      })
+      const result = await response.json()
       if (result.error) {
         toast.error(result.error)
         return
@@ -338,8 +355,7 @@ export default function AdminDashboardPage() {
       toast.success("Password updated successfully!")
       setSelectedUserForPassword(null)
       setNewPasswordForUser("")
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to connect to the server.")
     }
   }
@@ -360,21 +376,36 @@ export default function AdminDashboardPage() {
     if (!selectedUserForDetails) return
     setIsUpdatingDetails(true)
     try {
-      // Update profile details
-      const profileResult = await adminUpdateUserProfile(selectedUserForDetails.id, {
-        full_name: editingUserDetails.full_name,
-        phone: editingUserDetails.phone,
-        role: editingUserDetails.role
+      // Update profile details via API
+      const profileResponse = await fetch('/api/admin/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUserForDetails.id,
+          fullName: editingUserDetails.full_name,
+          phone: editingUserDetails.phone,
+          role: editingUserDetails.role
+        })
       })
 
+      const profileResult = await profileResponse.json()
       if (profileResult.error) {
         toast.error(profileResult.error)
         setIsUpdatingDetails(false)
         return
       }
 
-      // Update enrollments
-      const enrollResult = await adminManageEnrollments(selectedUserForDetails.id, editingUserDetails.enrollments)
+      // Update enrollments via API
+      const enrollResponse = await fetch('/api/admin/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUserForDetails.id,
+          courseIds: editingUserDetails.enrollments
+        })
+      })
+
+      const enrollResult = await enrollResponse.json()
       if (enrollResult.error) {
         toast.error(enrollResult.error)
         setIsUpdatingDetails(false)
@@ -383,10 +414,13 @@ export default function AdminDashboardPage() {
 
       toast.success("User updated successfully")
       setIsDetailsModalOpen(false)
+      
       // Refresh users list
-      const adminUsers = await getAdminUsers()
+      const refreshResponse = await fetch('/api/admin/users')
+      const adminUsers = await refreshResponse.json()
       setUsers(adminUsers)
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast.error("An unexpected error occurred while updating user")
     } finally {
       setIsUpdatingDetails(false)
