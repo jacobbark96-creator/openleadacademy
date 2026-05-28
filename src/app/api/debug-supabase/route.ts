@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
 export const runtime = "edge"
@@ -19,7 +18,8 @@ export async function GET() {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL || "null",
       }
     }, { status: 200 }) // Return 200 so you can see the JSON
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 200 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: msg }, { status: 200 })
   }
 }
