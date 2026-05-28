@@ -96,32 +96,7 @@ export default function DashboardPage() {
   })
 
   // Fallback curriculum if DB is empty
-  const displayCurriculum = curriculum.length > 0 ? curriculum : [
-    {
-      id: "dummy1",
-      week: 1,
-      title: "Welcome to Openlead",
-      description: "Introduction to our mission, values and the Openlead way.",
-      status: "completed",
-      thumbnail: true,
-    },
-    {
-      id: "dummy2",
-      week: 2,
-      title: "Our Products & Services",
-      description: "Overview of what we do and how our solutions help our clients succeed.",
-      status: "unlocked",
-      thumbnail: true,
-    },
-    {
-      id: "dummy3",
-      week: 3,
-      title: "Working with Customers",
-      description: "Best practices for communication, relationship building and delivering value.",
-      status: "locked",
-      thumbnail: true,
-    }
-  ]
+  const displayCurriculum = curriculum.length > 0 ? curriculum : []
 
   return (
     <div className="flex flex-col h-full overflow-hidden pb-4">

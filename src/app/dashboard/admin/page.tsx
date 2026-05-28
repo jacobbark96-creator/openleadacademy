@@ -81,6 +81,33 @@ export default function AdminDashboardPage() {
     }
   }
 
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null)
+
+  const handleImageUpload = async (id: string, file: File) => {
+    try {
+      setUploadingImage(id)
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${id}-${Math.random()}.${fileExt}`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName)
+
+      await handleUpdateTeamMember(id, 'image_url', data.publicUrl)
+    } catch (error: Error | unknown) {
+      const msg = error instanceof Error ? error.message : "Unknown error"
+      toast.error(`Failed to upload image: ${msg}`)
+    } finally {
+      setUploadingImage(null)
+    }
+  }
+
   if (loading) return <div className="p-8">Loading...</div>
 
   if (role !== 'admin' && role !== 'trainer') {
@@ -88,7 +115,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 h-full overflow-y-auto pr-2">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">
           {role === 'admin' ? 'Admin Dashboard' : 'Trainer Dashboard'}
@@ -229,11 +256,25 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Image URL (Optional)</Label>
-                    <Input 
-                      defaultValue={member.image_url || ''} 
-                      onBlur={(e) => handleUpdateTeamMember(member.id, 'image_url', e.target.value)} 
-                    />
+                    <Label>Profile Image</Label>
+                    <div className="flex items-center gap-3">
+                      {member.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={member.image_url} alt={member.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                      )}
+                      <div className="flex-1">
+                        <Input 
+                          type="file" 
+                          accept="image/*"
+                          disabled={uploadingImage === member.id}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleImageUpload(member.id, e.target.files[0])
+                            }
+                          }} 
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
