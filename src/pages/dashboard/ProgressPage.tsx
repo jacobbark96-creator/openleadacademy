@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart2, BookOpen, CheckCircle, Clock, Trophy, ArrowRight } from "lucide-react"
+import { BarChart2, BookOpen, CheckCircle, Clock, Trophy, ArrowRight, Award } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { Link } from "react-router-dom"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
 
 interface CourseProgress {
   id: string;
@@ -198,7 +198,12 @@ export default function ProgressPage() {
                         </Link>
                       </div>
                       <div className="mt-4">
-                        <Progress value={course.percentage} className="h-2 bg-gray-100" indicatorClassName="bg-[#008080]" />
+                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-[#008080] rounded-full transition-all duration-500" 
+                            style={{ width: `${course.percentage}%` }} 
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
