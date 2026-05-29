@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2 } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -56,6 +56,23 @@ interface Module {
   order_index: number;
 }
 
+interface Quiz {
+  id: string;
+  module_id?: string;
+  lesson_id?: string;
+  title: string;
+  passing_score: number;
+}
+
+interface QuizQuestion {
+  id: string;
+  quiz_id: string;
+  question: string;
+  options: string[];
+  correct_option_index: number;
+  order_index: number;
+}
+
 interface Lesson {
   id: string;
   module_id: string;
@@ -77,6 +94,9 @@ export default function AdminPage() {
   const [modules, setModules] = useState<Module[]>([])
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
   const [lessons, setLessons] = useState<Lesson[]>([])
+  const [quizzes, setQuizzes] = useState<Quiz[]>([])
+  const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null)
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
 
   // Form states
@@ -136,7 +156,13 @@ export default function AdminPage() {
             const firstCourseId = coursesData[0].id
             setSelectedCourseId(firstCourseId)
             const { data: modData } = await supabase.from('modules').select('*').eq('course_id', firstCourseId).order('order_index')
-            if (modData && mounted) setModules(modData)
+            if (modData && mounted) {
+              setModules(modData)
+              // Load quizzes for these modules
+              const modIds = modData.map(m => m.id)
+              const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
+              if (quizData) setQuizzes(quizData)
+            }
           }
         }
       } catch (err) {
@@ -151,10 +177,111 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
+    async function loadQuizQuestions() {
+      if (!selectedQuizId) {
+        setQuizQuestions([])
+        return
+      }
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .eq('quiz_id', selectedQuizId)
+        .order('order_index', { ascending: true })
+      
+      if (data) setQuizQuestions(data)
+    }
+    loadQuizQuestions()
+  }, [selectedQuizId])
+
+  const handleManageModuleQuiz = async (moduleId: string) => {
+    let quiz = quizzes.find(q => q.module_id === moduleId)
+    
+    if (!quiz) {
+      const { data: newQuiz, error } = await supabase
+        .from('quizzes')
+        .insert({
+          module_id: moduleId,
+          title: `Module Quiz: ${modules.find(m => m.id === moduleId)?.title}`,
+          passing_score: 80
+        })
+        .select()
+        .single()
+      
+      if (error) {
+        toast.error("Failed to create quiz")
+        return
+      }
+      if (newQuiz) {
+        quiz = newQuiz
+        setQuizzes([...quizzes, newQuiz])
+      }
+    }
+    
+    if (quiz) {
+      setSelectedQuizId(quiz.id)
+    }
+  }
+
+  const handleAddQuestion = async () => {
+    if (!selectedQuizId) return
+    
+    const newOrderIndex = quizQuestions.length > 0 
+      ? Math.max(...quizQuestions.map(q => q.order_index)) + 1 
+      : 0
+
+    const { data: newQuestion, error } = await supabase
+      .from('quiz_questions')
+      .insert({
+        quiz_id: selectedQuizId,
+        question: 'New Question',
+        options: ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
+        correct_option_index: 0,
+        order_index: newOrderIndex
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      toast.error("Failed to add question")
+    } else {
+      setQuizQuestions([...quizQuestions, newQuestion])
+      toast.success("Question added")
+    }
+  }
+
+  const handleUpdateQuestion = async (id: string, field: string, value: any) => {
+    const { error } = await supabase
+      .from('quiz_questions')
+      .update({ [field]: value })
+      .eq('id', id)
+    
+    if (error) {
+      toast.error("Failed to update question")
+    } else {
+      setQuizQuestions(quizQuestions.map(q => q.id === id ? { ...q, [field]: value } : q))
+    }
+  }
+
+  const handleDeleteQuestion = async (id: string) => {
+    const { error } = await supabase.from('quiz_questions').delete().eq('id', id)
+    if (error) {
+      toast.error("Failed to delete question")
+    } else {
+      setQuizQuestions(quizQuestions.filter(q => q.id !== id))
+      toast.success("Question deleted")
+    }
+  }
+
+  useEffect(() => {
     async function loadModules() {
       if (!selectedCourseId) return
       const { data: modData } = await supabase.from('modules').select('*').eq('course_id', selectedCourseId).order('order_index')
-      if (modData) setModules(modData)
+      if (modData) {
+        setModules(modData)
+        const modIds = modData.map(m => m.id)
+        const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
+        if (quizData) setQuizzes(quizData)
+      }
     }
     loadModules()
   }, [selectedCourseId])
@@ -1127,7 +1254,7 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      <div className="pt-2 flex justify-between items-center pr-8">
+                      <div className="pt-2 flex flex-wrap gap-2 pr-8">
                         <Dialog open={selectedModuleId === mod.id} onOpenChange={(open) => setSelectedModuleId(open ? mod.id : null)}>
                           <DialogTrigger render={<Button variant="outline" size="sm" className="text-[#008080] border-[#008080]/30 hover:bg-[#008080]/5" />}>
                               <Plus className="w-4 h-4 mr-2" /> Manage Lessons
@@ -1201,6 +1328,78 @@ export default function AdminPage() {
                                       variant="ghost" 
                                       onClick={() => handleDeleteLesson(lesson.id)} 
                                       className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover/lesson:opacity-100 transition-opacity"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Dialog open={selectedQuizId !== null && quizzes.find(q => q.id === selectedQuizId)?.module_id === mod.id} onOpenChange={(open) => { if(!open) setSelectedQuizId(null); }}>
+                          <DialogTrigger render={<Button variant="outline" size="sm" onClick={() => handleManageModuleQuiz(mod.id)} className="text-orange-600 border-orange-200 hover:bg-orange-50" />}>
+                              <CheckCircle2 className="w-4 h-4 mr-2" /> Manage Module Quiz
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Trophy className="w-5 h-5 text-orange-500" />
+                                Quiz Questions for {mod.title}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6 py-4">
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm text-gray-500">Create a mandatory quiz for the end of this module.</p>
+                                <Button size="sm" onClick={handleAddQuestion} className="bg-orange-500 hover:bg-orange-600">
+                                  <Plus className="w-4 h-4 mr-1" /> Add Question
+                                </Button>
+                              </div>
+
+                              <div className="space-y-6">
+                                {quizQuestions.length === 0 && (
+                                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
+                                    No questions yet. Click "Add Question" to begin.
+                                  </div>
+                                )}
+                                {quizQuestions.map((q, qIdx) => (
+                                  <div key={q.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group/question">
+                                    <div className="space-y-2 pr-8">
+                                      <Label className="text-xs">Question {qIdx + 1}</Label>
+                                      <Input 
+                                        defaultValue={q.question} 
+                                        onBlur={(e) => handleUpdateQuestion(q.id, 'question', e.target.value)} 
+                                      />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
+                                      {q.options.map((opt, optIdx) => (
+                                        <div key={optIdx} className="space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <input 
+                                              type="radio" 
+                                              name={`correct-${q.id}`} 
+                                              checked={q.correct_option_index === optIdx}
+                                              onChange={() => handleUpdateQuestion(q.id, 'correct_option_index', optIdx)}
+                                            />
+                                            <Label className="text-[10px] text-gray-500">Option {optIdx + 1} {q.correct_option_index === optIdx && '(Correct)'}</Label>
+                                          </div>
+                                          <Input 
+                                            defaultValue={opt} 
+                                            onBlur={(e) => {
+                                              const newOptions = [...q.options]
+                                              newOptions[optIdx] = e.target.value
+                                              handleUpdateQuestion(q.id, 'options', newOptions)
+                                            }}
+                                            className={q.correct_option_index === optIdx ? 'border-green-500 ring-green-500' : ''}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      onClick={() => handleDeleteQuestion(q.id)} 
+                                      className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover/question:opacity-100 transition-opacity"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </Button>

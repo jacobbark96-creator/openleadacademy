@@ -24,6 +24,7 @@ interface Module {
   order_index: number;
   lessons: Lesson[];
   status: 'completed' | 'unlocked' | 'locked';
+  quiz_id?: string;
 }
 
 interface Progress {
@@ -122,11 +123,11 @@ export default function DashboardPage() {
                    .select('quiz_id, passed')
                    .eq('user_id', session.user.id)
 
-                 // 5. Fetch quizzes to link them to lessons
+                 // 5. Fetch quizzes to link them to lessons or modules
                  const { data: quizData } = await supabase
                    .from('quizzes')
-                   .select('id, lesson_id')
-                   .in('lesson_id', (lessonData || []).map(l => l.id))
+                   .select('id, lesson_id, module_id')
+                   .or(`lesson_id.in.(${(lessonData || []).map(l => l.id).join(',')}),module_id.in.(${moduleIds.join(',')})`)
 
                  if (mounted) {
                    const progress = (userProgress as Progress[]) || []
@@ -138,14 +139,14 @@ export default function DashboardPage() {
                    let allModulesCompleted = true
                    const processedModules = moduleData.map((mod, idx) => {
                      const modLessons = allLessons.filter(l => l.module_id === mod.id)
+                     const modQuiz = quizzes.find(q => q.module_id === mod.id)
                      
-                     // A module is completed if all its lessons are completed 
-                     // AND if any lesson has a quiz, that quiz must be passed.
-                     const isCompleted = modLessons.length > 0 && modLessons.every(lesson => {
+                     // 1. All lessons must be completed
+                     const lessonsFinished = modLessons.length > 0 && modLessons.every(lesson => {
                        const lp = progress.find(p => p.lesson_id === lesson.id)
                        if (!lp?.completed) return false
                        
-                       // Check quiz if exists
+                       // Check lesson quiz if exists
                        const quiz = quizzes.find(q => q.lesson_id === lesson.id)
                        if (quiz) {
                          const attempt = quizResults.find(a => a.quiz_id === quiz.id)
@@ -153,6 +154,15 @@ export default function DashboardPage() {
                        }
                        return true
                      })
+
+                     // 2. Module quiz must be passed if it exists
+                     let moduleQuizPassed = true
+                     if (modQuiz) {
+                       const attempt = quizResults.find(a => a.quiz_id === modQuiz.id)
+                       moduleQuizPassed = !!attempt?.passed
+                     }
+
+                     const isCompleted = lessonsFinished && moduleQuizPassed
 
                      // Logic for unlocking: first module is always unlocked, 
                      // others depend on previous being completed.
@@ -169,6 +179,7 @@ export default function DashboardPage() {
                      return {
                        ...mod,
                        lessons: modLessons,
+                       quiz_id: modQuiz?.id,
                        status
                      }
                    })
@@ -368,11 +379,19 @@ export default function DashboardPage() {
                           )}
                           {module.status === 'unlocked' && (
                             <>
-                              <Link to={module.lessons.length > 0 ? `/dashboard/lessons/${module.lessons[0].id}` : '#'} className="w-full sm:w-auto">
-                                <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
-                                  {module.lessons.length > 0 ? 'Start Module' : 'No Lessons'}
-                                </Button>
-                              </Link>
+                              {module.quiz_id && module.lessons.every(l => progressData.find(p => p.lesson_id === l.id)?.completed) && !quizAttempts.find(a => a.quiz_id === module.quiz_id)?.passed ? (
+                                <Link to={`/dashboard/quizzes/${module.quiz_id}`} className="w-full sm:w-auto">
+                                  <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
+                                    Take Module Quiz
+                                  </Button>
+                                </Link>
+                              ) : (
+                                <Link to={module.lessons.length > 0 ? `/dashboard/lessons/${module.lessons[0].id}` : '#'} className="w-full sm:w-auto">
+                                  <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
+                                    {module.lessons.length > 0 ? 'Start Module' : 'No Lessons'}
+                                  </Button>
+                                </Link>
+                              )}
                               <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex mt-0.5">
                                 <PlayCircle className="w-3 h-3" /> Current
                               </div>

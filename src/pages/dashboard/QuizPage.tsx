@@ -19,13 +19,17 @@ interface Quiz {
   id: string;
   title: string;
   passing_score: number;
-  lesson_id: string;
-  lessons: {
+  lesson_id?: string;
+  module_id?: string;
+  lessons?: {
     title: string;
     module_id: string;
     modules: {
       title: string;
     };
+  };
+  modules?: {
+    title: string;
   };
 }
 
@@ -48,7 +52,7 @@ export default function QuizPage() {
       try {
         const { data: quizData, error: quizError } = await supabase
           .from('quizzes')
-          .select('*, lessons(title, module_id, modules(title))')
+          .select('*, lessons(title, module_id, modules(title)), modules(title)')
           .eq('id', id)
           .single()
 
@@ -148,7 +152,11 @@ export default function QuizPage() {
 
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">{quiz.title}</h1>
-        <p className="text-gray-500 text-lg">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
+        {quiz.lessons ? (
+          <p className="text-gray-500 text-lg">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
+        ) : quiz.modules ? (
+          <p className="text-gray-500 text-lg">{quiz.modules.title}: Final Module Test</p>
+        ) : null}
       </div>
 
       {!submitted ? (
@@ -241,11 +249,17 @@ export default function QuizPage() {
                     Try Again
                   </Button>
                   <Button 
-                    onClick={() => navigate(`/dashboard/lessons/${quiz.lesson_id}`)}
+                    onClick={() => {
+                      if (quiz.lesson_id) {
+                        navigate(`/dashboard/lessons/${quiz.lesson_id}`)
+                      } else {
+                        navigate('/dashboard')
+                      }
+                    }}
                     variant="ghost"
                     className="rounded-xl h-11 px-8 text-gray-500"
                   >
-                    Review Lesson
+                    {quiz.lesson_id ? "Review Lesson" : "Back to Dashboard"}
                   </Button>
                 </>
               )}
