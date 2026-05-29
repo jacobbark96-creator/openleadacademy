@@ -1,4 +1,4 @@
-import { Bell, Menu } from "lucide-react"
+import { Bell, Menu, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -11,7 +11,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { supabase } from "@/lib/supabase/client"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./Sidebar"
@@ -94,6 +94,8 @@ export function Topbar() {
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'Student'
 
   const isDashboardHome = pathname === '/dashboard'
+  const isLessonPage = pathname.startsWith('/dashboard/lessons/')
+  const isQuizPage = pathname.startsWith('/dashboard/quizzes/')
 
   return (
     <header className="flex h-16 md:h-20 items-center justify-between bg-white md:bg-transparent border-b md:border-b-0 px-4 md:px-8 shrink-0 sticky top-0 z-20">
@@ -111,14 +113,21 @@ export function Topbar() {
       </div>
 
       <div className="flex-1 hidden md:flex flex-col">
-        {isDashboardHome && user && (
+        {isDashboardHome && user ? (
           <div className="flex flex-col gap-0.5">
             <h1 className="text-lg md:text-xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
               Welcome back, {firstName}! <span className="text-lg">👋</span>
             </h1>
             <p className="text-gray-500 text-[11px] font-medium">You&apos;re on track. Keep learning and keep growing.</p>
           </div>
-        )}
+        ) : (isLessonPage || isQuizPage) ? (
+          <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-[#008080] transition-colors group w-fit">
+            <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            Back to Dashboard
+          </Link>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">

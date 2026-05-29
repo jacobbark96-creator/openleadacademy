@@ -128,21 +128,14 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 space-y-8 pb-16">
-      <div className="flex justify-start">
-        <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#008080] transition-colors">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
-        </Link>
+    <div className="max-w-4xl mx-auto px-4 space-y-10 pb-20">
+      <div className="space-y-4 text-center pt-4">
+        <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{lesson.modules.title}</p>
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">{lesson.title}</h1>
       </div>
 
-      <div className="space-y-3 text-center">
-        <p className="text-[#008080] font-semibold tracking-wide uppercase text-sm">{lesson.modules.title}</p>
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">{lesson.title}</h1>
-      </div>
-
-      <div className="relative group">
-        <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-black aspect-video relative ring-1 ring-gray-200">
+      <div className="relative group mx-auto w-full">
+        <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden bg-black aspect-video relative ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-[1.01]">
           {lesson.video_url && getEmbedUrl(lesson.video_url) ? (
             <iframe
               src={getEmbedUrl(lesson.video_url)!}
@@ -159,18 +152,18 @@ export default function LessonPage() {
         </Card>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-white rounded-2xl shadow-md border border-gray-100 gap-4">
+      <div className="max-w-2xl mx-auto space-y-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-8 bg-white rounded-[2rem] shadow-xl border border-gray-50 gap-6">
           <div className="text-center sm:text-left">
-            <h3 className="font-bold text-gray-900 text-lg">Finished watching?</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Finished watching?</h3>
+            <p className="text-sm text-gray-500 mt-1.5 font-medium">
               {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
             </p>
           </div>
           <Button 
             onClick={handleComplete}
             disabled={completed || saving}
-            className={`rounded-xl h-12 px-10 text-base font-semibold shadow-lg transition-all ${
+            className={`rounded-2xl h-14 px-12 text-base font-bold shadow-xl transition-all ${
               completed 
                 ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
                 : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-105 active:scale-95"
@@ -189,17 +182,17 @@ export default function LessonPage() {
           </Button>
         </div>
 
-        <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-white">
-          <CardContent className="p-8 md:p-12">
-            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-50">
-              <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080]">
-                <FileText className="w-5 h-5" />
+        <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white">
+          <CardContent className="p-10 md:p-16">
+            <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-50">
+              <div className="w-12 h-12 rounded-2xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
+                <FileText className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">Course Content</h3>
+              <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
             </div>
             
-            <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
-              <div className="text-lg leading-relaxed whitespace-pre-wrap">
+            <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080] prose-lg">
+              <div className="text-xl leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
                 {lesson.description || "No content available for this lesson."}
               </div>
             </div>

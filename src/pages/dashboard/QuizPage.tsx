@@ -144,33 +144,28 @@ export default function QuizPage() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
-      <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Dashboard
-      </Link>
-
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">{quiz.title}</h1>
+    <div className="max-w-4xl mx-auto px-4 space-y-10 pb-20">
+      <div className="space-y-4 text-center pt-4">
         {quiz.lessons ? (
-          <p className="text-gray-500 text-lg">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
+          <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
         ) : quiz.modules ? (
-          <p className="text-gray-500 text-lg">{quiz.modules.title}: Final Module Test</p>
+          <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.modules.title}: Final Module Test</p>
         ) : null}
+        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">{quiz.title}</h1>
       </div>
 
       {!submitted ? (
-        <Card className="border-0 shadow-sm rounded-2xl">
-          <CardHeader className="p-8 pb-0">
-            <div className="flex justify-between items-center mb-4">
-               <span className="text-xs font-bold text-[#008080] uppercase tracking-wider">Question {currentQuestionIndex + 1} of {questions.length}</span>
-               <span className="text-xs font-medium text-gray-400">Passing score: {quiz.passing_score}%</span>
+        <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden bg-white">
+          <CardHeader className="p-10 md:p-16 pb-0">
+            <div className="flex justify-between items-center mb-6">
+               <span className="text-xs font-bold text-[#008080] uppercase tracking-widest bg-[#EBF5F5] px-3 py-1 rounded-full">Question {currentQuestionIndex + 1} of {questions.length}</span>
+               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Passing score: {quiz.passing_score}%</span>
             </div>
-            <CardTitle className="text-xl text-gray-900 leading-relaxed">
+            <CardTitle className="text-2xl md:text-3xl text-gray-900 leading-relaxed font-extrabold tracking-tight">
               {currentQuestion.question}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-10 md:p-16">
             <RadioGroup 
               value={selectedAnswers[currentQuestionIndex]?.toString()} 
               onValueChange={(val) => setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: parseInt(val) }))}
@@ -179,24 +174,24 @@ export default function QuizPage() {
               {currentQuestion.options.map((option, idx) => (
                 <div 
                   key={idx}
-                  className={`flex items-center space-x-3 p-4 rounded-xl border transition-colors cursor-pointer ${
+                  className={`flex items-center space-x-4 p-6 rounded-2xl border-2 transition-all cursor-pointer ${
                     selectedAnswers[currentQuestionIndex] === idx 
-                      ? 'border-[#008080] bg-[#EBF5F5]/50' 
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-[#008080] bg-[#EBF5F5]/50 shadow-md scale-[1.01]' 
+                      : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                   }`}
                   onClick={() => setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: idx }))}
                 >
-                  <RadioGroupItem value={idx.toString()} id={`r${idx}`} />
-                  <Label htmlFor={`r${idx}`} className="flex-1 cursor-pointer text-base font-normal">{option}</Label>
+                  <RadioGroupItem value={idx.toString()} id={`r${idx}`} className="w-5 h-5" />
+                  <Label htmlFor={`r${idx}`} className="flex-1 cursor-pointer text-lg font-semibold text-gray-700">{option}</Label>
                 </div>
               ))}
             </RadioGroup>
 
-            <div className="mt-8 pt-8 border-t flex justify-end">
+            <div className="mt-12 pt-8 border-t border-gray-50 flex justify-end">
               <Button 
                 onClick={handleNext} 
                 disabled={selectedAnswers[currentQuestionIndex] === undefined}
-                className="rounded-xl h-11 px-8 text-white bg-[#008080] hover:bg-[#006666]"
+                className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-[#008080] hover:bg-[#006666] shadow-xl hover:scale-105 active:scale-95 transition-all"
               >
                 {currentQuestionIndex === questions.length - 1 ? "Finish Quiz" : "Next Question"}
               </Button>
@@ -204,34 +199,34 @@ export default function QuizPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-0 shadow-sm rounded-2xl">
-          <CardContent className="p-12 text-center space-y-6">
+        <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden bg-white">
+          <CardContent className="p-16 md:p-24 text-center space-y-8">
             <div className="flex justify-center">
               {passed ? (
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                  <CheckCircle2 className="w-10 h-10" />
+                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-600 shadow-inner">
+                  <CheckCircle2 className="w-12 h-12" />
                 </div>
               ) : (
-                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-600">
-                  <XCircle className="w-10 h-10" />
+                <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center text-red-600 shadow-inner">
+                  <XCircle className="w-12 h-12" />
                 </div>
               )}
             </div>
             
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">
+            <div className="space-y-3">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
                 {passed ? "Congratulations! You Passed" : "Quiz Not Passed"}
               </h2>
-              <p className="text-gray-500">
+              <p className="text-xl text-gray-500 font-medium">
                 Your score: <span className={`font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>{score}%</span>
               </p>
             </div>
 
-            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center">
               {passed ? (
                 <Button 
                   onClick={() => navigate('/dashboard')}
-                  className="rounded-xl h-11 px-8 text-white bg-[#008080] hover:bg-[#006666]"
+                  className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-[#008080] hover:bg-[#006666] shadow-xl hover:scale-105 transition-all"
                 >
                   Continue to Next Module
                 </Button>
@@ -244,7 +239,7 @@ export default function QuizPage() {
                       setSelectedAnswers({})
                     }}
                     variant="outline"
-                    className="rounded-xl h-11 px-8"
+                    className="rounded-2xl h-14 px-12 text-base font-bold border-2 hover:bg-gray-50 transition-all"
                   >
                     Try Again
                   </Button>
@@ -257,7 +252,7 @@ export default function QuizPage() {
                       }
                     }}
                     variant="ghost"
-                    className="rounded-xl h-11 px-8 text-gray-500"
+                    className="rounded-2xl h-14 px-12 text-base font-bold text-gray-500 hover:bg-gray-50 transition-all"
                   >
                     {quiz.lesson_id ? "Review Lesson" : "Back to Dashboard"}
                   </Button>
