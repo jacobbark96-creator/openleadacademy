@@ -129,7 +129,7 @@ export default function LessonPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-6 md:py-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8 xl:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 xl:gap-10 items-start">
         {/* Left Column: Video and Title */}
         <div className="space-y-6 md:space-y-8">
           <div className="space-y-2 md:space-y-3">
@@ -161,29 +161,29 @@ export default function LessonPage() {
         </div>
 
         {/* Right Column: Actions and Content */}
-        <div className="space-y-6 md:space-y-8 lg:sticky lg:top-24">
+        <div className="space-y-6 lg:sticky lg:top-24">
           {/* Completion Card */}
-          <div className="p-6 md:p-8 bg-white rounded-[2rem] shadow-xl border border-gray-50 flex flex-col gap-6">
-            <div className="space-y-1.5">
-              <h3 className="font-bold text-gray-900 text-xl tracking-tight">Finished watching?</h3>
-              <p className="text-sm text-gray-500 font-medium leading-relaxed">
-                {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson and return to dashboard."}
+          <div className="p-6 bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg border border-gray-50 flex flex-col gap-5">
+            <div className="space-y-1">
+              <h3 className="font-bold text-gray-900 text-lg tracking-tight">Finished watching?</h3>
+              <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
+                {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
               </p>
             </div>
             <Button 
               onClick={handleComplete}
               disabled={completed || saving}
-              className={`rounded-2xl h-14 w-full text-base font-bold shadow-lg transition-all ${
+              className={`rounded-xl h-12 w-full text-sm font-bold shadow-md transition-all ${
                 completed 
                   ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
                   : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
               {saving ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : completed ? (
                 <>
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
                   Completed
                 </>
               ) : (
@@ -193,17 +193,17 @@ export default function LessonPage() {
           </div>
 
           {/* Course Content Card */}
-          <Card className="border-0 shadow-xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-white min-h-[400px]">
-            <CardContent className="p-8 md:p-10">
-              <div className="flex items-center gap-3 mb-8 pb-5 border-b border-gray-50">
-                <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
-                  <FileText className="w-5 h-5" />
+          <Card className="border-0 shadow-lg rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-gray-50">
+                <div className="w-8 h-8 rounded-lg bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
+                  <FileText className="w-4 h-4" />
                 </div>
-                <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
+                <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
               </div>
               
-              <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
-                <div className="text-lg leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
+              <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
+                <div className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
                   {lesson.description || "No additional notes or content available for this lesson."}
                 </div>
               </div>
