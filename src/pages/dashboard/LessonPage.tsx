@@ -12,6 +12,7 @@ interface Lesson {
   description: string;
   video_url: string;
   module_id: string;
+  order_index: number;
   modules: {
     title: string;
   };
@@ -25,6 +26,8 @@ export default function LessonPage() {
   const [completed, setCompleted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [quizId, setQuizId] = useState<string | null>(null)
+  const [nextLessonId, setNextLessonId] = useState<string | null>(null)
+  const [moduleQuizId, setModuleQuizId] = useState<string | null>(null)
 
   const getEmbedUrl = (url: string) => {
     if (!url) return null;
@@ -66,6 +69,28 @@ export default function LessonPage() {
         
         if (quizData) setQuizId(quizData.id)
 
+        // Find next lesson in the same module
+        const { data: nextLesson } = await supabase
+          .from('lessons')
+          .select('id')
+          .eq('module_id', lessonData.module_id)
+          .gt('order_index', lessonData.order_index)
+          .order('order_index', { ascending: true })
+          .limit(1)
+        
+        if (nextLesson && nextLesson.length > 0) {
+          setNextLessonId(nextLesson[0].id)
+        } else {
+          // If no next lesson, check for a module-level quiz
+          const { data: modQuiz } = await supabase
+            .from('quizzes')
+            .select('id')
+            .eq('module_id', lessonData.module_id)
+            .single()
+          
+          if (modQuiz) setModuleQuizId(modQuiz.id)
+        }
+
       } catch (err) {
         console.error("Error loading lesson:", err)
         toast.error("Failed to load lesson")
@@ -98,10 +123,20 @@ export default function LessonPage() {
       toast.success("Lesson marked as complete!")
       
       if (quizId) {
-        toast.info("Taking you to the module test...")
+        toast.info("Taking you to the lesson quiz...")
         setTimeout(() => {
           navigate(`/dashboard/quizzes/${quizId}`)
-        }, 2000)
+        }, 1500)
+      } else if (nextLessonId) {
+        toast.info("Moving to the next lesson...")
+        setTimeout(() => {
+          navigate(`/dashboard/lessons/${nextLessonId}`)
+        }, 1500)
+      } else if (moduleQuizId) {
+        toast.info("Module finished! Taking you to the final test...")
+        setTimeout(() => {
+          navigate(`/dashboard/quizzes/${moduleQuizId}`)
+        }, 1500)
       } else {
         setTimeout(() => {
           navigate("/dashboard")
@@ -167,7 +202,13 @@ export default function LessonPage() {
             <div className="space-y-1">
               <h3 className="font-bold text-gray-900 text-lg tracking-tight">Finished watching?</h3>
               <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
-                {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
+                {quizId 
+                  ? "Mark as complete to start the lesson quiz." 
+                  : nextLessonId 
+                    ? "Mark as complete to move to the next lesson." 
+                    : moduleQuizId 
+                      ? "Mark as complete to start the final module test." 
+                      : "Mark as complete to finish this lesson."}
               </p>
             </div>
             <Button 
