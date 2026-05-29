@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Lock, PlayCircle, ChevronRight, FileText, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 
 interface Lesson {
   id: string;
@@ -21,11 +21,14 @@ interface Progress {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const selectedCourseIdFromUrl = searchParams.get('course')
   const [loading, setLoading] = useState(true)
 
   // Supabase state
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [progressData, setProgressData] = useState<Progress[]>([])
+  const [currentCourse, setCurrentCourse] = useState<any>(null)
 
   useEffect(() => {
     let mounted = true;
@@ -41,36 +44,60 @@ export default function DashboardPage() {
         }
 
         if (mounted) {
-          // Fetch courses
-          const { data: courseData } = await supabase.from('courses').select('*')
+          // Fetch enrolled courses for the current user
+          const { data: enrollmentData, error: enrollError } = await supabase
+            .from('course_enrollments')
+            .select('course_id, courses(*)')
+            .eq('user_id', session.user.id)
           
-          // Fetch modules for the first course
-          if (courseData && courseData.length > 0 && mounted) {
-            const firstCourse = courseData[0]
+          if (enrollError) throw enrollError
+
+          // If user is enrolled in at least one course
+          if (enrollmentData && enrollmentData.length > 0 && mounted) {
+            // Pick the selected course or the first one
+            let enrolledCourse = null
+            if (selectedCourseIdFromUrl) {
+              const selected = enrollmentData.find(e => e.course_id === selectedCourseIdFromUrl)
+              if (selected) enrolledCourse = selected.courses
+            }
             
-            const { data: moduleData } = await supabase
-              .from('modules')
-              .select('*')
-              .eq('course_id', firstCourse.id)
-              .order('order_index', { ascending: true })
-              
-            if (moduleData && moduleData.length > 0 && mounted) {
-               const moduleIds = moduleData.map((m: { id: string }) => m.id)
-               const { data: lessonData } = await supabase
-                 .from('lessons')
-                 .select('*')
-                 .in('module_id', moduleIds)
-                 .order('week_number', { ascending: true })
+            if (!enrolledCourse) {
+              enrolledCourse = enrollmentData[0].courses as any
+            }
+            
+            if (enrolledCourse) {
+              setCurrentCourse(enrolledCourse)
+              const { data: moduleData } = await supabase
+                .from('modules')
+                .select('*')
+                .eq('course_id', enrolledCourse.id)
+                .order('order_index', { ascending: true })
+                
+              if (moduleData && moduleData.length > 0 && mounted) {
+                 const moduleIds = moduleData.map((m: { id: string }) => m.id)
+                 const { data: lessonData } = await supabase
+                   .from('lessons')
+                   .select('*')
+                   .in('module_id', moduleIds)
+                   .order('week_number', { ascending: true })
+                   
+                 if (mounted) setLessons((lessonData as Lesson[]) || [])
                  
-               if (mounted) setLessons((lessonData as Lesson[]) || [])
-               
-               // Fetch progress
-               const { data: userProgress } = await supabase
-                 .from('lesson_progress')
-                 .select('*')
-                 .eq('user_id', session.user.id)
-                 
-               if (mounted) setProgressData((userProgress as Progress[]) || [])
+                 // Fetch progress
+                 const { data: userProgress } = await supabase
+                   .from('lesson_progress')
+                   .select('*')
+                   .eq('user_id', session.user.id)
+                   
+                 if (mounted) setProgressData((userProgress as Progress[]) || [])
+              }
+            }
+          } else {
+            // Not enrolled in any courses
+            if (mounted) {
+              setLessons([])
+              setProgressData([])
+              setCurrentCourse(null)
             }
           }
         }
@@ -82,7 +109,7 @@ export default function DashboardPage() {
     }
     loadDashboardData()
     return () => { mounted = false }
-  }, [navigate])
+  }, [navigate, selectedCourseIdFromUrl])
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Loading your dashboard...</div>
@@ -139,7 +166,9 @@ export default function DashboardPage() {
                 
                 <div className="flex-1 space-y-2 w-full">
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900 leading-tight">Openlead Academy - Onboarding Program</h3>
+                    <h3 className="text-sm font-bold text-gray-900 leading-tight">
+                      {currentCourse ? currentCourse.title : "Openlead Academy - Program"}
+                    </h3>
                     <div className="text-xs text-gray-600 mt-1 leading-relaxed">
                       <p>Complete quizzes to unlock the next lesson.</p>
                       <p className="hidden sm:block">Stay consistent and keep building your knowledge!</p>
