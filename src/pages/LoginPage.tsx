@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+import { Loader2, Mail, Lock, ArrowRight } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -14,32 +14,32 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const navigate = useNavigate()
-  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setErrorMsg("")
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
+      if (error) throw error
+      
+      toast.success("Logged in successfully!")
+      navigate("/dashboard")
+    } catch (error: any) {
       let friendlyError = error.message
       if (friendlyError === "Invalid login credentials") {
         friendlyError = "Incorrect email or password. Please try again."
       }
       setErrorMsg(friendlyError)
       toast.error(friendlyError)
+    } finally {
       setLoading(false)
-      return
     }
-
-    toast.success("Successfully logged in!")
-    navigate("/dashboard")
-    setLoading(false)
   }
 
   return (

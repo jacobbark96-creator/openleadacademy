@@ -17,7 +17,7 @@ import {
   ShieldAlert
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 const sidebarNavItems = [
   { title: "Home", href: "/dashboard", icon: Home },
@@ -35,23 +35,26 @@ const sidebarNavItems = [
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  const supabase = createClient()
   const [role, setRole] = useState<string>("student")
 
   useEffect(() => {
     let mounted = true
     async function getUserRole() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user && mounted) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-        if (profile && mounted) {
-          setRole(profile.role)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user && mounted) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+          if (profile && mounted) {
+            setRole(profile.role)
+          }
         }
+      } catch (err) {
+        console.error("Error fetching user role:", err)
       }
     }
     getUserRole()
     return () => { mounted = false }
-  }, [supabase])
+  }, [])
 
   return (
     <div className="hidden md:flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0">

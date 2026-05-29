@@ -1,47 +1,48 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { createClient } from "@/lib/supabase/client"
+import { useNavigate, Link } from "react-router-dom"
+import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
   const navigate = useNavigate()
-  const supabase = createClient()
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setErrorMsg("")
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    })
+      })
 
-    if (error) {
-      setErrorMsg(error.message)
-      toast.error(error.message)
+      if (error) throw error
+
+      if (data?.user) {
+        // The trigger will create the profile automatically
+        toast.success("Account created! Please sign in.")
+        navigate("/login")
+      }
+    } catch (error: Error | unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to create account"
+      toast.error(msg)
+    } finally {
       setLoading(false)
-      return
     }
-
-    toast.success("Account created! You can now log in.")
-    navigate("/login")
-    setLoading(false)
   }
 
   return (
@@ -54,11 +55,6 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSignup} className="space-y-4">
-          {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
-              {errorMsg}
-            </div>
-          )}
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
             <Input

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Lock, PlayCircle, ChevronRight, FileText, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -21,7 +21,6 @@ interface Progress {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const supabase = createClient()
   const [loading, setLoading] = useState(true)
 
   // Supabase state
@@ -31,55 +30,59 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
     async function loadDashboardData() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        if (mounted) {
-          setLoading(false)
-          navigate('/login')
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          if (mounted) {
+            setLoading(false)
+            navigate('/login')
+          }
+          return
         }
-        return
-      }
 
-      if (mounted) {
-        // Fetch courses
-        const { data: courseData } = await supabase.from('courses').select('*')
-        
-        // Fetch modules for the first course
-        if (courseData && courseData.length > 0 && mounted) {
-          const firstCourse = courseData[0]
+        if (mounted) {
+          // Fetch courses
+          const { data: courseData } = await supabase.from('courses').select('*')
           
-          const { data: moduleData } = await supabase
-            .from('modules')
-            .select('*')
-            .eq('course_id', firstCourse.id)
-            .order('order_index', { ascending: true })
+          // Fetch modules for the first course
+          if (courseData && courseData.length > 0 && mounted) {
+            const firstCourse = courseData[0]
             
-          if (moduleData && moduleData.length > 0 && mounted) {
-             const moduleIds = moduleData.map((m: { id: string }) => m.id)
-             const { data: lessonData } = await supabase
-               .from('lessons')
-               .select('*')
-               .in('module_id', moduleIds)
-               .order('week_number', { ascending: true })
+            const { data: moduleData } = await supabase
+              .from('modules')
+              .select('*')
+              .eq('course_id', firstCourse.id)
+              .order('order_index', { ascending: true })
+              
+            if (moduleData && moduleData.length > 0 && mounted) {
+               const moduleIds = moduleData.map((m: { id: string }) => m.id)
+               const { data: lessonData } = await supabase
+                 .from('lessons')
+                 .select('*')
+                 .in('module_id', moduleIds)
+                 .order('week_number', { ascending: true })
+                 
+               if (mounted) setLessons((lessonData as Lesson[]) || [])
                
-             if (mounted) setLessons((lessonData as Lesson[]) || [])
-             
-             // Fetch progress
-             const { data: userProgress } = await supabase
-               .from('lesson_progress')
-               .select('*')
-               .eq('user_id', session.user.id)
-               
-             if (mounted) setProgressData((userProgress as Progress[]) || [])
+               // Fetch progress
+               const { data: userProgress } = await supabase
+                 .from('lesson_progress')
+                 .select('*')
+                 .eq('user_id', session.user.id)
+                 
+               if (mounted) setProgressData((userProgress as Progress[]) || [])
+            }
           }
         }
+      } catch (err) {
+        console.error("Error loading dashboard data:", err)
+      } finally {
+        if (mounted) setLoading(false)
       }
-      if (mounted) setLoading(false)
     }
     loadDashboardData()
     return () => { mounted = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [navigate])
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">Loading your dashboard...</div>

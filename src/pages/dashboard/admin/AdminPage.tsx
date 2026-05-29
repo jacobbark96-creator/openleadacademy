@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2 } from "lucide-react"
@@ -56,7 +56,6 @@ interface Module {
 }
 
 export default function AdminPage() {
-  const supabase = createClient()
   const [role, setRole] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("users")
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -96,42 +95,47 @@ export default function AdminPage() {
   useEffect(() => {
     let mounted = true
     async function loadData() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user && mounted) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-        if (profile && mounted) {
-          setRole(profile.role)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user && mounted) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+          if (profile && mounted) {
+            setRole(profile.role)
+          }
         }
-      }
 
-      // Load Users via Edge Function
-      await loadUsers(mounted)
+        // Load Users via Edge Function
+        await loadUsers(mounted)
 
-      // Load Team
-      const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
-      if (teamData && mounted) setTeam(teamData)
+        // Load Team
+        const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
+        if (teamData && mounted) setTeam(teamData)
 
-      // Load Vacancies
-      const { data: vacData } = await supabase.from('vacancies').select('*').order('created_at', { ascending: false })
-      if (vacData && mounted) setVacancies(vacData)
+        // Load Vacancies
+        const { data: vacData } = await supabase.from('vacancies').select('*').order('created_at', { ascending: false })
+        if (vacData && mounted) setVacancies(vacData)
 
-      // Load Courses and Modules
-      const { data: coursesData } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
-      if (coursesData && mounted) {
-        setCourses(coursesData)
-        if (coursesData.length > 0) {
-          const firstCourseId = coursesData[0].id
-          setSelectedCourseId(firstCourseId)
-          const { data: modData } = await supabase.from('modules').select('*').eq('course_id', firstCourseId).order('order_index')
-          if (modData && mounted) setModules(modData)
+        // Load Courses and Modules
+        const { data: coursesData } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
+        if (coursesData && mounted) {
+          setCourses(coursesData)
+          if (coursesData.length > 0) {
+            const firstCourseId = coursesData[0].id
+            setSelectedCourseId(firstCourseId)
+            const { data: modData } = await supabase.from('modules').select('*').eq('course_id', firstCourseId).order('order_index')
+            if (modData && mounted) setModules(modData)
+          }
         }
+      } catch (err) {
+        console.error("Error loading admin data:", err)
+        toast.error("Failed to load some dashboard data")
+      } finally {
+        if (mounted) setLoading(false)
       }
-
-      if (mounted) setLoading(false)
     }
     loadData()
     return () => { mounted = false }
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     async function loadModules() {
@@ -140,7 +144,7 @@ export default function AdminPage() {
       if (modData) setModules(modData)
     }
     loadModules()
-  }, [selectedCourseId, supabase])
+  }, [selectedCourseId])
 
   const handleUpdateYoutube = async (userId: string, url: string) => {
     const { error } = await supabase.from('profiles').update({ youtube_url: url }).eq('id', userId)

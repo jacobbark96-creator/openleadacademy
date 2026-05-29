@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
-  const supabase = createClient()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     })
 
     return () => subscription.unsubscribe()
-  }, [navigate, supabase])
+  }, [navigate])
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-[#F8FAFC]">Loading...</div>

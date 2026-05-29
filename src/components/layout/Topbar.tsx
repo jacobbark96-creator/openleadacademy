@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -37,7 +37,6 @@ interface Notification {
 export function Topbar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -45,27 +44,31 @@ export function Topbar() {
   useEffect(() => {
     let mounted = true;
     async function loadData() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (mounted && session?.user) {
-        setUser(session.user)
-        
-        // Fetch notifications
-        const { data: notifs } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false })
-          .limit(10)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (mounted && session?.user) {
+          setUser(session.user)
           
-        if (notifs) {
-          setNotifications(notifs)
-          setUnreadCount(notifs.filter(n => !n.is_read).length)
+          // Fetch notifications
+          const { data: notifs } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false })
+            .limit(10)
+            
+          if (notifs && mounted) {
+            setNotifications(notifs)
+            setUnreadCount(notifs.filter(n => !n.is_read).length)
+          }
         }
+      } catch (err) {
+        console.error("Error loading topbar data:", err)
       }
     }
     loadData()
     return () => { mounted = false; }
-  }, [supabase])
+  }, [])
 
   const handleMarkAsRead = async (id: string) => {
     const { error } = await supabase

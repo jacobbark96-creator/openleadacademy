@@ -2,7 +2,7 @@ import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 
 interface TeamMember {
@@ -15,7 +15,6 @@ interface TeamMember {
 }
 
 export default function AboutPage() {
-  const supabase = createClient()
   const [members, setMembers] = useState<TeamMember[]>([
     { name: "Sarah Jenkins", role_title: "Head of Academy", initials: "SJ" },
     { name: "Marcus Thorne", role_title: "Lead Sales Trainer", initials: "MT" },
@@ -24,17 +23,21 @@ export default function AboutPage() {
 
   useEffect(() => {
     async function fetchTeam() {
-      const { data: teamMembers } = await supabase
-        .from('team_members')
-        .select('*')
-        .order('order_index', { ascending: true })
-      
-      if (teamMembers && teamMembers.length > 0) {
-        setMembers(teamMembers)
+      try {
+        const { data: teamMembers } = await supabase
+          .from('team_members')
+          .select('*')
+          .order('order_index', { ascending: true })
+        
+        if (teamMembers && teamMembers.length > 0) {
+          setMembers(teamMembers)
+        }
+      } catch (err) {
+        console.error("Error fetching team:", err)
       }
     }
     fetchTeam()
-  }, [supabase])
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

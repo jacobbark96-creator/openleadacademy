@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { createClient } from "@/lib/supabase/client"
+import { supabase } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { Loader2, Briefcase, MapPin, Building } from "lucide-react"
 
@@ -28,20 +28,24 @@ export default function VacanciesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
     async function fetchVacancies() {
-      const { data, error } = await supabase
-        .from('vacancies')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-      
-      if (error) {
-        console.error(error)
-      } else {
-        setVacancies(data || [])
+      try {
+        const { data, error } = await supabase
+          .from('vacancies')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+        
+        if (error) {
+          console.error(error)
+        } else {
+          setVacancies(data || [])
+        }
+      } catch (err) {
+        console.error("Error fetching vacancies:", err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     fetchVacancies()
   }, [])
@@ -112,7 +116,6 @@ function ApplicationModal({ vacancy }: { vacancy: Vacancy }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({ fullName: "", email: "", cvUrl: "" })
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
