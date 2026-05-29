@@ -11,12 +11,28 @@ interface Lesson {
   description: string;
   week_number: number;
   thumbnail_url?: string;
+  module_id: string;
+  order_index: number;
+}
+
+interface Module {
+  id: string;
+  title: string;
+  description: string;
+  order_index: number;
+  lessons: Lesson[];
+  status: 'completed' | 'unlocked' | 'locked';
 }
 
 interface Progress {
   lesson_id: string;
   completed: boolean;
   unlocked: boolean;
+}
+
+interface QuizAttempt {
+  quiz_id: string;
+  passed: boolean;
 }
 
 export default function DashboardPage() {
@@ -26,8 +42,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   // Supabase state
-  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [progressData, setProgressData] = useState<Progress[]>([])
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
   const [currentCourse, setCurrentCourse] = useState<any>(null)
 
   useEffect(() => {
@@ -54,7 +71,6 @@ export default function DashboardPage() {
 
           // If user is enrolled in at least one course
           if (enrollmentData && enrollmentData.length > 0 && mounted) {
-            // Pick the selected course or the first one
             let enrolledCourse = null
             if (selectedCourseIdFromUrl) {
               const selected = enrollmentData.find(e => e.course_id === selectedCourseIdFromUrl)
@@ -67,6 +83,8 @@ export default function DashboardPage() {
             
             if (enrolledCourse) {
               setCurrentCourse(enrolledCourse)
+              
+              // 1. Fetch modules
               const { data: moduleData } = await supabase
                 .from('modules')
                 .select('*')
@@ -75,28 +93,88 @@ export default function DashboardPage() {
                 
               if (moduleData && moduleData.length > 0 && mounted) {
                  const moduleIds = moduleData.map((m: { id: string }) => m.id)
+                 
+                 // 2. Fetch lessons for these modules
                  const { data: lessonData } = await supabase
                    .from('lessons')
                    .select('*')
                    .in('module_id', moduleIds)
-                   .order('week_number', { ascending: true })
+                   .order('order_index', { ascending: true })
                    
-                 if (mounted) setLessons((lessonData as Lesson[]) || [])
-                 
-                 // Fetch progress
+                 // 3. Fetch user progress
                  const { data: userProgress } = await supabase
                    .from('lesson_progress')
                    .select('*')
                    .eq('user_id', session.user.id)
                    
-                 if (mounted) setProgressData((userProgress as Progress[]) || [])
+                 // 4. Fetch quiz attempts
+                 const { data: attempts } = await supabase
+                   .from('quiz_attempts')
+                   .select('quiz_id, passed')
+                   .eq('user_id', session.user.id)
+
+                 // 5. Fetch quizzes to link them to lessons
+                 const { data: quizData } = await supabase
+                   .from('quizzes')
+                   .select('id, lesson_id')
+                   .in('lesson_id', (lessonData || []).map(l => l.id))
+
+                 if (mounted) {
+                   const progress = (userProgress as Progress[]) || []
+                   const quizResults = (attempts as QuizAttempt[]) || []
+                   const quizzes = quizData || []
+                   const allLessons = (lessonData as Lesson[]) || []
+                   
+                   // Group lessons by module and calculate status
+                   let allModulesCompleted = true
+                   const processedModules = moduleData.map((mod, idx) => {
+                     const modLessons = allLessons.filter(l => l.module_id === mod.id)
+                     
+                     // A module is completed if all its lessons are completed 
+                     // AND if any lesson has a quiz, that quiz must be passed.
+                     const isCompleted = modLessons.length > 0 && modLessons.every(lesson => {
+                       const lp = progress.find(p => p.lesson_id === lesson.id)
+                       if (!lp?.completed) return false
+                       
+                       // Check quiz if exists
+                       const quiz = quizzes.find(q => q.lesson_id === lesson.id)
+                       if (quiz) {
+                         const attempt = quizResults.find(a => a.quiz_id === quiz.id)
+                         return attempt?.passed
+                       }
+                       return true
+                     })
+
+                     // Logic for unlocking: first module is always unlocked, 
+                     // others depend on previous being completed.
+                     let status: 'completed' | 'unlocked' | 'locked' = 'locked'
+                     if (isCompleted) {
+                       status = 'completed'
+                     } else if (idx === 0 || allModulesCompleted) {
+                       status = 'unlocked'
+                       allModulesCompleted = false // Next modules will be locked
+                     } else {
+                       allModulesCompleted = false
+                     }
+
+                     return {
+                       ...mod,
+                       lessons: modLessons,
+                       status
+                     }
+                   })
+
+                   setModules(processedModules)
+                   setProgressData(progress)
+                   setQuizAttempts(quizResults)
+                 }
               }
             }
           } else {
-            // Not enrolled in any courses
             if (mounted) {
-              setLessons([])
+              setModules([])
               setProgressData([])
+              setQuizAttempts([])
               setCurrentCourse(null)
             }
           }
@@ -115,26 +193,14 @@ export default function DashboardPage() {
     return <div className="p-8 text-center text-gray-500">Loading your dashboard...</div>
   }
   
-  // Calculate dynamic progress
-  const totalLessons = lessons.length || 14
-  const completedLessons = progressData.filter(p => p.completed).length
-  const progressPercentage = Math.round((completedLessons / totalLessons) * 100) || 0
+  // Calculate dynamic progress based on modules
+  const totalModules = modules.length || 1
+  const completedModules = modules.filter(m => m.status === 'completed').length
+  const progressPercentage = Math.round((completedModules / totalModules) * 100) || 0
 
-  // Combine lessons with progress
-  const curriculum = lessons.map(lesson => {
-    const prog = progressData.find(p => p.lesson_id === lesson.id)
-    return {
-      id: lesson.id,
-      week: lesson.week_number,
-      title: lesson.title,
-      description: lesson.description,
-      status: prog?.completed ? 'completed' : prog?.unlocked ? 'unlocked' : 'locked',
-      thumbnail: !!lesson.thumbnail_url
-    }
-  })
-
-  // Fallback curriculum if DB is empty
-  const displayCurriculum = curriculum.length > 0 ? curriculum : []
+  // Find the first lesson of the current (unlocked but not completed) module
+  const currentModule = modules.find(m => m.status === 'unlocked') || modules[0]
+  const nextLessonId = currentModule?.lessons?.[0]?.id
 
   return (
     <div className="flex flex-col h-full overflow-hidden pb-4">
@@ -179,7 +245,7 @@ export default function DashboardPage() {
                       <div className="h-full bg-[#008080] rounded-full transition-all duration-1000" style={{ width: `${progressPercentage}%` }} />
                     </div>
                     <div className="flex justify-between items-center">
-                      <p className="text-[11px] font-medium text-gray-500">{completedLessons} of {totalLessons} lessons completed</p>
+                      <p className="text-[11px] font-medium text-gray-500">{completedModules} of {totalModules} modules completed</p>
                       <Link to="/dashboard/progress">
                         <Button variant="ghost" className="px-0 text-[#008080] hover:bg-transparent hover:text-[#006666] font-semibold flex items-center gap-1 h-auto py-0 text-xs">
                           View My Progress <ArrowRightIcon className="w-3 h-3" />
@@ -202,35 +268,35 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex-none lg:flex-1 lg:overflow-y-auto p-4 space-y-3">
-              {displayCurriculum.length > 0 ? (
-                displayCurriculum.map((week, idx) => (
-                  <div key={week.id} className="flex items-start sm:items-stretch gap-3 group relative">
+              {modules.length > 0 ? (
+                modules.map((module, idx) => (
+                  <div key={module.id} className="flex items-start sm:items-stretch gap-3 group relative">
                     {/* Status Icon & Line */}
                     <div className="w-6 flex flex-col items-center flex-shrink-0 relative pt-3">
-                      {week.status === 'completed' ? (
+                      {module.status === 'completed' ? (
                         <div className="w-5 h-5 rounded-full bg-[#008080] flex items-center justify-center text-white z-10 shadow-sm">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
-                      ) : week.status === 'unlocked' ? (
+                      ) : module.status === 'unlocked' ? (
                         <div className="w-5 h-5 rounded-full border-2 border-[#008080] flex items-center justify-center text-[#008080] z-10 bg-white shadow-sm">
-                          <Lock className="w-2.5 h-2.5" />
+                          <PlayCircle className="w-2.5 h-2.5" />
                         </div>
                       ) : (
                         <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center text-gray-400 z-10 bg-white">
                           <Lock className="w-2.5 h-2.5" />
                         </div>
                       )}
-                      {idx !== displayCurriculum.length - 1 && (
+                      {idx !== modules.length - 1 && (
                         <div className="w-px bg-gray-100 absolute top-8 -bottom-3 z-0" />
                       )}
                     </div>
 
                     {/* Card Content */}
-                    <Card className="flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors">
+                    <Card className={`flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors ${module.status === 'locked' ? 'opacity-75' : ''}`}>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center p-2.5 gap-3">
                         {/* Thumbnail */}
-                        <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${week.thumbnail ? 'bg-gray-900' : 'bg-gray-100'}`}>
-                          {week.thumbnail ? (
+                        <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${module.status !== 'locked' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+                          {module.status !== 'locked' ? (
                             <>
                               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
                               <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -248,33 +314,36 @@ export default function DashboardPage() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0 py-0.5">
-                          <h3 className="text-xs font-bold text-gray-900">Week {week.week}: {week.title}</h3>
-                          <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{week.description}</p>
+                          <h3 className="text-xs font-bold text-gray-900">Module {idx + 1}: {module.title}</h3>
+                          <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{module.description}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                             <div className="text-[10px] font-medium text-gray-400">{module.lessons.length} Lessons</div>
+                          </div>
                         </div>
 
                         {/* Actions/Status */}
                         <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
-                          {week.status === 'completed' && (
+                          {module.status === 'completed' && (
                             <>
                               <span className="text-[10px] font-semibold text-[#008080] bg-[#EBF5F5] px-2 py-0.5 rounded-full">Completed</span>
                               <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex">
-                                <CheckCircle className="w-3 h-3" /> Quiz passed
+                                <CheckCircle className="w-3 h-3" /> Test passed
                               </div>
                             </>
                           )}
-                          {week.status === 'unlocked' && (
+                          {module.status === 'unlocked' && (
                             <>
-                              <Link to={`/dashboard/lessons/${week.id}`} className="w-full sm:w-auto">
+                              <Link to={module.lessons.length > 0 ? `/dashboard/lessons/${module.lessons[0].id}` : '#'} className="w-full sm:w-auto">
                                 <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
-                                  Start Lesson
+                                  {module.lessons.length > 0 ? 'Start Module' : 'No Lessons'}
                                 </Button>
                               </Link>
                               <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex mt-0.5">
-                                <Lock className="w-3 h-3" /> Unlocked
+                                <PlayCircle className="w-3 h-3" /> Current
                               </div>
                             </>
                           )}
-                          {week.status === 'locked' && (
+                          {module.status === 'locked' && (
                             <>
                               <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Locked</span>
                               <div className="flex items-center gap-1 text-[9px] text-gray-400 text-center leading-tight hidden sm:flex">
@@ -291,11 +360,11 @@ export default function DashboardPage() {
                 <div className="py-12 text-center flex flex-col items-center justify-center text-gray-500">
                   <BookOpen className="w-12 h-12 mb-4 text-gray-200" />
                   <h3 className="text-sm font-bold text-gray-900 mb-1">
-                    {currentCourse ? "No lessons available yet" : "Not enrolled in any course"}
+                    {currentCourse ? "No modules available yet" : "Not enrolled in any course"}
                   </h3>
                   <p className="text-xs max-w-[240px] mx-auto">
                     {currentCourse 
-                      ? "This program doesn't have any lessons published yet. Check back soon!" 
+                      ? "This program doesn't have any modules published yet. Check back soon!" 
                       : "You haven't been assigned to a program yet. Contact your administrator to get started."}
                   </p>
                   {!currentCourse && (
