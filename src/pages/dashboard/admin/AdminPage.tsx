@@ -52,7 +52,18 @@ interface Module {
   course_id: string;
   title: string;
   description: string;
+  video_url?: string;
   order_index: number;
+}
+
+interface Lesson {
+  id: string;
+  module_id: string;
+  title: string;
+  description: string;
+  video_url?: string;
+  order_index: number;
+  week_number: number;
 }
 
 export default function AdminPage() {
@@ -64,6 +75,8 @@ export default function AdminPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
   const [modules, setModules] = useState<Module[]>([])
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
+  const [lessons, setLessons] = useState<Lesson[]>([])
   const [loading, setLoading] = useState(true)
 
   // Form states
@@ -284,7 +297,57 @@ export default function AdminPage() {
     }
   }
 
-  const handleCreateVacancy = async () => {
+  useEffect(() => {
+    async function loadLessons() {
+      if (!selectedModuleId) {
+        setLessons([])
+        return
+      }
+      const { data: lessonData } = await supabase.from('lessons').select('*').eq('module_id', selectedModuleId).order('order_index')
+      if (lessonData) setLessons(lessonData)
+    }
+    loadLessons()
+  }, [selectedModuleId])
+
+  const handleCreateLesson = async (moduleId: string) => {
+    const newOrderIndex = lessons.length > 0 ? Math.max(...lessons.map(l => l.order_index)) + 1 : 0
+    const { data: newLesson, error } = await supabase.from('lessons').insert({
+      module_id: moduleId,
+      title: 'New Lesson',
+      description: 'Lesson content/notes...',
+      video_url: '',
+      order_index: newOrderIndex,
+      week_number: 1
+    }).select().single()
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success("Lesson created")
+      setLessons([...lessons, newLesson])
+    }
+  }
+
+  const handleUpdateLesson = async (id: string, field: string, value: string | number) => {
+    const { error } = await supabase.from('lessons').update({ [field]: value }).eq('id', id)
+    if (error) {
+      toast.error(`Failed to update ${field}`)
+    } else {
+      setLessons(lessons.map(l => l.id === id ? { ...l, [field]: value } : l))
+      toast.success("Lesson updated")
+    }
+  }
+
+  const handleDeleteLesson = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this lesson?")) return
+    const { error } = await supabase.from('lessons').delete().eq('id', id)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setLessons(lessons.filter(l => l.id !== id))
+      toast.success("Lesson deleted")
+    }
+  }
     const { data: newVac, error } = await supabase.from('vacancies').insert({
       title: 'New Job Title',
       department: 'Sales',
@@ -1040,13 +1103,113 @@ export default function AdminPage() {
                           <Input type="number" defaultValue={mod.order_index} onBlur={(e) => handleUpdateModule(mod.id, 'order_index', parseInt(e.target.value))} />
                         </div>
                       </div>
-                      <div className="space-y-2 pr-8">
-                        <Label className="text-xs text-gray-500">Description</Label>
-                        <textarea 
-                          defaultValue={mod.description || ''} 
-                          onBlur={(e) => handleUpdateModule(mod.id, 'description', e.target.value)}
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Intro Video URL (YouTube)</Label>
+                          <div className="flex gap-2">
+                            <Video className="w-4 h-4 text-gray-400 mt-3" />
+                            <Input 
+                              placeholder="https://www.youtube.com/watch?v=..." 
+                              defaultValue={mod.video_url || ''} 
+                              onBlur={(e) => handleUpdateModule(mod.id, 'video_url', e.target.value)} 
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Description</Label>
+                          <textarea 
+                            defaultValue={mod.description || ''} 
+                            onBlur={(e) => handleUpdateModule(mod.id, 'description', e.target.value)}
+                            className="flex min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-between items-center pr-8">
+                        <Dialog open={selectedModuleId === mod.id} onOpenChange={(open) => setSelectedModuleId(open ? mod.id : null)}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-[#008080] border-[#008080]/30 hover:bg-[#008080]/5">
+                              <Plus className="w-4 h-4 mr-2" /> Manage Lessons
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <BookOpen className="w-5 h-5 text-[#008080]" />
+                                Lessons in {mod.title}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6 py-4">
+                              <div className="flex justify-between items-center">
+                                <p className="text-sm text-gray-500">Add and manage the lessons for this module.</p>
+                                <Button size="sm" onClick={() => handleCreateLesson(mod.id)} className="bg-[#14B8A6] hover:bg-[#0D9488]">
+                                  <Plus className="w-4 h-4 mr-1" /> Add Lesson
+                                </Button>
+                              </div>
+
+                              <div className="space-y-4">
+                                {lessons.length === 0 && (
+                                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400 text-sm">
+                                    No lessons yet. Click "Add Lesson" to begin.
+                                  </div>
+                                )}
+                                {lessons.map((lesson, idx) => (
+                                  <div key={lesson.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group/lesson">
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pr-8">
+                                      <div className="space-y-2 md:col-span-2">
+                                        <Label className="text-xs">Lesson {idx + 1} Title</Label>
+                                        <Input 
+                                          defaultValue={lesson.title} 
+                                          onBlur={(e) => handleUpdateLesson(lesson.id, 'title', e.target.value)} 
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Week #</Label>
+                                        <Input 
+                                          type="number" 
+                                          defaultValue={lesson.week_number} 
+                                          onBlur={(e) => handleUpdateLesson(lesson.id, 'week_number', parseInt(e.target.value))} 
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Order</Label>
+                                        <Input 
+                                          type="number" 
+                                          defaultValue={lesson.order_index} 
+                                          onBlur={(e) => handleUpdateLesson(lesson.id, 'order_index', parseInt(e.target.value))} 
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2 pr-8">
+                                      <Label className="text-xs">YouTube Video URL</Label>
+                                      <Input 
+                                        placeholder="https://www.youtube.com/watch?v=..." 
+                                        defaultValue={lesson.video_url || ''} 
+                                        onBlur={(e) => handleUpdateLesson(lesson.id, 'video_url', e.target.value)} 
+                                      />
+                                    </div>
+                                    <div className="space-y-2 pr-8">
+                                      <Label className="text-xs">Course Content</Label>
+                                      <textarea 
+                                        placeholder="Add course content, detailed notes, or instructions for this lesson..."
+                                        defaultValue={lesson.description || ''} 
+                                        onBlur={(e) => handleUpdateLesson(lesson.id, 'description', e.target.value)}
+                                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                      />
+                                    </div>
+                                    <Button 
+                                      variant="ghost" 
+                                      onClick={() => handleDeleteLesson(lesson.id)} 
+                                      className="absolute top-2 right-2 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0 opacity-0 group-hover/lesson:opacity-100 transition-opacity"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                       <Button 
                         variant="ghost" 

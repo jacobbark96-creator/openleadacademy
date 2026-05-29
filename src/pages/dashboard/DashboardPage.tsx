@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Lock, PlayCircle, ChevronRight, FileText, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone } from "lucide-react"
+import { Lock, PlayCircle, ChevronRight, FileText, Trophy, Calendar, Star, BookOpen, CheckSquare, CheckCircle, Megaphone, Video } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface Lesson {
   id: string;
@@ -19,6 +20,7 @@ interface Module {
   id: string;
   title: string;
   description: string;
+  video_url?: string;
   order_index: number;
   lessons: Lesson[];
   status: 'completed' | 'unlocked' | 'locked';
@@ -323,6 +325,28 @@ export default function DashboardPage() {
 
                         {/* Actions/Status */}
                         <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
+                          {module.video_url && module.status !== 'locked' && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#008080] hover:bg-[#EBF5F5] font-semibold gap-1">
+                                  <Video className="w-3 h-3" /> Watch Intro
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-black border-0">
+                                <DialogHeader className="p-4 bg-white border-b">
+                                  <DialogTitle>{module.title} - Introduction</DialogTitle>
+                                </DialogHeader>
+                                <div className="aspect-video">
+                                  <iframe
+                                    src={module.video_url.replace("watch?v=", "embed/")}
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
                           {module.status === 'completed' && (
                             <>
                               <span className="text-[10px] font-semibold text-[#008080] bg-[#EBF5F5] px-2 py-0.5 rounded-full">Completed</span>

@@ -175,9 +175,9 @@ export default function LessonPage() {
 
       <Card className="border-0 shadow-sm rounded-2xl">
         <CardContent className="p-8 prose max-w-none">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Lesson Notes</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Course Content</h3>
           <div className="text-gray-600 whitespace-pre-wrap">
-            {lesson.description || "No notes available for this lesson."}
+            {lesson.description || "No content available for this lesson."}
           </div>
         </CardContent>
       </Card>
