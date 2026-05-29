@@ -17,7 +17,6 @@ import LessonPage from "./pages/dashboard/LessonPage"
 import QuizPage from "./pages/dashboard/QuizPage"
 import ProgressPage from "./pages/dashboard/ProgressPage"
 import CertificatesPage from "./pages/dashboard/CertificatesPage"
-import ResourcesPage from "./pages/dashboard/ResourcesPage"
 import SettingsPage from "./pages/dashboard/SettingsPage"
 import SupportPage from "./pages/dashboard/SupportPage"
 import HelpPage from "./pages/dashboard/HelpPage"
@@ -52,7 +51,7 @@ export default function App() {
           <Route path="/dashboard/library" element={<LibraryPage />} />
           <Route path="/dashboard/progress" element={<ProgressPage />} />
           <Route path="/dashboard/certificates" element={<CertificatesPage />} />
-          <Route path="/dashboard/resources" element={<ResourcesPage />} />
+          <Route path="/dashboard/resources" element={<LibraryPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/help" element={<HelpPage />} />
           <Route path="/dashboard/support" element={<SupportPage />} />

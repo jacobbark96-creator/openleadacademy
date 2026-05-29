@@ -79,8 +79,36 @@ interface Lesson {
   title: string;
   description: string;
   video_url?: string;
+  thumbnail_url?: string;
   order_index: number;
   week_number: number;
+}
+
+interface LibraryResource {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  thumbnail_url?: string;
+  description?: string;
+  category?: string;
+  created_at: string;
+}
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  created_at: string;
+}
+
+interface HelpArticle {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  order_index: number;
 }
 
 export default function AdminPage() {
@@ -97,6 +125,9 @@ export default function AdminPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [selectedQuizId, setSelectedQuizId] = useState<string | null>(null)
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([])
+  const [resources, setResources] = useState<LibraryResource[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [helpArticles, setHelpArticles] = useState<HelpArticle[]>([])
   const [loading, setLoading] = useState(true)
 
   // Form states
@@ -165,6 +196,18 @@ export default function AdminPage() {
             }
           }
         }
+
+        // Load Library Resources
+        const { data: resData } = await supabase.from('resources').select('*').order('created_at', { ascending: false })
+        if (resData && mounted) setResources(resData)
+
+        // Load Announcements
+        const { data: annData } = await supabase.from('announcements').select('*').order('created_at', { ascending: false })
+        if (annData && mounted) setAnnouncements(annData)
+
+        // Load Help Articles
+        const { data: helpData } = await supabase.from('help_articles').select('*').order('order_index', { ascending: true })
+        if (helpData && mounted) setHelpArticles(helpData)
       } catch (err) {
         console.error("Error loading admin data:", err)
         toast.error("Failed to load some dashboard data")
@@ -518,29 +561,55 @@ export default function AdminPage() {
 
   const [uploadingImage, setUploadingImage] = useState<string | null>(null)
 
-  const handleImageUpload = async (id: string, file: File) => {
+  const handleFileUpload = async (bucket: string, id: string, file: File, table: string, field: string) => {
     try {
       setUploadingImage(id)
       const fileExt = file.name.split('.').pop()
       const fileName = `${id}-${Math.random()}.${fileExt}`
       
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from(bucket)
         .upload(fileName, file)
 
       if (uploadError) throw uploadError
 
       const { data } = supabase.storage
-        .from('avatars')
+        .from(bucket)
         .getPublicUrl(fileName)
 
-      await handleUpdateTeamMember(id, 'image_url', data.publicUrl)
+      const { error: updateError } = await supabase
+        .from(table)
+        .update({ [field]: data.publicUrl })
+        .eq('id', id)
+
+      if (updateError) throw updateError
+
+      // Update local state based on table
+      if (table === 'team_members') {
+        setTeam(team.map(t => t.id === id ? { ...t, [field]: data.publicUrl } : t))
+      } else if (table === 'courses') {
+        setCourses(courses.map(c => c.id === id ? { ...c, [field]: data.publicUrl } : c))
+      } else if (table === 'modules') {
+        setModules(modules.map(m => m.id === id ? { ...m, [field]: data.publicUrl } : m))
+      } else if (table === 'lessons') {
+        setLessons(lessons.map(l => l.id === id ? { ...l, [field]: data.publicUrl } : l))
+      } else if (table === 'resources') {
+        setResources(resources.map(r => r.id === id ? { ...r, [field]: data.publicUrl } : r))
+      } else if (table === 'announcements') {
+        setAnnouncements(announcements.map(a => a.id === id ? { ...a, [field]: data.publicUrl } : a))
+      }
+
+      toast.success("File uploaded successfully")
     } catch (error: Error | unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error"
-      toast.error(`Failed to upload image: ${msg}`)
+      toast.error(`Failed to upload: ${msg}`)
     } finally {
       setUploadingImage(null)
     }
+  }
+
+  const handleImageUpload = async (id: string, file: File) => {
+    await handleFileUpload('avatars', id, file, 'team_members', 'image_url')
   }
 
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null)
@@ -643,6 +712,96 @@ export default function AdminPage() {
     }
   }
 
+  const handleCreateResource = async () => {
+    const { data, error } = await supabase.from('resources').insert({
+      title: 'New Resource',
+      url: '',
+      type: 'PDF',
+      category: 'General'
+    }).select().single()
+    if (error) toast.error(error.message)
+    else {
+      setResources([data, ...resources])
+      toast.success("Resource created")
+    }
+  }
+
+  const handleUpdateResource = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from('resources').update({ [field]: value }).eq('id', id)
+    if (error) toast.error(error.message)
+    else setResources(resources.map(r => r.id === id ? { ...r, [field]: value } : r))
+  }
+
+  const handleDeleteResource = async (id: string) => {
+    if (!confirm("Are you sure?")) return
+    const { error } = await supabase.from('resources').delete().eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      setResources(resources.filter(r => r.id !== id))
+      toast.success("Resource deleted")
+    }
+  }
+
+  const handleCreateAnnouncement = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data, error } = await supabase.from('announcements').insert({
+      title: 'New Announcement',
+      content: '',
+      created_by: user?.id
+    }).select().single()
+    if (error) toast.error(error.message)
+    else {
+      setAnnouncements([data, ...announcements])
+      toast.success("Announcement created")
+    }
+  }
+
+  const handleUpdateAnnouncement = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from('announcements').update({ [field]: value }).eq('id', id)
+    if (error) toast.error(error.message)
+    else setAnnouncements(announcements.map(a => a.id === id ? { ...a, [field]: value } : a))
+  }
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm("Are you sure?")) return
+    const { error } = await supabase.from('announcements').delete().eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      setAnnouncements(announcements.filter(a => a.id !== id))
+      toast.success("Announcement deleted")
+    }
+  }
+
+  const handleCreateHelpArticle = async () => {
+    const { data, error } = await supabase.from('help_articles').insert({
+      title: 'New Article',
+      content: '',
+      category: 'General',
+      order_index: helpArticles.length
+    }).select().single()
+    if (error) toast.error(error.message)
+    else {
+      setHelpArticles([...helpArticles, data])
+      toast.success("Article created")
+    }
+  }
+
+  const handleUpdateHelpArticle = async (id: string, field: string, value: any) => {
+    const { error } = await supabase.from('help_articles').update({ [field]: value }).eq('id', id)
+    if (error) toast.error(error.message)
+    else setHelpArticles(helpArticles.map(a => a.id === id ? { ...a, [field]: value } : a))
+  }
+
+  const handleDeleteHelpArticle = async (id: string) => {
+    if (!confirm("Are you sure?")) return
+    const { error } = await supabase.from('help_articles').delete().eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      setHelpArticles(helpArticles.filter(a => a.id !== id))
+      toast.success("Article deleted")
+    }
+  }
+
   const toggleEnrollment = (courseId: string) => {
     setEditingUserDetails(prev => {
       const isEnrolled = prev.enrollments.includes(courseId)
@@ -697,6 +856,30 @@ export default function AdminPage() {
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'modules' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Manage Modules
+          </button>
+        )}
+        {(role === 'admin' || role === 'trainer') && (
+          <button
+            onClick={() => setActiveTab("library")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'library' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Library
+          </button>
+        )}
+        {(role === 'admin' || role === 'trainer') && (
+          <button
+            onClick={() => setActiveTab("announcements")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'announcements' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Announcements
+          </button>
+        )}
+        {(role === 'admin' || role === 'trainer') && (
+          <button
+            onClick={() => setActiveTab("help")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'help' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Help Centre
           </button>
         )}
       </div>
@@ -1178,6 +1361,26 @@ export default function AdminPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label className="text-xs">Cover Photo</Label>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded bg-gray-100 border overflow-hidden flex-shrink-0">
+                        {courses.find(c => c.id === selectedCourseId)?.thumbnail_url ? (
+                          <img src={courses.find(c => c.id === selectedCourseId)?.thumbnail_url} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Plus className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                      <Input 
+                        type="file" 
+                        accept="image/*"
+                        className="h-8 text-[10px]"
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', selectedCourseId, e.target.files[0], 'courses', 'thumbnail_url')}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label className="text-xs">Description</Label>
                     <textarea 
                       key={`${selectedCourseId}-desc`}
@@ -1227,6 +1430,26 @@ export default function AdminPage() {
                         <div className="space-y-2 md:col-span-2">
                           <Label className="text-xs text-gray-500">Module Title</Label>
                           <Input defaultValue={mod.title} onBlur={(e) => handleUpdateModule(mod.id, 'title', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500">Cover Photo</Label>
+                          <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded bg-white border flex-shrink-0 overflow-hidden">
+                              {mod.thumbnail_url ? (
+                                <img src={mod.thumbnail_url} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                  <Plus className="w-3 h-3" />
+                                </div>
+                              )}
+                            </div>
+                            <Input 
+                              type="file" 
+                              accept="image/*"
+                              className="h-8 text-[10px]"
+                              onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', mod.id, e.target.files[0], 'modules', 'thumbnail_url')}
+                            />
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label className="text-xs text-gray-500">Order</Label>
@@ -1290,6 +1513,26 @@ export default function AdminPage() {
                                           defaultValue={lesson.title} 
                                           onBlur={(e) => handleUpdateLesson(lesson.id, 'title', e.target.value)} 
                                         />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label className="text-xs">Cover Photo</Label>
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-10 h-10 rounded bg-white border flex-shrink-0 overflow-hidden">
+                                            {lesson.thumbnail_url ? (
+                                              <img src={lesson.thumbnail_url} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <Plus className="w-3 h-3" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <Input 
+                                            type="file" 
+                                            accept="image/*"
+                                            className="h-8 text-[10px]"
+                                            onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', lesson.id, e.target.files[0], 'lessons', 'thumbnail_url')}
+                                          />
+                                        </div>
                                       </div>
                                       <div className="space-y-2">
                                         <Label className="text-xs">Week #</Label>
@@ -1425,6 +1668,214 @@ export default function AdminPage() {
             </Card>
           </div>
         </div>
+      )}
+      {activeTab === 'library' && (role === 'admin' || role === 'trainer') && (
+        <Card className="border-0 shadow-sm rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                Resource Library
+              </div>
+              <Button onClick={handleCreateResource} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+                <Plus className="w-4 h-4 mr-1" /> New Resource
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {resources.map(res => (
+                <div key={res.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group">
+                  <div className="flex gap-4">
+                    <div className="w-24 h-32 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 relative">
+                      {res.thumbnail_url ? (
+                        <img src={res.thumbnail_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <BookOpen className="w-8 h-8" />
+                        </div>
+                      )}
+                      <Label className="absolute inset-0 cursor-pointer bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                        Upload Cover
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', res.id, e.target.files[0], 'resources', 'thumbnail_url')}
+                        />
+                      </Label>
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Title</Label>
+                        <Input defaultValue={res.title} onBlur={(e) => handleUpdateResource(res.id, 'title', e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Type & Category</Label>
+                        <div className="flex gap-2">
+                          <select 
+                            defaultValue={res.type} 
+                            onChange={(e) => handleUpdateResource(res.id, 'type', e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs"
+                          >
+                            <option value="PDF">PDF File</option>
+                            <option value="Link">External Link</option>
+                            <option value="Video">Video Link</option>
+                          </select>
+                          <Input 
+                            placeholder="Category" 
+                            defaultValue={res.category} 
+                            onBlur={(e) => handleUpdateResource(res.id, 'category', e.target.value)} 
+                            className="h-9 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">{res.type === 'Link' ? 'Link URL' : 'File / Resource URL'}</Label>
+                    <div className="flex gap-2">
+                      <Input defaultValue={res.url} onBlur={(e) => handleUpdateResource(res.id, 'url', e.target.value)} placeholder="https://..." />
+                      {res.type !== 'Link' && (
+                        <Button variant="outline" size="sm" className="h-10 relative overflow-hidden">
+                          <Plus className="w-4 h-4 mr-1" /> Upload File
+                          <input 
+                            type="file" 
+                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                            onChange={(e) => e.target.files?.[0] && handleFileUpload('resources', res.id, e.target.files[0], 'resources', 'url')}
+                          />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Description</Label>
+                    <textarea 
+                      defaultValue={res.description || ''} 
+                      onBlur={(e) => handleUpdateResource(res.id, 'description', e.target.value)}
+                      className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+                    />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleDeleteResource(res.id)} 
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'announcements' && (role === 'admin' || role === 'trainer') && (
+        <Card className="border-0 shadow-sm rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Announcements
+              <Button onClick={handleCreateAnnouncement} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+                <Plus className="w-4 h-4 mr-1" /> New Announcement
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {announcements.map(ann => (
+                <div key={ann.id} className="p-6 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group">
+                  <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
+                    <div className="aspect-video bg-gray-200 rounded-xl overflow-hidden relative group/img">
+                      {ann.image_url ? (
+                        <img src={ann.image_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                          <Plus className="w-8 h-8" />
+                        </div>
+                      )}
+                      <Label className="absolute inset-0 cursor-pointer bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                        Upload Image
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', ann.id, e.target.files[0], 'announcements', 'image_url')}
+                        />
+                      </Label>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Title</Label>
+                        <Input defaultValue={ann.title} onBlur={(e) => handleUpdateAnnouncement(ann.id, 'title', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Content</Label>
+                        <textarea 
+                          defaultValue={ann.content} 
+                          onBlur={(e) => handleUpdateAnnouncement(ann.id, 'content', e.target.value)}
+                          className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleDeleteAnnouncement(ann.id)} 
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'help' && (role === 'admin' || role === 'trainer') && (
+        <Card className="border-0 shadow-sm rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Help Centre Articles
+              <Button onClick={handleCreateHelpArticle} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+                <Plus className="w-4 h-4 mr-1" /> New Article
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {helpArticles.map(art => (
+                <div key={art.id} className="p-6 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-2">
+                      <Label>Article Title</Label>
+                      <Input defaultValue={art.title} onBlur={(e) => handleUpdateHelpArticle(art.id, 'title', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Input defaultValue={art.category} onBlur={(e) => handleUpdateHelpArticle(art.id, 'category', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Article Content (Markdown supported)</Label>
+                    <textarea 
+                      defaultValue={art.content} 
+                      onBlur={(e) => handleUpdateHelpArticle(art.id, 'content', e.target.value)}
+                      className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleDeleteHelpArticle(art.id)} 
+                    className="absolute top-2 right-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

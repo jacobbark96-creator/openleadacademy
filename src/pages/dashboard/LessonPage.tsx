@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText } fr
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface Lesson {
   id: string;
@@ -38,6 +39,13 @@ export default function LessonPage() {
 
   useEffect(() => {
     async function loadLesson() {
+      setLoading(true)
+      // Reset lesson-specific states for the new ID
+      setCompleted(false)
+      setQuizId(null)
+      setNextLessonId(null)
+      setModuleQuizId(null)
+
       try {
         const { data: lessonData, error: lessonError } = await supabase
           .from('lessons')
@@ -55,7 +63,7 @@ export default function LessonPage() {
             .select('completed')
             .eq('user_id', session.user.id)
             .eq('lesson_id', id)
-            .single()
+            .maybeSingle()
           
           if (progress?.completed) setCompleted(true)
         }
@@ -146,10 +154,22 @@ export default function LessonPage() {
     }
   }
 
-  if (loading) {
+  if (!lesson && loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#008080]" />
+      <div className="max-w-[1400px] mx-auto px-4 pt-2 md:pt-4 pb-12 md:pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 xl:gap-10 items-start">
+          <div className="space-y-6 md:space-y-8">
+            <Card className="border-0 shadow-lg rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-gray-100 aspect-video relative animate-pulse" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-3/4" />
+            </div>
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-40 w-full rounded-[1.5rem]" />
+            <Skeleton className="h-60 w-full rounded-[1.5rem]" />
+          </div>
+        </div>
       </div>
     )
   }
@@ -163,19 +183,18 @@ export default function LessonPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 xl:gap-10 items-start">
         {/* Left Column: Video and Title */}
         <div className="space-y-6 md:space-y-8">
-          <div className="space-y-2 md:space-y-3">
-            <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">
-              {lesson.modules.title}
-            </p>
-            <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
-              {lesson.title}
-            </h1>
-          </div>
-
+          {/* Video Container - Always at the top and aspect-video for stability */}
           <div className="relative group w-full">
             <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-black aspect-video relative ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-[1.005]">
+              {loading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#008080]" />
+                </div>
+              ) : null}
+              
               {lesson.video_url && getEmbedUrl(lesson.video_url) ? (
                 <iframe
+                  key={lesson.id}
                   src={getEmbedUrl(lesson.video_url)!}
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -188,6 +207,16 @@ export default function LessonPage() {
                 </div>
               )}
             </Card>
+          </div>
+
+          {/* Title and Module info - Moved below video for stability */}
+          <div className="space-y-2 md:space-y-3">
+            <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">
+              {lesson.modules?.title}
+            </p>
+            <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+              {lesson.title}
+            </h1>
           </div>
         </div>
 
@@ -209,7 +238,7 @@ export default function LessonPage() {
             </div>
             <Button 
               onClick={handleComplete}
-              disabled={saving}
+              disabled={saving || loading}
               className={`rounded-xl h-12 w-full text-sm font-bold shadow-md transition-all ${
                 completed 
                   ? "bg-green-600 hover:bg-green-700 text-white hover:scale-[1.02] active:scale-[0.98]" 

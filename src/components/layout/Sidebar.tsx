@@ -22,12 +22,11 @@ import { supabase } from "@/lib/supabase/client"
 const sidebarNavItems = [
   { title: "Home", href: "/dashboard", icon: Home },
   { title: "My Learning", href: "/dashboard/learning", icon: BookOpen },
-  { title: "Library", href: "/dashboard/library", icon: FileText },
+  { title: "Resource Library", href: "/dashboard/library", icon: FileText },
   { title: "Quizzes", href: "/dashboard/quizzes", icon: CheckSquare },
   { title: "Progress", href: "/dashboard/progress", icon: BarChart2 },
   { title: "Certificates", href: "/dashboard/certificates", icon: Award },
   { title: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
-  { title: "Resources", href: "/dashboard/resources", icon: FolderOpen },
   { title: "Help Centre", href: "/dashboard/help", icon: HelpCircle },
   { title: "Support", href: "/dashboard/support", icon: Headphones },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
