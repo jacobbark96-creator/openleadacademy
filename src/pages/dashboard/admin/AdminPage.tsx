@@ -208,7 +208,8 @@ export default function AdminPage() {
         .single()
       
       if (error) {
-        toast.error("Failed to create quiz")
+        console.error("Quiz creation error:", error)
+        toast.error(`Failed to create quiz: ${error.message}`)
         return
       }
       if (newQuiz) {
