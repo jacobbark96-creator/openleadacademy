@@ -144,8 +144,8 @@ export default function QuizPage() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="max-w-4xl mx-auto px-4 space-y-10 pb-20">
-      <div className="space-y-4 text-center pt-4">
+    <div className="max-w-4xl mx-auto px-4 pt-2 md:pt-4 pb-12 md:pb-20">
+      <div className="space-y-4 text-center">
         {quiz.lessons ? (
           <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
         ) : quiz.modules ? (

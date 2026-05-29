@@ -128,7 +128,7 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6 md:py-10">
+    <div className="max-w-[1400px] mx-auto px-4 pt-2 md:pt-4 pb-12 md:pb-20">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8 xl:gap-10 items-start">
         {/* Left Column: Video and Title */}
         <div className="space-y-6 md:space-y-8">
