@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CheckCircle2, Loader2, PlayCircle, FileText } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
@@ -103,50 +103,46 @@ export default function LessonPage() {
   }, [id])
 
   const handleComplete = async () => {
+    if (completed) {
+      handleNavigateNext()
+      return
+    }
+
     try {
       setSaving(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("No user found")
 
       const { error } = await supabase
         .from('lesson_progress')
         .upsert({
-          user_id: session.user.id,
+          user_id: user.id,
           lesson_id: id,
           completed: true,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,lesson_id' })
+          last_accessed: new Date().toISOString()
+        })
 
       if (error) throw error
 
       setCompleted(true)
       toast.success("Lesson marked as complete!")
-      
-      if (quizId) {
-        toast.info("Taking you to the lesson quiz...")
-        setTimeout(() => {
-          navigate(`/dashboard/quizzes/${quizId}`)
-        }, 1500)
-      } else if (nextLessonId) {
-        toast.info("Moving to the next lesson...")
-        setTimeout(() => {
-          navigate(`/dashboard/lessons/${nextLessonId}`)
-        }, 1500)
-      } else if (moduleQuizId) {
-        toast.info("Module finished! Taking you to the final test...")
-        setTimeout(() => {
-          navigate(`/dashboard/quizzes/${moduleQuizId}`)
-        }, 1500)
-      } else {
-        setTimeout(() => {
-          navigate("/dashboard")
-        }, 1500)
-      }
-    } catch (err) {
-      console.error("Error saving progress:", err)
+    } catch (error: any) {
+      console.error('Error marking lesson as complete:', error)
       toast.error("Failed to save progress")
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleNavigateNext = () => {
+    if (quizId) {
+      navigate(`/dashboard/quizzes/${quizId}`)
+    } else if (nextLessonId) {
+      navigate(`/dashboard/lessons/${nextLessonId}`)
+    } else if (moduleQuizId) {
+      navigate(`/dashboard/quizzes/${moduleQuizId}`)
+    } else {
+      navigate("/dashboard")
     }
   }
 
@@ -213,10 +209,10 @@ export default function LessonPage() {
             </div>
             <Button 
               onClick={handleComplete}
-              disabled={completed || saving}
+              disabled={saving}
               className={`rounded-xl h-12 w-full text-sm font-bold shadow-md transition-all ${
                 completed 
-                  ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
+                  ? "bg-green-600 hover:bg-green-700 text-white hover:scale-[1.02] active:scale-[0.98]" 
                   : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
@@ -224,8 +220,8 @@ export default function LessonPage() {
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : completed ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Completed
+                  {quizId ? "Start Lesson Quiz" : nextLessonId ? "Move to Next Lesson" : moduleQuizId ? "Start Module Test" : "Back to Dashboard"}
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               ) : (
                 "Mark as Complete"
