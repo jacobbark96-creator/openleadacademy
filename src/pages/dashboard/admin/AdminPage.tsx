@@ -348,6 +348,8 @@ export default function AdminPage() {
       toast.success("Lesson deleted")
     }
   }
+
+  const handleCreateVacancy = async () => {
     const { data: newVac, error } = await supabase.from('vacancies').insert({
       title: 'New Job Title',
       department: 'Sales',
@@ -1127,10 +1129,8 @@ export default function AdminPage() {
 
                       <div className="pt-2 flex justify-between items-center pr-8">
                         <Dialog open={selectedModuleId === mod.id} onOpenChange={(open) => setSelectedModuleId(open ? mod.id : null)}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="text-[#008080] border-[#008080]/30 hover:bg-[#008080]/5">
+                          <DialogTrigger render={<Button variant="outline" size="sm" className="text-[#008080] border-[#008080]/30 hover:bg-[#008080]/5" />}>
                               <Plus className="w-4 h-4 mr-2" /> Manage Lessons
-                            </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
                             <DialogHeader>

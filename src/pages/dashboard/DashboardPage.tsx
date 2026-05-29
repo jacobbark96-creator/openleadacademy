@@ -327,10 +327,8 @@ export default function DashboardPage() {
                         <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
                           {module.video_url && module.status !== 'locked' && (
                             <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#008080] hover:bg-[#EBF5F5] font-semibold gap-1">
+                              <DialogTrigger render={<Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#008080] hover:bg-[#EBF5F5] font-semibold gap-1" />}>
                                   <Video className="w-3 h-3" /> Watch Intro
-                                </Button>
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-black border-0">
                                 <DialogHeader className="p-4 bg-white border-b">
