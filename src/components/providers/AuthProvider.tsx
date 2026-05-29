@@ -1,11 +1,9 @@
-"use client"
-
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
 import { createClient } from "@/lib/supabase/client"
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
 
@@ -13,7 +11,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/login')
+        navigate('/login')
       } else {
         setLoading(false)
       }
@@ -23,12 +21,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
-        router.push('/login')
+        navigate('/login')
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [router, supabase])
+  }, [navigate, supabase])
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-[#F8FAFC]">Loading...</div>

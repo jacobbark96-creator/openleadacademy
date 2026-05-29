@@ -1,5 +1,3 @@
-"use client"
-
 import { Bell, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -13,7 +11,7 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter, usePathname } from "next/navigation"
+import { useNavigate, useLocation } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./Sidebar"
@@ -37,8 +35,8 @@ interface Notification {
 }
 
 export function Topbar() {
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -83,7 +81,7 @@ export function Topbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.push("/login")
+    navigate("/login")
   }
 
   const initials = user?.user_metadata?.full_name
@@ -151,7 +149,7 @@ export function Topbar() {
                     className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-[#008080]/5' : ''}`}
                     onClick={() => {
                       if (!notif.is_read) handleMarkAsRead(notif.id)
-                      if (notif.link) router.push(notif.link)
+                      if (notif.link) navigate(notif.link)
                     }}
                   >
                     <div className="flex items-start gap-3">
@@ -198,7 +196,7 @@ export function Topbar() {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+            <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />

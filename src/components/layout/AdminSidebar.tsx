@@ -1,7 +1,4 @@
-"use client"
-
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -14,20 +11,20 @@ import {
 import { Logo } from "@/components/Logo"
 
 const sidebarNavItems = [
-  { title: "Overview", href: "/admin", icon: LayoutDashboard },
-  { title: "Students", href: "/admin/students", icon: Users },
-  { title: "Curriculum", href: "/admin/curriculum", icon: BookOpen },
-  { title: "Vacancies", href: "/admin/vacancies", icon: Briefcase },
-  { title: "Settings", href: "/admin/settings", icon: Settings },
+  { title: "Overview", href: "/dashboard/admin", icon: LayoutDashboard },
+  { title: "Students", href: "/dashboard/admin/students", icon: Users },
+  { title: "Curriculum", href: "/dashboard/admin/curriculum", icon: BookOpen },
+  { title: "Vacancies", href: "/dashboard/admin/vacancies", icon: Briefcase },
+  { title: "Settings", href: "/dashboard/admin/settings", icon: Settings },
 ]
 
 export function AdminSidebar() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-gray-900 text-white">
       <div className="flex h-24 items-center px-8 border-b border-gray-800">
-        <Link href="/admin">
+        <Link to="/dashboard/admin">
           <Logo className="invert opacity-90" />
         </Link>
       </div>
@@ -38,7 +35,7 @@ export function AdminSidebar() {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive

@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { Logo } from "@/components/Logo"
 
 export function PublicFooter() {
@@ -7,7 +7,7 @@ export function PublicFooter() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <Logo />
             </Link>
             <p className="text-gray-500 text-sm">
@@ -17,25 +17,25 @@ export function PublicFooter() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-4">Platform</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link href="/dashboard" className="hover:text-primary transition-colors">Student Portal</Link></li>
-              <li><Link href="/about" className="hover:text-primary transition-colors">Curriculum</Link></li>
-              <li><Link href="/vacancies" className="hover:text-primary transition-colors">Careers</Link></li>
+              <li><Link to="/dashboard" className="hover:text-primary transition-colors">Student Portal</Link></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">Curriculum</Link></li>
+              <li><Link to="/vacancies" className="hover:text-primary transition-colors">Careers</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li><Link to="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-gray-900 mb-4">Connect</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link href="#" className="hover:text-primary transition-colors">Twitter</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">LinkedIn</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">YouTube</Link></li>
+              <li><Link to="#" className="hover:text-primary transition-colors">Twitter</Link></li>
+              <li><Link to="#" className="hover:text-primary transition-colors">LinkedIn</Link></li>
+              <li><Link to="#" className="hover:text-primary transition-colors">YouTube</Link></li>
             </ul>
           </div>
         </div>

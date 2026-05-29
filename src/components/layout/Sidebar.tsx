@@ -1,7 +1,4 @@
-"use client"
-
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/Logo"
 import {
@@ -37,7 +34,7 @@ const sidebarNavItems = [
 ]
 
 export function Sidebar() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const supabase = createClient()
   const [role, setRole] = useState<string>("student")
 
@@ -59,7 +56,7 @@ export function Sidebar() {
   return (
     <div className="hidden md:flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0">
       <div className="flex h-20 items-center px-6">
-        <Link href="/dashboard">
+        <Link to="/dashboard">
           <Logo className="scale-90 origin-left" />
         </Link>
       </div>
@@ -70,7 +67,7 @@ export function Sidebar() {
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
                   isActive
@@ -88,7 +85,7 @@ export function Sidebar() {
             <>
               <div className="my-2 border-t border-gray-100" />
               <Link
-                href="/dashboard/admin"
+                to="/dashboard/admin"
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
                   pathname?.startsWith('/dashboard/admin')
@@ -104,7 +101,7 @@ export function Sidebar() {
         </nav>
       </div>
       <div className="p-4">
-        <Link href="/dashboard/support" className="block p-3 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow group">
+        <Link to="/dashboard/support" className="block p-3 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#EBF5F5] flex items-center justify-center text-[#008080]">
               <Headphones className="w-4 h-4" />

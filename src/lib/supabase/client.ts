@@ -1,14 +1,14 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Browser Client: Missing Supabase URL or Key! Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your Cloudflare Pages Environment Variables.')
+    console.error('Browser Client: Missing Supabase URL or Key! Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.')
   }
 
-  return createBrowserClient(
+  return createSupabaseClient(
     supabaseUrl || '',
     supabaseKey || ''
   )
