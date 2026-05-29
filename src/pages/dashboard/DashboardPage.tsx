@@ -43,6 +43,13 @@ export default function DashboardPage() {
   const selectedCourseIdFromUrl = searchParams.get('course')
   const [loading, setLoading] = useState(true)
 
+  const getEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
+
   // Supabase state
   const [modules, setModules] = useState<Module[]>([])
   const [progressData, setProgressData] = useState<Progress[]>([])
@@ -335,13 +342,19 @@ export default function DashboardPage() {
                                   <DialogTitle>{module.title} - Introduction</DialogTitle>
                                 </DialogHeader>
                                 <div className="aspect-video">
-                                  <iframe
-                                    src={module.video_url.replace("watch?v=", "embed/")}
-                                    className="w-full h-full"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                  />
-                                </div>
+                                    {module.video_url && getEmbedUrl(module.video_url) ? (
+                                      <iframe
+                                        src={getEmbedUrl(module.video_url)!}
+                                        className="w-full h-full"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-500">
+                                        Invalid video URL
+                                      </div>
+                                    )}
+                                  </div>
                               </DialogContent>
                             </Dialog>
                           )}

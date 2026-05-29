@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, CheckCircle2, Loader2, PlayCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Loader2, PlayCircle, FileText } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
@@ -25,6 +25,13 @@ export default function LessonPage() {
   const [completed, setCompleted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [quizId, setQuizId] = useState<string | null>(null)
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
 
   useEffect(() => {
     async function loadLesson() {
@@ -121,66 +128,84 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Dashboard
-      </Link>
-
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">{lesson.title}</h1>
-        <p className="text-gray-500 text-lg">{lesson.modules.title}</p>
+    <div className="max-w-5xl mx-auto px-4 space-y-8 pb-16">
+      <div className="flex justify-start">
+        <Link to="/dashboard" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#008080] transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Link>
       </div>
 
-      <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-black aspect-video relative">
-        {lesson.video_url ? (
-          <iframe
-            src={lesson.video_url.replace("watch?v=", "embed/")}
-            className="absolute inset-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center flex-col text-white">
-            <PlayCircle className="w-20 h-20 text-gray-600 mb-4" />
-            <p className="font-medium text-lg text-gray-400">No video available</p>
-          </div>
-        )}
-      </Card>
+      <div className="space-y-3 text-center">
+        <p className="text-[#008080] font-semibold tracking-wide uppercase text-sm">{lesson.modules.title}</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">{lesson.title}</h1>
+      </div>
 
-      <div className="flex items-center justify-between p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h3 className="font-bold text-gray-900">Finished watching?</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
-          </p>
-        </div>
-        <Button 
-          onClick={handleComplete}
-          disabled={completed || saving}
-          className={`rounded-xl h-11 px-8 ${completed ? "bg-green-500 hover:bg-green-600 text-white" : "text-white"}`}
-        >
-          {saving ? (
-            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          ) : completed ? (
-            <>
-              <CheckCircle2 className="w-5 h-5 mr-2" />
-              Completed
-            </>
+      <div className="relative group">
+        <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-black aspect-video relative ring-1 ring-gray-200">
+          {lesson.video_url && getEmbedUrl(lesson.video_url) ? (
+            <iframe
+              src={getEmbedUrl(lesson.video_url)!}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           ) : (
-            "Mark as Complete"
+            <div className="absolute inset-0 flex items-center justify-center flex-col text-white">
+              <PlayCircle className="w-20 h-20 text-gray-800 mb-4 opacity-20" />
+              <p className="font-medium text-lg text-gray-500">No video available</p>
+            </div>
           )}
-        </Button>
+        </Card>
       </div>
 
-      <Card className="border-0 shadow-sm rounded-2xl">
-        <CardContent className="p-8 prose max-w-none">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Course Content</h3>
-          <div className="text-gray-600 whitespace-pre-wrap">
-            {lesson.description || "No content available for this lesson."}
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-6 bg-white rounded-2xl shadow-md border border-gray-100 gap-4">
+          <div className="text-center sm:text-left">
+            <h3 className="font-bold text-gray-900 text-lg">Finished watching?</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          <Button 
+            onClick={handleComplete}
+            disabled={completed || saving}
+            className={`rounded-xl h-12 px-10 text-base font-semibold shadow-lg transition-all ${
+              completed 
+                ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
+                : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-105 active:scale-95"
+            }`}
+          >
+            {saving ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : completed ? (
+              <>
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Completed
+              </>
+            ) : (
+              "Mark as Complete"
+            )}
+          </Button>
+        </div>
+
+        <Card className="border-0 shadow-lg rounded-3xl overflow-hidden bg-white">
+          <CardContent className="p-8 md:p-12">
+            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-50">
+              <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080]">
+                <FileText className="w-5 h-5" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">Course Content</h3>
+            </div>
+            
+            <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
+              <div className="text-lg leading-relaxed whitespace-pre-wrap">
+                {lesson.description || "No content available for this lesson."}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
