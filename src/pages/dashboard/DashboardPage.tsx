@@ -202,90 +202,111 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex-none lg:flex-1 lg:overflow-y-auto p-4 space-y-3">
-              {displayCurriculum.map((week, idx) => (
-                <div key={week.id} className="flex items-start sm:items-stretch gap-3 group relative">
-                  {/* Status Icon & Line */}
-                  <div className="w-6 flex flex-col items-center flex-shrink-0 relative pt-3">
-                    {week.status === 'completed' ? (
-                      <div className="w-5 h-5 rounded-full bg-[#008080] flex items-center justify-center text-white z-10 shadow-sm">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      </div>
-                    ) : week.status === 'unlocked' ? (
-                      <div className="w-5 h-5 rounded-full border-2 border-[#008080] flex items-center justify-center text-[#008080] z-10 bg-white shadow-sm">
-                        <Lock className="w-2.5 h-2.5" />
-                      </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center text-gray-400 z-10 bg-white">
-                        <Lock className="w-2.5 h-2.5" />
-                      </div>
-                    )}
-                    {idx !== displayCurriculum.length - 1 && (
-                      <div className="w-px bg-gray-100 absolute top-8 -bottom-3 z-0" />
-                    )}
-                  </div>
-
-                  {/* Card Content */}
-                  <Card className="flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center p-2.5 gap-3">
-                      {/* Thumbnail */}
-                      <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${week.thumbnail ? 'bg-gray-900' : 'bg-gray-100'}`}>
-                        {week.thumbnail ? (
-                          <>
-                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-                            <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                              <div className="w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center pl-0.5 shadow-sm">
-                                <PlayCircle className="w-3.5 h-3.5 text-gray-900" />
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                            <Lock className="w-4 h-4 text-gray-300" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0 py-0.5">
-                        <h3 className="text-xs font-bold text-gray-900">Week {week.week}: {week.title}</h3>
-                        <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{week.description}</p>
-                      </div>
-
-                      {/* Actions/Status */}
-                      <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
-                        {week.status === 'completed' && (
-                          <>
-                            <span className="text-[10px] font-semibold text-[#008080] bg-[#EBF5F5] px-2 py-0.5 rounded-full">Completed</span>
-                            <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex">
-                              <CheckCircle className="w-3 h-3" /> Quiz passed
-                            </div>
-                          </>
-                        )}
-                        {week.status === 'unlocked' && (
-                          <>
-                            <Link to={`/dashboard/lessons/${week.id}`} className="w-full sm:w-auto">
-                              <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
-                                Start Lesson
-                              </Button>
-                            </Link>
-                            <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex mt-0.5">
-                              <Lock className="w-3 h-3" /> Unlocked
-                            </div>
-                          </>
-                        )}
-                        {week.status === 'locked' && (
-                          <>
-                            <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Locked</span>
-                            <div className="flex items-center gap-1 text-[9px] text-gray-400 text-center leading-tight hidden sm:flex">
-                              <Lock className="w-2.5 h-2.5 flex-shrink-0" /> Complete previous
-                            </div>
-                          </>
-                        )}
-                      </div>
+              {displayCurriculum.length > 0 ? (
+                displayCurriculum.map((week, idx) => (
+                  <div key={week.id} className="flex items-start sm:items-stretch gap-3 group relative">
+                    {/* Status Icon & Line */}
+                    <div className="w-6 flex flex-col items-center flex-shrink-0 relative pt-3">
+                      {week.status === 'completed' ? (
+                        <div className="w-5 h-5 rounded-full bg-[#008080] flex items-center justify-center text-white z-10 shadow-sm">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                      ) : week.status === 'unlocked' ? (
+                        <div className="w-5 h-5 rounded-full border-2 border-[#008080] flex items-center justify-center text-[#008080] z-10 bg-white shadow-sm">
+                          <Lock className="w-2.5 h-2.5" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-200 flex items-center justify-center text-gray-400 z-10 bg-white">
+                          <Lock className="w-2.5 h-2.5" />
+                        </div>
+                      )}
+                      {idx !== displayCurriculum.length - 1 && (
+                        <div className="w-px bg-gray-100 absolute top-8 -bottom-3 z-0" />
+                      )}
                     </div>
-                  </Card>
+
+                    {/* Card Content */}
+                    <Card className="flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center p-2.5 gap-3">
+                        {/* Thumbnail */}
+                        <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${week.thumbnail ? 'bg-gray-900' : 'bg-gray-100'}`}>
+                          {week.thumbnail ? (
+                            <>
+                              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+                              <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <div className="w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center pl-0.5 shadow-sm">
+                                  <PlayCircle className="w-3.5 h-3.5 text-gray-900" />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                              <Lock className="w-4 h-4 text-gray-300" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 py-0.5">
+                          <h3 className="text-xs font-bold text-gray-900">Week {week.week}: {week.title}</h3>
+                          <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{week.description}</p>
+                        </div>
+
+                        {/* Actions/Status */}
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
+                          {week.status === 'completed' && (
+                            <>
+                              <span className="text-[10px] font-semibold text-[#008080] bg-[#EBF5F5] px-2 py-0.5 rounded-full">Completed</span>
+                              <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex">
+                                <CheckCircle className="w-3 h-3" /> Quiz passed
+                              </div>
+                            </>
+                          )}
+                          {week.status === 'unlocked' && (
+                            <>
+                              <Link to={`/dashboard/lessons/${week.id}`} className="w-full sm:w-auto">
+                                <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
+                                  Start Lesson
+                                </Button>
+                              </Link>
+                              <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex mt-0.5">
+                                <Lock className="w-3 h-3" /> Unlocked
+                              </div>
+                            </>
+                          )}
+                          {week.status === 'locked' && (
+                            <>
+                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Locked</span>
+                              <div className="flex items-center gap-1 text-[9px] text-gray-400 text-center leading-tight hidden sm:flex">
+                                <Lock className="w-2.5 h-2.5 flex-shrink-0" /> Complete previous
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                ))
+              ) : (
+                <div className="py-12 text-center flex flex-col items-center justify-center text-gray-500">
+                  <BookOpen className="w-12 h-12 mb-4 text-gray-200" />
+                  <h3 className="text-sm font-bold text-gray-900 mb-1">
+                    {currentCourse ? "No lessons available yet" : "Not enrolled in any course"}
+                  </h3>
+                  <p className="text-xs max-w-[240px] mx-auto">
+                    {currentCourse 
+                      ? "This program doesn't have any lessons published yet. Check back soon!" 
+                      : "You haven't been assigned to a program yet. Contact your administrator to get started."}
+                  </p>
+                  {!currentCourse && (
+                    <Link to="/dashboard/learning" className="mt-4">
+                      <Button variant="outline" className="h-8 text-xs font-semibold rounded-lg">
+                        View My Learning
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
