@@ -128,76 +128,88 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 space-y-10 pb-20">
-      <div className="space-y-4 text-center pt-4">
-        <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{lesson.modules.title}</p>
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">{lesson.title}</h1>
-      </div>
-
-      <div className="relative group mx-auto w-full">
-        <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden bg-black aspect-video relative ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-[1.01]">
-          {lesson.video_url && getEmbedUrl(lesson.video_url) ? (
-            <iframe
-              src={getEmbedUrl(lesson.video_url)!}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center flex-col text-white">
-              <PlayCircle className="w-20 h-20 text-gray-800 mb-4 opacity-20" />
-              <p className="font-medium text-lg text-gray-500">No video available</p>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div className="max-w-2xl mx-auto space-y-10">
-        <div className="flex flex-col sm:flex-row items-center justify-between p-8 bg-white rounded-[2rem] shadow-xl border border-gray-50 gap-6">
-          <div className="text-center sm:text-left">
-            <h3 className="font-bold text-gray-900 text-xl tracking-tight">Finished watching?</h3>
-            <p className="text-sm text-gray-500 mt-1.5 font-medium">
-              {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson."}
+    <div className="max-w-[1400px] mx-auto px-4 py-6 md:py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-8 xl:gap-12 items-start">
+        {/* Left Column: Video and Title */}
+        <div className="space-y-6 md:space-y-8">
+          <div className="space-y-2 md:space-y-3">
+            <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">
+              {lesson.modules.title}
             </p>
+            <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+              {lesson.title}
+            </h1>
           </div>
-          <Button 
-            onClick={handleComplete}
-            disabled={completed || saving}
-            className={`rounded-2xl h-14 px-12 text-base font-bold shadow-xl transition-all ${
-              completed 
-                ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
-                : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-105 active:scale-95"
-            }`}
-          >
-            {saving ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : completed ? (
-              <>
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                Completed
-              </>
-            ) : (
-              "Mark as Complete"
-            )}
-          </Button>
+
+          <div className="relative group w-full">
+            <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-black aspect-video relative ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-[1.005]">
+              {lesson.video_url && getEmbedUrl(lesson.video_url) ? (
+                <iframe
+                  src={getEmbedUrl(lesson.video_url)!}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center flex-col text-white">
+                  <PlayCircle className="w-16 h-16 md:w-20 md:h-20 text-gray-800 mb-4 opacity-20" />
+                  <p className="font-medium text-lg text-gray-500 text-center px-4">No video available for this lesson</p>
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
 
-        <Card className="border-0 shadow-xl rounded-[2.5rem] overflow-hidden bg-white">
-          <CardContent className="p-10 md:p-16">
-            <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-50">
-              <div className="w-12 h-12 rounded-2xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
+        {/* Right Column: Actions and Content */}
+        <div className="space-y-6 md:space-y-8 lg:sticky lg:top-24">
+          {/* Completion Card */}
+          <div className="p-6 md:p-8 bg-white rounded-[2rem] shadow-xl border border-gray-50 flex flex-col gap-6">
+            <div className="space-y-1.5">
+              <h3 className="font-bold text-gray-900 text-xl tracking-tight">Finished watching?</h3>
+              <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                {quizId ? "Mark as complete to start the module test." : "Mark as complete to finish this lesson and return to dashboard."}
+              </p>
             </div>
-            
-            <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080] prose-lg">
-              <div className="text-xl leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
-                {lesson.description || "No content available for this lesson."}
+            <Button 
+              onClick={handleComplete}
+              disabled={completed || saving}
+              className={`rounded-2xl h-14 w-full text-base font-bold shadow-lg transition-all ${
+                completed 
+                  ? "bg-green-500 hover:bg-green-600 text-white cursor-default" 
+                  : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-[1.02] active:scale-[0.98]"
+              }`}
+            >
+              {saving ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : completed ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Completed
+                </>
+              ) : (
+                "Mark as Complete"
+              )}
+            </Button>
+          </div>
+
+          {/* Course Content Card */}
+          <Card className="border-0 shadow-xl rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-white min-h-[400px]">
+            <CardContent className="p-8 md:p-10">
+              <div className="flex items-center gap-3 mb-8 pb-5 border-b border-gray-50">
+                <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              
+              <div className="prose prose-slate max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
+                <div className="text-lg leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
+                  {lesson.description || "No additional notes or content available for this lesson."}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
