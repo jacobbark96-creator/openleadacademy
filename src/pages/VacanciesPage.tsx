@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
+import SEO from "@/components/SEO"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -51,52 +52,58 @@ export default function VacanciesPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#020617] text-white">
+      <SEO 
+        title="Exclusive Opportunities" 
+        description="Explore elite career opportunities at Openlead Academy's partner companies."
+      />
       <PublicHeader />
       
-      <main className="pt-32 pb-20">
+      <main className="pt-48 pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-slate-900 mb-4">
+          <div className="text-center mb-24">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6">
               Careers Portal
             </h1>
-            <p className="text-xl text-slate-600 font-medium">
-              Discover opportunities at top partner companies hiring from our academy.
+            <p className="text-xl text-slate-400 font-medium">
+              Direct access to the world's most aggressive revenue teams.
             </p>
           </div>
 
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <Loader2 className="w-10 h-10 animate-spin text-[#14B8A6]" />
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {vacancies.map((job) => (
-                <Card key={job.id} className="border-0 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
-                  <CardContent className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-bold text-gray-900">{job.title}</h2>
-                      <div className="flex flex-wrap items-center gap-4 text-gray-500 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Briefcase className="w-4 h-4" />
+                <Card key={job.id} className="bg-white/5 border-white/10 hover:border-[#14B8A6]/30 transition-all rounded-[32px] overflow-hidden group">
+                  <CardContent className="p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                         <h2 className="text-3xl font-black text-white tracking-tight">{job.title}</h2>
+                         <Badge className="bg-[#14B8A6]/10 text-[#14B8A6] border-none rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest">
+                           {job.type}
+                         </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-[#14B8A6]" />
                           {job.department}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-[#14B8A6]" />
                           {job.location}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Building className="w-4 h-4" />
+                        <div className="flex items-center gap-2">
+                          <Building className="w-4 h-4 text-[#14B8A6]" />
                           {job.remote_hybrid}
                         </div>
                       </div>
-                      <p className="text-gray-600 mt-4 max-w-2xl">{job.description}</p>
+                      <p className="text-slate-400 mt-6 max-w-2xl leading-relaxed">{job.description}</p>
                     </div>
                     
-                    <div className="flex flex-col items-start md:items-end gap-3">
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
-                        {job.type}
-                      </Badge>
+                    <div className="flex flex-col items-start md:items-end gap-4">
                       <ApplicationModal vacancy={job} />
                     </div>
                   </CardContent>

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
+import SEO from "@/components/SEO"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,106 +25,111 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-[#020617] text-white">
+      <SEO 
+        title="Direct Support" 
+        description="Connect with our admissions team for inquiries regarding our elite sales training programs."
+      />
       <PublicHeader />
       
-      <main className="pt-32 pb-20">
+      <main className="pt-48 pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter text-slate-900 mb-4">
-              Get in Touch
+          <div className="text-center mb-24">
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6">
+              Connect With Us
             </h1>
-            <p className="text-xl text-slate-600 font-medium">
-              Have questions about the academy? We're here to help.
+            <p className="text-xl text-slate-400 font-medium">
+              Have questions about the academy? Our team is standing by.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="space-y-8">
-              <Card className="border-0 shadow-sm rounded-2xl">
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
-                      <Mail className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+            <div className="space-y-10">
+              <Card className="bg-white/5 border-white/10 shadow-2xl rounded-[32px] overflow-hidden">
+                <CardContent className="p-10 space-y-8">
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 bg-[#14B8A6]/10 rounded-2xl flex items-center justify-center text-[#14B8A6] flex-shrink-0 border border-[#14B8A6]/20">
+                      <Mail className="w-7 h-7" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">Email Support</h3>
-                      <p className="text-gray-500 mt-1">Our team typically replies within 2 hours.</p>
-                      <a href="mailto:support@openlead.com" className="text-primary font-medium mt-2 inline-block">support@openlead.com</a>
+                      <h3 className="text-xl font-black text-white mb-1">Priority Support</h3>
+                      <p className="text-slate-500 mb-2">Typically replies within 2 hours.</p>
+                      <a href="mailto:admissions@openlead.academy" className="text-[#14B8A6] font-bold hover:underline">admissions@openlead.academy</a>
                     </div>
                   </div>
                   
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 flex-shrink-0">
-                      <MessageSquare className="w-6 h-6" />
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 bg-[#25D366]/10 rounded-2xl flex items-center justify-center text-[#25D366] flex-shrink-0 border border-[#25D366]/20">
+                      <MessageSquare className="w-7 h-7" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">WhatsApp</h3>
-                      <p className="text-gray-500 mt-1">Message us directly for quick questions.</p>
-                      <Button variant="outline" className="mt-2 rounded-xl text-green-700 border-green-200 hover:bg-green-50">
-                        Chat on WhatsApp
+                      <h3 className="text-xl font-black text-white mb-1">Direct WhatsApp</h3>
+                      <p className="text-slate-500 mb-4">Message us for immediate assistance.</p>
+                      <Button variant="outline" className="rounded-full px-6 border-[#25D366]/50 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all font-bold">
+                        Chat Now
                       </Button>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 flex-shrink-0">
-                      <MapPin className="w-6 h-6" />
+                  <div className="flex items-start gap-6">
+                    <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 flex-shrink-0 border border-white/10">
+                      <MapPin className="w-7 h-7" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">London Office</h3>
-                      <p className="text-gray-500 mt-1">123 Sales Street, London, UK<br/>EC1A 1BB</p>
+                      <h3 className="text-xl font-black text-white mb-1">London Office</h3>
+                      <p className="text-slate-500">123 Sales Street, London, UK<br/>EC1A 1BB</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Map Placeholder */}
-              <div className="h-64 bg-gray-200 rounded-2xl overflow-hidden relative">
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                  Google Map Placeholder
+              <div className="h-64 bg-white/5 rounded-[32px] overflow-hidden relative border border-white/5">
+                <div className="absolute inset-0 flex items-center justify-center text-slate-700 font-black uppercase tracking-widest text-xs">
+                  Global Admissions Center
                 </div>
               </div>
             </div>
 
-            <Card className="border-0 shadow-lg rounded-3xl">
-              <CardContent className="p-8 md:p-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Send a Message</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <Card className="bg-white/5 border-white/10 shadow-2xl rounded-[40px] overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#14B8A6]/5 blur-3xl" />
+              <CardContent className="p-10 md:p-12">
+                <h2 className="text-3xl font-black text-white mb-8 tracking-tight">Send a Message</h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-slate-500">Full Name</Label>
                     <Input 
                       id="name" 
                       required 
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-transparent focus:border-primary focus:bg-white"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] h-14"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-slate-500">Email Address</Label>
                     <Input 
                       id="email" 
                       type="email" 
                       required 
                       value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-transparent focus:border-primary focus:bg-white"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] h-14"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="message">Message</Label>
+                    <Label htmlFor="message" className="text-xs font-black uppercase tracking-widest text-slate-500">Inquiry</Label>
                     <Textarea 
                       id="message" 
                       required 
                       rows={5}
                       value={formData.message}
                       onChange={e => setFormData({...formData, message: e.target.value})}
-                      className="rounded-xl bg-gray-50 border-transparent focus:border-primary focus:bg-white resize-none"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] resize-none"
                     />
                   </div>
-                  <Button type="submit" className="w-full rounded-xl h-14 text-white text-lg mt-4 shadow-[0_8px_16px_rgba(20,184,166,0.2)] hover:shadow-[0_8px_20px_rgba(20,184,166,0.3)] transition-all bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.02] border border-transparent font-bold" disabled={loading}>
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : "Send Message"}
+                  <Button type="submit" className="w-full rounded-full h-16 text-white text-xl mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-none font-black uppercase tracking-widest" disabled={loading}>
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : "Submit Inquiry"}
                   </Button>
                 </form>
               </CardContent>

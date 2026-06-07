@@ -73,7 +73,7 @@ export default function LessonPage() {
           .from('quizzes')
           .select('id')
           .eq('lesson_id', id)
-          .single()
+          .maybeSingle()
         
         if (quizData) setQuizId(quizData.id)
 
@@ -94,7 +94,7 @@ export default function LessonPage() {
             .from('quizzes')
             .select('id')
             .eq('module_id', lessonData.module_id)
-            .single()
+            .maybeSingle()
           
           if (modQuiz) setModuleQuizId(modQuiz.id)
         }
@@ -127,8 +127,8 @@ export default function LessonPage() {
           user_id: user.id,
           lesson_id: id,
           completed: true,
-          last_accessed: new Date().toISOString()
-        })
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,lesson_id' })
 
       if (error) throw error
 
