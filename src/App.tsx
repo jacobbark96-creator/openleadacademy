@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom"
+import { useEffect } from "react"
+import { supabase } from "./lib/supabase/client"
 import HomePage from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
@@ -22,9 +24,26 @@ import SettingsPage from "./pages/dashboard/SettingsPage"
 import SupportPage from "./pages/dashboard/SupportPage"
 import HelpPage from "./pages/dashboard/HelpPage"
 
+function AuthListener() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        navigate("/reset-password")
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [navigate])
+
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthListener />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />

@@ -18,9 +18,24 @@ interface TeamMember {
 
 export default function AboutPage() {
   const [members, setMembers] = useState<TeamMember[]>([
-    { name: "Sarah Jenkins", role_title: "Head of Academy", initials: "SJ" },
-    { name: "Marcus Thorne", role_title: "Lead Sales Trainer", initials: "MT" },
-    { name: "Elena Rostova", role_title: "Careers Director", initials: "ER" }
+    { 
+      name: "Sarah Jenkins", 
+      role_title: "Head of Academy", 
+      initials: "SJ",
+      image_url: "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional+headshot+of+a+successful+business+woman+in+luxury+office+soft+teal+lighting+high+end&image_size=square"
+    },
+    { 
+      name: "Marcus Thorne", 
+      role_title: "Lead Sales Trainer", 
+      initials: "MT",
+      image_url: "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional+headshot+of+a+charismatic+business+man+in+high+end+suit+minimalist+background&image_size=square"
+    },
+    { 
+      name: "Elena Rostova", 
+      role_title: "Careers Director", 
+      initials: "ER",
+      image_url: "https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=professional+headshot+of+a+modern+business+leader+woman+smiling+high+end+corporate+vibe&image_size=square"
+    }
   ]);
 
   useEffect(() => {

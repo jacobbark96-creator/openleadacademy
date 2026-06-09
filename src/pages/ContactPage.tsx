@@ -84,8 +84,13 @@ export default function ContactPage() {
               </Card>
 
               {/* Map Placeholder */}
-              <div className="h-64 bg-white/5 rounded-[32px] overflow-hidden relative border border-white/5">
-                <div className="absolute inset-0 flex items-center justify-center text-slate-700 font-black uppercase tracking-widest text-xs">
+              <div className="h-64 bg-white/5 rounded-[32px] overflow-hidden relative border border-white/5 group">
+                <img 
+                  src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=high+end+luxury+concierge+desk+modern+minimalist+academy+lobby+teal+lighting&image_size=landscape_16_9" 
+                  alt="Global Admissions Center" 
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-opacity duration-500"
+                />
+                <div className="absolute inset-0 flex items-center justify-center text-white font-black uppercase tracking-widest text-xs bg-[#020617]/40">
                   Global Admissions Center
                 </div>
               </div>

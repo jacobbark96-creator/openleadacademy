@@ -17,9 +17,15 @@ export default function HomePage() {
       
       <main>
         {/* Hero Section */}
-        <section className="relative pt-48 pb-32 px-4">
-          <div className="absolute inset-0 bg-[url('https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=abstract+luxury+dark+geometric+background+with+subtle+teal+glow+lines+high+resolution+minimalist&image_size=landscape_16_9')] bg-cover bg-center opacity-20 z-0" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617] z-0" />
+        <section className="relative pt-48 pb-32 px-4 min-h-[90vh] flex items-center">
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury+dark+academy+architecture+exterior+night+time+teal+lighting+high+end+cinematic+lighting&image_size=landscape_16_9" 
+              alt="Elite Academy" 
+              className="w-full h-full object-cover opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#020617]/60 to-[#020617]" />
+          </div>
           
           {/* Selective Glows */}
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#14B8A6]/10 blur-[160px] rounded-full z-0 pointer-events-none" />
@@ -194,11 +200,13 @@ export default function HomePage() {
               </div>
               <div className="relative">
                  <div className="absolute inset-0 bg-gradient-to-tr from-[#14B8A6]/20 to-transparent blur-3xl rounded-full" />
-                 <img 
-                    src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury+office+interior+modern+minimalist+dark+tones+with+teal+accents+high+end+academy+vibe&image_size=square_hd" 
-                    alt="Prestigious Academy" 
-                    className="relative rounded-[40px] border border-white/10 shadow-2xl z-10"
-                 />
+                 <div className="relative rounded-[40px] overflow-hidden border border-white/10 shadow-2xl z-10 aspect-square md:aspect-auto">
+                   <img 
+                      src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=modern+luxury+boardroom+meeting+selective+focus+high+end+business+environment+teal+accents&image_size=square_hd" 
+                      alt="Prestigious Academy" 
+                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
+                   />
+                 </div>
               </div>
             </div>
           </div>

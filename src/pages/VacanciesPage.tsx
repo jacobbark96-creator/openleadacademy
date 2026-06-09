@@ -59,8 +59,17 @@ export default function VacanciesPage() {
       />
       <PublicHeader />
       
-      <main className="pt-48 pb-20">
-        <div className="container mx-auto px-4 max-w-5xl">
+      <main className="pt-48 pb-20 relative">
+        <div className="absolute top-0 left-0 w-full h-[500px] overflow-hidden z-0">
+          <img 
+            src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury+modern+office+glass+architecture+skyline+view+dark+blue+tones+teal+lighting&image_size=landscape_16_9" 
+            className="w-full h-full object-cover opacity-20"
+            alt="Opportunities Background"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#020617]" />
+        </div>
+        
+        <div className="container mx-auto px-4 max-w-5xl relative z-10">
           <div className="text-center mb-24">
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white mb-6">
               Careers Portal

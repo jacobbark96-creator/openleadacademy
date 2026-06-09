@@ -12,19 +12,41 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [verifying, setVerifying] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Check if we have a session (the user should be logged in via the recovery link)
+    let mounted = true;
+
     const checkSession = async () => {
+      // Small delay to allow hash processing
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        toast.error("Invalid or expired reset link")
-        navigate("/login")
+      
+      if (mounted) {
+        if (session) {
+          setVerifying(false)
+        } else {
+          toast.error("Invalid or expired reset link")
+          navigate("/login")
+        }
       }
     }
+
     checkSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && session)) {
+        if (mounted) setVerifying(false)
+      }
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [navigate])
 
   const handleReset = async (e: React.FormEvent) => {
@@ -55,6 +77,17 @@ export default function ResetPasswordPage() {
     toast.success("Password updated successfully!")
     navigate("/dashboard")
     setLoading(false)
+  }
+
+  if (verifying) {
+    return (
+      <Card className="shadow-lg border-0 rounded-2xl">
+        <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-[#14B8A6]" />
+          <p className="text-slate-500 font-medium">Verifying reset link...</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
