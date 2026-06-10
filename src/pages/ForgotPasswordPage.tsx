@@ -42,62 +42,63 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="shadow-lg border-0 rounded-2xl">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-        <CardDescription className="text-center">
-          Enter your email to receive a password reset link
+    <Card className="bg-white/5 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+      <CardHeader className="space-y-2 pb-8">
+        <CardTitle className="text-2xl font-black text-white text-center uppercase tracking-wider">Reset Credentials</CardTitle>
+        <CardDescription className="text-center text-slate-400 font-medium">
+          Verify your identity to regain access
         </CardDescription>
       </CardHeader>
       <CardContent>
         {submitted ? (
-          <div className="text-center space-y-4 py-4">
-            <div className="text-sm text-gray-600">
-              We&apos;ve sent a password reset link to <strong>{email}</strong>.
-              Please check your inbox and spam folder.
+          <div className="text-center space-y-6 py-4">
+            <div className="text-sm text-slate-400 leading-relaxed font-medium">
+              A secure reset link has been dispatched to <br />
+              <strong className="text-white">{email}</strong>.
+              <p className="mt-2 text-xs text-slate-500 italic">Please check your inbox and spam folder.</p>
             </div>
             <Button
               variant="outline"
-              className="w-full rounded-xl"
+              className="w-full rounded-2xl h-12 border-white/10 text-white hover:bg-white/5"
               onClick={() => setSubmitted(false)}
             >
               Try another email
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleReset} className="space-y-4">
+          <form onSubmit={handleReset} className="space-y-6">
             {errorMsg && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs font-bold uppercase tracking-wider text-center">
                 {errorMsg}
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="name@company.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="rounded-xl"
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
               />
             </div>
             <Button
               type="submit"
-              className="w-full rounded-xl h-12 text-white shadow-[0_8px_16px_rgba(20,184,166,0.2)] hover:shadow-[0_8px_20px_rgba(20,184,166,0.3)] transition-all bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.02] border border-transparent font-bold text-[15px]"
+              className="w-full rounded-2xl h-14 text-white shadow-[0_0_30px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-0 font-black text-sm uppercase tracking-[0.2em]"
               disabled={loading}
             >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Send Reset Link"}
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Dispatch Reset Link"}
             </Button>
           </form>
         )}
       </CardContent>
-      <CardFooter className="flex justify-center border-t border-gray-50 pt-4">
-        <Link to="/login" className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+      <CardFooter className="flex justify-center pb-8 border-t border-white/5 pt-6 mt-4">
+        <Link to="/login" className="flex items-center text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-white transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Login
+          Back to Secure Login
         </Link>
       </CardFooter>
     </Card>

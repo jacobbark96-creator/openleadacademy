@@ -46,17 +46,17 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="shadow-lg border-0 rounded-2xl">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Apply Now</CardTitle>
-        <CardDescription className="text-center">
-          Create an account to start your training journey
+    <Card className="bg-white/5 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+      <CardHeader className="space-y-2 pb-8">
+        <CardTitle className="text-2xl font-black text-white text-center uppercase tracking-wider">Candidate Application</CardTitle>
+        <CardDescription className="text-center text-slate-400 font-medium">
+          Begin your journey into the elite 2%
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSignup} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="fullName" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Full Name</Label>
             <Input
               id="fullName"
               type="text"
@@ -65,47 +65,48 @@ export default function SignupPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={loading}
-              className="rounded-xl"
+              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address</Label>
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="name@company.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              className="rounded-xl"
+              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Security Key</Label>
             <Input
               id="password"
               type="password"
+              placeholder="••••••••"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className="rounded-xl"
+              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
             />
           </div>
           <Button
             type="submit"
-            className="w-full rounded-xl h-12 text-white shadow-[0_8px_16px_rgba(20,184,166,0.2)] hover:shadow-[0_8px_20px_rgba(20,184,166,0.3)] transition-all bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.02] border border-transparent font-bold text-[15px]"
+            className="w-full rounded-2xl h-14 text-white shadow-[0_0_30px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-0 font-black text-sm uppercase tracking-[0.2em]"
             disabled={loading}
           >
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Account"}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Initiate Application"}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <div className="text-sm text-gray-500">
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline font-medium">
+      <CardFooter className="flex justify-center pb-8">
+        <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+          Already a candidate?{" "}
+          <Link to="/login" className="text-[#14B8A6] hover:text-[#0D9488] transition-colors ml-1">
             Sign In
           </Link>
         </div>
