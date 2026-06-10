@@ -17,83 +17,65 @@ export default function HomePage() {
       
       <main>
         {/* Hero Section */}
-        <section className="relative pt-48 pb-32 px-4 min-h-[90vh] flex items-center">
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-16">
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=luxury+dark+academy+architecture+exterior+night+time+teal+lighting+high+end+cinematic+lighting&image_size=landscape_16_9" 
-              alt="Elite Academy" 
+              src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=Ultra-modern%20elite%20corporate%20architecture%20at%20night%2C%20deep%20navy%20and%20teal%20lighting%2C%20highly%20detailed%2C%20minimalist%20luxury&image_size=landscape_16_9" 
               className="w-full h-full object-cover opacity-30"
+              alt="Elite Academy Background"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-[#020617]/60 to-[#020617]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/50 via-[#020617] to-[#020617]" />
           </div>
-          
-          {/* Selective Glows */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[#14B8A6]/10 blur-[160px] rounded-full z-0 pointer-events-none" />
 
-          <div className="container mx-auto text-center max-w-5xl relative z-10">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-[#14B8A6] font-bold text-xs uppercase tracking-[0.2em] mb-12 hover:bg-white/10 transition-all cursor-default shadow-[0_0_20px_rgba(20,184,166,0.1)]"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14B8A6] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14B8A6]"></span>
-              </span>
-              Admission by Application Only • 2026 Cohort
-            </motion.div>
-            
-            <motion.h1 
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[0.95]"
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="max-w-4xl mx-auto"
             >
-              Forging The Next <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#14B8A6] via-[#2DD4BF] to-[#0D9488] relative">
-                Revenue Elite
+              <span className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#14B8A6] text-xs font-bold tracking-[0.2em] uppercase mb-6">
+                Admission by Application Only
               </span>
-            </motion.h1>
-
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl md:text-2xl text-slate-400 mb-12 max-w-3xl mx-auto font-medium leading-relaxed"
-            >
-              The world's most rigorous training academy for high-stakes sales. We don't just teach—we transform the top 2% of applicants into dominant revenue leaders.
-            </motion.p>
-
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-6"
-            >
-              <Link to="/signup">
-                <Button className="rounded-full h-16 px-12 text-xl text-white shadow-[0_0_30px_rgba(20,184,166,0.3)] hover:shadow-[0_0_50px_rgba(20,184,166,0.5)] transition-all w-full sm:w-auto bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.05] border-none font-black group">
-                  Request Admission <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" className="rounded-full h-16 px-12 text-xl bg-white/5 backdrop-blur-md border-white/10 text-white w-full sm:w-auto hover:bg-white/10 hover:border-white/20 font-bold transition-all hover:scale-[1.05]">
-                  Member Portal
-                </Button>
-              </Link>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-[1.1] tracking-tight">
+                THE ELITE ARSENAL <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#14B8A6] to-white/60">
+                  FOR TOP 2% SELLERS
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                The most rigorous sales training program in the world. 
+                Built for those who refuse to be average.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/signup">
+                  <Button size="lg" className="h-14 px-10 text-base font-black bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-full shadow-[0_0_30px_rgba(20,184,166,0.3)] border-0">
+                    APPLY FOR ADMISSION
+                  </Button>
+                </Link>
+                <Link to="/about">
+                  <Button size="lg" variant="outline" className="h-14 px-10 text-base font-bold text-white border-white/10 hover:bg-white/5 rounded-full">
+                    VIEW THE CURRICULUM
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
+          </div>
+        </section>
 
-            {/* Trust Bar */}
+        {/* Global Impact Bar */}
+        <section className="py-12 border-y border-white/5 bg-[#020617]/50 backdrop-blur-sm relative z-10">
+          <div className="container mx-auto px-4">
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.6 }}
-              className="mt-24 pt-12 border-t border-white/5"
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-center"
             >
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 mb-8">Graduates Placed At Global Leaders</p>
-              <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-500 mb-6">Graduates Placed At Global Leaders</p>
+              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
                 {['Salesforce', 'HubSpot', 'Oracle', 'Gartner', 'McKinsey'].map((brand) => (
-                  <span key={brand} className="text-2xl font-black text-white tracking-tighter italic">{brand}</span>
+                  <span key={brand} className="text-xl md:text-2xl font-black text-white tracking-tighter italic">{brand}</span>
                 ))}
               </div>
             </motion.div>
@@ -101,8 +83,8 @@ export default function HomePage() {
         </section>
 
         {/* Exclusive Preview */}
-        <section className="py-24 px-4 relative z-10 bg-[#020617]">
-          <div className="container mx-auto max-w-6xl">
+        <section className="py-20 px-4 relative z-10 bg-[#020617]">
+          <div className="container mx-auto max-w-5xl">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -111,40 +93,40 @@ export default function HomePage() {
               className="rounded-[40px] p-1 bg-gradient-to-br from-[#14B8A6]/30 via-white/5 to-transparent shadow-[0_0_100px_rgba(20,184,166,0.1)]"
             >
               <div className="rounded-[39px] bg-[#020617] overflow-hidden border border-white/10">
-                <div className="aspect-[16/9] relative group">
+                <div className="aspect-[16/10] md:aspect-[16/9] relative group">
                   {/* High-end Dashboard Preview */}
                   <div className="absolute inset-0 flex bg-[#030712]">
-                    <div className="w-[280px] border-r border-white/5 bg-[#030712] p-8 hidden md:block">
-                      <div className="h-10 w-40 bg-white/10 rounded-xl mb-12" />
-                      <div className="space-y-6">
+                    <div className="w-[240px] border-r border-white/5 bg-[#030712] p-6 hidden lg:block">
+                      <div className="h-8 w-32 bg-white/10 rounded-xl mb-10" />
+                      <div className="space-y-5">
                         {[1, 2, 3, 4, 5].map((i) => (
-                          <div key={i} className="flex items-center gap-4">
-                            <div className="h-6 w-6 bg-white/5 rounded-lg" />
-                            <div className="h-4 bg-white/5 rounded-lg w-32" />
+                          <div key={i} className="flex items-center gap-3">
+                            <div className="h-5 w-5 bg-white/5 rounded-lg" />
+                            <div className="h-3 bg-white/5 rounded-lg w-24" />
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="flex-1 p-12 flex flex-col">
-                      <div className="h-12 w-80 bg-white/10 rounded-2xl mb-12" />
-                      <div className="grid grid-cols-3 gap-8 mb-12">
-                        <div className="col-span-2 h-64 bg-white/5 border border-white/10 rounded-3xl p-8 relative overflow-hidden">
-                          <div className="absolute top-0 right-0 p-8">
-                             <div className="h-32 w-32 rounded-full border-[12px] border-[#14B8A6]/20 border-t-[#14B8A6]" />
+                    <div className="flex-1 p-8 md:p-12 flex flex-col">
+                      <div className="h-10 w-64 bg-white/10 rounded-2xl mb-10" />
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <div className="md:col-span-2 h-48 md:h-64 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 p-6 md:p-8">
+                             <div className="h-24 w-24 md:h-32 md:w-32 rounded-full border-[10px] md:border-[12px] border-[#14B8A6]/20 border-t-[#14B8A6]" />
                           </div>
-                          <div className="space-y-4">
-                            <div className="h-8 w-64 bg-white/10 rounded-xl" />
-                            <div className="h-4 w-48 bg-white/5 rounded-lg" />
-                            <div className="pt-12">
+                          <div className="space-y-3">
+                            <div className="h-6 w-48 md:w-64 bg-white/10 rounded-xl" />
+                            <div className="h-3 w-32 md:w-48 bg-white/5 rounded-lg" />
+                            <div className="pt-8 md:pt-12">
                               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                 <div className="h-full w-[85%] bg-[#14B8A6]" />
                               </div>
                             </div>
                           </div>
                         </div>
-                        <div className="h-64 bg-[#14B8A6]/10 rounded-3xl p-8 flex flex-col justify-end">
-                           <div className="text-4xl font-black text-white mb-2">85%</div>
-                           <div className="text-sm font-bold text-[#14B8A6] uppercase tracking-widest">Mastery Level</div>
+                        <div className="h-48 md:h-64 bg-[#14B8A6]/10 rounded-3xl p-6 md:p-8 flex flex-col justify-end">
+                           <div className="text-3xl md:text-4xl font-black text-white mb-1">85%</div>
+                           <div className="text-xs font-bold text-[#14B8A6] uppercase tracking-widest">Mastery Level</div>
                         </div>
                       </div>
                     </div>

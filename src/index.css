@@ -37,6 +37,10 @@
 }
 
 @layer base {
+  html {
+    @apply text-[14px] md:text-[15px] lg:text-[16px];
+    scroll-behavior: smooth;
+  }
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;

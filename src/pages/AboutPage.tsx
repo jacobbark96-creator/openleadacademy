@@ -79,32 +79,31 @@ export default function AboutPage() {
         </div>
 
         <div className="container mx-auto px-4 max-w-5xl space-y-32">
-          <section className="bg-white/5 rounded-[40px] p-12 md:p-20 border border-white/10 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#14B8A6]/5 blur-3xl" />
-            <h2 className="text-3xl font-black text-white mb-12 uppercase tracking-widest">Core Values</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div>
-                <h3 className="text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Relentless Execution</h3>
-                <p className="text-slate-400 leading-relaxed">Theory is nothing without action. We prioritize reps, roleplays, and real-world application over abstract concepts.</p>
+          <section className="mb-24">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-12 uppercase tracking-widest text-center">Our Core Ethos</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-5xl mx-auto">
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Radical Action</h3>
+                <p className="text-slate-400 leading-relaxed text-sm md:text-base">Theory is nothing without action. We prioritize reps, roleplays, and real-world application over abstract concepts.</p>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Continuous Evolution</h3>
-                <p className="text-slate-400 leading-relaxed">The market changes, and so do we. Our curriculum is constantly updated with the latest tactics working today.</p>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Continuous Evolution</h3>
+                <p className="text-slate-400 leading-relaxed text-sm md:text-base">The market changes, and so do we. Our curriculum is constantly updated with the latest tactics working today.</p>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Integrity First</h3>
-                <p className="text-slate-400 leading-relaxed">We teach sales as a service. We close deals by genuinely solving problems, not through manipulation.</p>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Integrity First</h3>
+                <p className="text-slate-400 leading-relaxed text-sm md:text-base">We teach sales as a service. We close deals by genuinely solving problems, not through manipulation.</p>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Elite Community</h3>
-                <p className="text-slate-400 leading-relaxed">You are the average of the people you surround yourself with. We cultivate a network of winners.</p>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Elite Community</h3>
+                <p className="text-slate-400 leading-relaxed text-sm md:text-base">You are the average of the people you surround yourself with. We cultivate a network of winners.</p>
               </div>
             </div>
           </section>
 
           <section className="text-center">
-            <h2 className="text-3xl font-black text-white mb-16 uppercase tracking-widest">Academy Leadership</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <h2 className="text-2xl md:text-3xl font-black text-white mb-12 uppercase tracking-widest">Academy Leadership</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {members.map((leader: TeamMember, i: number) => {
                 const initials = leader.initials || leader.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
                 return (
