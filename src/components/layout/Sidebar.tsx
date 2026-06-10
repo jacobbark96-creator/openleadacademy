@@ -59,7 +59,7 @@ export function Sidebar() {
     <div className="hidden md:flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0">
       <div className="flex h-20 items-center px-6">
         <Link to="/dashboard">
-          <Logo className="scale-90 origin-left" />
+          <Logo className="scale-90 origin-left" variant="dark" />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto py-2 scrollbar-hide">

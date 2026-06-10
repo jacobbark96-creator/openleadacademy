@@ -25,7 +25,7 @@ export function AdminSidebar() {
     <div className="flex h-screen w-64 flex-col border-r bg-gray-900 text-white">
       <div className="flex h-24 items-center px-8 border-b border-gray-800">
         <Link to="/dashboard/admin">
-          <Logo className="invert opacity-90" />
+          <Logo className="opacity-90" />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto py-6">

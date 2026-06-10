@@ -20,18 +20,15 @@ export default function ForgotPasswordPage() {
     setErrorMsg("")
 
     // Determine the redirect URL based on environment
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    const siteUrl = isLocal 
-      ? window.location.origin 
-      : (import.meta.env.NEXT_PUBLIC_SITE_URL || import.meta.env.VITE_SITE_URL || 'https://openleadacademy.com')
-
+    const siteUrl = window.location.origin
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${siteUrl}/reset-password`,
     })
 
     if (error) {
+      console.error("Supabase Reset Password Error:", error)
       setErrorMsg(error.message)
-      toast.error(error.message)
+      toast.error(`Failed to send email: ${error.message}`)
       setLoading(false)
       return
     }
