@@ -1,0 +1,124 @@
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { AgreementModal } from '@/components/onboarding/AgreementModal'
+import { NDA_CONTENT, SUBCONTRACTOR_CONTENT } from '@/constants/agreements'
+import { toast } from 'sonner'
+
+interface OnboardingContextType {
+  isComplete: boolean
+  isLoading: boolean
+}
+
+const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined)
+
+export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [profile, setProfile] = useState<any>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1) // 1: NDA, 2: Subcontractor
+
+  const fetchProfile = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+      
+      if (data) {
+        setProfile(data)
+        // Determine initial step
+        if (!data.nda_signed) {
+          setCurrentStep(1)
+          setShowModal(true)
+        } else if (!data.subcontractor_signed) {
+          setCurrentStep(2)
+          setShowModal(true)
+        } else {
+          setShowModal(false)
+        }
+      }
+    }
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  const handleSign = async (signatureName: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      if (currentStep === 1) {
+        // Sign NDA
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            nda_signed: true,
+            nda_signed_at: new Date().toISOString(),
+            agreement_signature_name: signatureName
+          })
+          .eq('id', session.user.id)
+
+        if (error) throw error
+        
+        toast.success('NDA Signed successfully')
+        
+        // Move to next step or finish
+        if (!profile.subcontractor_signed) {
+          setCurrentStep(2)
+        } else {
+          setShowModal(false)
+        }
+      } else if (currentStep === 2) {
+        // Sign Subcontractor Agreement
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            subcontractor_signed: true,
+            subcontractor_signed_at: new Date().toISOString(),
+            agreement_signature_name: signatureName // Ensure name is kept/updated
+          })
+          .eq('id', session.user.id)
+
+        if (error) throw error
+
+        toast.success('Subcontractor Agreement Signed successfully')
+        setShowModal(false)
+      }
+      
+      // Refresh profile data
+      await fetchProfile()
+    } catch (error: any) {
+      console.error('Error signing agreement:', error)
+      toast.error(error.message || 'Failed to sign agreement')
+    }
+  }
+
+  const isComplete = profile?.nda_signed && profile?.subcontractor_signed
+
+  return (
+    <OnboardingContext.Provider value={{ isComplete, isLoading }}>
+      {children}
+      <AgreementModal
+        isOpen={showModal}
+        title={currentStep === 1 ? 'Non-Disclosure Agreement' : 'Subcontractor Agreement'}
+        content={currentStep === 1 ? NDA_CONTENT : SUBCONTRACTOR_CONTENT}
+        onSign={handleSign}
+        step={currentStep}
+        totalSteps={2}
+      />
+    </OnboardingContext.Provider>
+  )
+}
+
+export const useOnboarding = () => {
+  const context = useContext(OnboardingContext)
+  if (context === undefined) {
+    throw new Error('useOnboarding must be used within an OnboardingProvider')
+  }
+  return context
+}
