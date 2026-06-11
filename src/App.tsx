@@ -23,6 +23,7 @@ import CertificatesPage from "./pages/dashboard/CertificatesPage"
 import SettingsPage from "./pages/dashboard/SettingsPage"
 import SupportPage from "./pages/dashboard/SupportPage"
 import HelpPage from "./pages/dashboard/HelpPage"
+import LegalPage from "./pages/dashboard/LegalPage"
 
 function AuthListener() {
   const navigate = useNavigate()
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/dashboard/library" element={<LibraryPage />} />
           <Route path="/dashboard/progress" element={<ProgressPage />} />
           <Route path="/dashboard/certificates" element={<CertificatesPage />} />
+          <Route path="/dashboard/legal" element={<LegalPage />} />
           <Route path="/dashboard/resources" element={<LibraryPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/help" element={<HelpPage />} />
