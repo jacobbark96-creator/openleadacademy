@@ -62,10 +62,10 @@ export function AgreementModal({
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden"
+          className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 border-b border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+          <div className="shrink-0 p-6 border-b border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#14B8A6]/10 rounded-lg">
@@ -91,7 +91,7 @@ export function AgreementModal({
           <div 
             ref={scrollRef}
             onScroll={handleScroll}
-            className="p-8 max-h-[45vh] overflow-y-auto bg-slate-50/30 dark:bg-black/20"
+            className="flex-1 min-h-0 p-8 overflow-y-auto bg-slate-50/30 dark:bg-black/20"
           >
             <div className="whitespace-pre-wrap text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium font-sans">
               {content}
@@ -99,7 +99,7 @@ export function AgreementModal({
           </div>
 
           {/* Footer / Controls */}
-          <div className="p-8 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 space-y-6">
+          <div className="shrink-0 p-8 border-t border-gray-100 dark:border-white/5 bg-white dark:bg-slate-900 space-y-6">
             {!hasScrolledToBottom && (
               <motion.div 
                 initial={{ opacity: 0 }}
