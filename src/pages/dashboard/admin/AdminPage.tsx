@@ -1039,14 +1039,16 @@ export default function AdminPage() {
 
                       {(u.nda_signed || u.subcontractor_signed) && (
                         <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-9 border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/5 font-bold"
-                            >
-                              <ShieldCheck className="w-4 h-4 mr-2" /> View Agreements
-                            </Button>
+                          <DialogTrigger
+                            render={
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/5 font-bold"
+                              />
+                            }
+                          >
+                            <ShieldCheck className="w-4 h-4 mr-2" /> View Agreements
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -1356,10 +1358,12 @@ export default function AdminPage() {
                           </td>
                           <td className="py-4 text-right">
                             <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-[#008080] hover:text-[#006666] hover:bg-[#008080]/5 h-8">
-                                  Details
-                                </Button>
+                              <DialogTrigger
+                                render={
+                                  <Button variant="ghost" size="sm" className="text-[#008080] hover:text-[#006666] hover:bg-[#008080]/5 h-8" />
+                                }
+                              >
+                                Details
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-[600px]">
                                 <DialogHeader>
