@@ -12,6 +12,7 @@ interface Lesson {
   title: string;
   description: string;
   video_url: string;
+  audio_url?: string;
   module_id: string;
   order_index: number;
   modules: {
@@ -269,6 +270,15 @@ export default function LessonPage() {
               </div>
               
               <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
+                {lesson.audio_url && (
+                  <div className="mb-5 rounded-2xl border border-[#008080]/10 bg-[#EBF5F5] p-4">
+                    <p className="mb-3 text-sm font-semibold text-[#006666]">Lesson Audio</p>
+                    <audio controls preload="metadata" className="w-full">
+                      <source src={lesson.audio_url} />
+                      Your browser does not support the audio player.
+                    </audio>
+                  </div>
+                )}
                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
                   {lesson.description || "No additional notes or content available for this lesson."}
                 </div>

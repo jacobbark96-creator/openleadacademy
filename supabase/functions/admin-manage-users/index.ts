@@ -69,7 +69,6 @@ serve(async (req) => {
           full_name: p?.full_name || u.user_metadata?.full_name || 'Unknown',
           role: p?.role || 'student',
           phone: p?.phone || '',
-          youtube_url: p?.youtube_url,
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at,
           enrollments: userEnrollments
@@ -160,6 +159,53 @@ serve(async (req) => {
         }
       }
       
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    if (action === 'delete-user') {
+      const { userId } = payload
+
+      if (!userId) {
+        return new Response(JSON.stringify({ error: 'userId is required' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      if (userId === user.id) {
+        return new Response(JSON.stringify({ error: 'You cannot delete your own account' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        })
+      }
+
+      const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (targetProfileError) throw targetProfileError
+      if (!targetProfile) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404,
+        })
+      }
+
+      if (profile.role === 'trainer' && targetProfile.role !== 'student') {
+        return new Response(JSON.stringify({ error: 'Trainers can only delete student accounts' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+      if (deleteError) throw deleteError
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy, ShieldCheck, Search, Filter } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,10 +14,14 @@ interface UserProfile {
   full_name?: string;
   role: string;
   phone?: string;
-  youtube_url?: string;
   created_at?: string;
   last_sign_in_at?: string;
   enrollments?: string[];
+  nda_signed?: boolean;
+  nda_signed_at?: string;
+  subcontractor_signed?: boolean;
+  subcontractor_signed_at?: string;
+  agreement_signature_name?: string;
 }
 
 interface TeamMember {
@@ -81,6 +85,7 @@ interface Lesson {
   title: string;
   description: string;
   video_url?: string;
+  audio_url?: string;
   thumbnail_url?: string;
   order_index: number;
   week_number: number;
@@ -115,6 +120,7 @@ interface HelpArticle {
 
 export default function AdminPage() {
   const [role, setRole] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("users")
   const [users, setUsers] = useState<UserProfile[]>([])
   const [team, setTeam] = useState<TeamMember[]>([])
@@ -164,6 +170,7 @@ export default function AdminPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user && mounted) {
+          setCurrentUserId(session.user.id)
           const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
           if (profile && mounted) {
             setRole(profile.role)
@@ -332,16 +339,6 @@ export default function AdminPage() {
     loadModules()
   }, [selectedCourseId])
 
-  const handleUpdateYoutube = async (userId: string, url: string) => {
-    const { error } = await supabase.from('profiles').update({ youtube_url: url }).eq('id', userId)
-    if (error) {
-      toast.error("Failed to update YouTube URL")
-    } else {
-      toast.success("YouTube URL updated")
-      setUsers(users.map(u => u.id === userId ? { ...u, youtube_url: url } : u))
-    }
-  }
-
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     const loadingToast = toast.loading("Creating user...")
@@ -489,6 +486,7 @@ export default function AdminPage() {
       title: 'New Lesson',
       description: 'Lesson content/notes...',
       video_url: '',
+      audio_url: '',
       order_index: newOrderIndex,
       week_number: 1
     }).select().single()
@@ -714,6 +712,52 @@ export default function AdminPage() {
     }
   }
 
+  const canDeleteUser = (user: UserProfile) => {
+    if (!role || currentUserId === user.id) return false
+    if (role === 'admin') return true
+    if (role === 'trainer') return user.role === 'student'
+    return false
+  }
+
+  const handleDeleteUser = async (user: UserProfile) => {
+    if (!canDeleteUser(user)) {
+      toast.error("You do not have permission to delete this user")
+      return
+    }
+
+    const userLabel = user.full_name || user.email || 'this user'
+    if (!confirm(`Are you sure you want to delete ${userLabel}? This cannot be undone.`)) return
+
+    const loadingToast = toast.loading("Deleting user...")
+
+    try {
+      const { error } = await supabase.functions.invoke('admin-manage-users', {
+        body: {
+          action: 'delete-user',
+          userId: user.id
+        }
+      })
+
+      toast.dismiss(loadingToast)
+
+      if (error) {
+        toast.error(error.message || "Failed to delete user")
+        return
+      }
+
+      setUsers(users.filter((existingUser) => existingUser.id !== user.id))
+      if (selectedUserForDetails?.id === user.id) {
+        setIsDetailsModalOpen(false)
+        setSelectedUserForDetails(null)
+      }
+      toast.success("User deleted")
+    } catch (error: unknown) {
+      toast.dismiss(loadingToast)
+      const msg = error instanceof Error ? error.message : String(error)
+      toast.error(`Failed to delete user: ${msg}`)
+    }
+  }
+
   const handleCreateResource = async () => {
     const { data, error } = await supabase.from('resources').insert({
       title: 'New Resource',
@@ -838,6 +882,14 @@ export default function AdminPage() {
         </button>
         {role === 'admin' && (
           <button
+            onClick={() => setActiveTab("agreements")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'agreements' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Signed Agreements
+          </button>
+        )}
+        {role === 'admin' && (
+          <button
             onClick={() => setActiveTab("team")}
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'team' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
@@ -943,6 +995,11 @@ export default function AdminPage() {
                       <div className="flex items-center gap-3">
                         <p className="font-bold text-gray-900 text-lg">{u.full_name || 'Unknown'}</p>
                         <span className="text-xs text-gray-500 capitalize bg-white border border-gray-200 px-2 py-0.5 rounded-full font-semibold shadow-sm">{u.role}</span>
+                        {(u.nda_signed || u.subcontractor_signed) && (
+                          <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full border border-[#14B8A6]/20 font-bold uppercase tracking-wider">
+                            Agreements Signed
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
                         {u.email && (
@@ -980,20 +1037,65 @@ export default function AdminPage() {
                         <Settings className="w-4 h-4" /> Manage User
                       </Button>
 
-                      <div className="flex items-center gap-2 mr-2 w-full sm:w-auto mt-2 xl:mt-0">
-                        <Video className="w-5 h-5 text-red-500 flex-shrink-0" />
-                        <Input 
-                          className="h-9 text-xs w-full sm:w-48"
-                          placeholder="YouTube Channel URL" 
-                          defaultValue={u.youtube_url || ''}
-                          onBlur={(e) => {
-                            if (e.target.value !== u.youtube_url) {
-                              handleUpdateYoutube(u.id, e.target.value)
-                            }
-                          }}
-                        />
-                      </div>
-                      
+                      {(u.nda_signed || u.subcontractor_signed) && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-9 border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/5 font-bold"
+                            >
+                              <ShieldCheck className="w-4 h-4 mr-2" /> View Agreements
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <ShieldCheck className="w-5 h-5 text-[#14B8A6]" />
+                                Signed Agreements: {u.full_name}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-6 py-4">
+                              {u.nda_signed ? (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-bold text-slate-900">Non-Disclosure Agreement</h4>
+                                    <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full font-bold">SIGNED</span>
+                                  </div>
+                                  <div className="space-y-1 text-sm text-slate-500">
+                                    <p>Signed by: <span className="font-semibold text-slate-700">{u.agreement_signature_name}</span></p>
+                                    <p>Date: <span className="font-semibold text-slate-700">{u.nda_signed_at ? new Date(u.nda_signed_at).toLocaleString() : 'N/A'}</span></p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 opacity-50">
+                                  <h4 className="font-bold text-slate-400">Non-Disclosure Agreement</h4>
+                                  <p className="text-xs text-slate-400 italic">Not yet signed</p>
+                                </div>
+                              )}
+
+                              {u.subcontractor_signed ? (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-bold text-slate-900">Subcontractor Agreement</h4>
+                                    <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full font-bold">SIGNED</span>
+                                  </div>
+                                  <div className="space-y-1 text-sm text-slate-500">
+                                    <p>Signed by: <span className="font-semibold text-slate-700">{u.agreement_signature_name}</span></p>
+                                    <p>Date: <span className="font-semibold text-slate-700">{u.subcontractor_signed_at ? new Date(u.subcontractor_signed_at).toLocaleString() : 'N/A'}</span></p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 opacity-50">
+                                  <h4 className="font-bold text-slate-400">Subcontractor Agreement</h4>
+                                  <p className="text-xs text-slate-400 italic">Not yet signed</p>
+                                </div>
+                              )}
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+
                       <div className="flex items-center gap-2 mt-2 xl:mt-0">
                         {u.email && (
                           <Button 
@@ -1042,6 +1144,22 @@ export default function AdminPage() {
                             </div>
                           </DialogContent>
                         </Dialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 text-xs flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => handleDeleteUser(u)}
+                          disabled={!canDeleteUser(u)}
+                          title={
+                            currentUserId === u.id
+                              ? "You cannot delete your own account"
+                              : role === 'trainer' && u.role !== 'student'
+                                ? "Trainers can only delete student accounts"
+                                : undefined
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete User
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -1154,6 +1272,143 @@ export default function AdminPage() {
                 )}
               </DialogContent>
             </Dialog>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'agreements' && role === 'admin' && (
+        <div className="space-y-6">
+          <Card className="border-0 shadow-sm rounded-2xl">
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-[#14B8A6]" />
+                  Agreement Compliance Tracker
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Input 
+                      placeholder="Search by name or email..." 
+                      className="pl-9 w-full md:w-[300px] h-9 text-sm"
+                      onChange={(e) => {
+                        // We can add local filtering if needed, but for now just showing all
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="pb-3 font-bold text-gray-500 text-xs uppercase tracking-wider">User</th>
+                      <th className="pb-3 font-bold text-gray-500 text-xs uppercase tracking-wider text-center">NDA Status</th>
+                      <th className="pb-3 font-bold text-gray-500 text-xs uppercase tracking-wider text-center">Subcontractor Status</th>
+                      <th className="pb-3 font-bold text-gray-500 text-xs uppercase tracking-wider">Signature Name</th>
+                      <th className="pb-3 font-bold text-gray-500 text-xs uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-gray-500 italic">No users found.</td>
+                      </tr>
+                    ) : (
+                      users.map(u => (
+                        <tr key={u.id} className="group hover:bg-gray-50/50 transition-colors">
+                          <td className="py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-gray-900">{u.full_name || 'Unknown'}</span>
+                              <span className="text-xs text-gray-500">{u.email}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 text-center">
+                            {u.nda_signed ? (
+                              <div className="inline-flex flex-col items-center">
+                                <CheckCircle2 className="w-5 h-5 text-[#14B8A6]" />
+                                <span className="text-[10px] text-gray-400 mt-0.5">
+                                  {u.nda_signed_at ? new Date(u.nda_signed_at).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-2 h-2 rounded-full bg-gray-200 mx-auto" />
+                            )}
+                          </td>
+                          <td className="py-4 text-center">
+                            {u.subcontractor_signed ? (
+                              <div className="inline-flex flex-col items-center">
+                                <CheckCircle2 className="w-5 h-5 text-[#14B8A6]" />
+                                <span className="text-[10px] text-gray-400 mt-0.5">
+                                  {u.subcontractor_signed_at ? new Date(u.subcontractor_signed_at).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-2 h-2 rounded-full bg-gray-200 mx-auto" />
+                            )}
+                          </td>
+                          <td className="py-4">
+                            <span className="text-sm font-medium text-gray-700">
+                              {u.agreement_signature_name || <span className="text-gray-300 italic">Not signed</span>}
+                            </span>
+                          </td>
+                          <td className="py-4 text-right">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="text-[#008080] hover:text-[#006666] hover:bg-[#008080]/5 h-8">
+                                  Details
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[600px]">
+                                <DialogHeader>
+                                  <DialogTitle>Agreement Details: {u.full_name}</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6 py-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                      <h4 className="font-bold text-slate-900 mb-2">NDA</h4>
+                                      <div className="space-y-1 text-sm">
+                                        <p className="text-gray-500">Status: <span className={u.nda_signed ? "text-[#14B8A6] font-bold" : "text-gray-400"}>{u.nda_signed ? "Signed" : "Pending"}</span></p>
+                                        {u.nda_signed && (
+                                          <>
+                                            <p className="text-gray-500">Date: <span className="text-slate-700 font-medium">{new Date(u.nda_signed_at!).toLocaleString()}</span></p>
+                                            <p className="text-gray-500">IP Logged: <span className="text-slate-700 font-medium italic text-[10px]">Securely Logged</span></p>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                                      <h4 className="font-bold text-slate-900 mb-2">Subcontractor</h4>
+                                      <div className="space-y-1 text-sm">
+                                        <p className="text-gray-500">Status: <span className={u.subcontractor_signed ? "text-[#14B8A6] font-bold" : "text-gray-400"}>{u.subcontractor_signed ? "Signed" : "Pending"}</span></p>
+                                        {u.subcontractor_signed && (
+                                          <>
+                                            <p className="text-gray-500">Date: <span className="text-slate-700 font-medium">{new Date(u.subcontractor_signed_at!).toLocaleString()}</span></p>
+                                            <p className="text-gray-500">IP Logged: <span className="text-slate-700 font-medium italic text-[10px]">Securely Logged</span></p>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {u.agreement_signature_name && (
+                                    <div className="p-4 rounded-xl bg-[#008080]/5 border border-[#008080]/10">
+                                      <p className="text-xs text-[#008080] font-bold uppercase tracking-wider mb-1">Legal Signature</p>
+                                      <p className="text-2xl font-signature text-slate-800 italic" style={{ fontFamily: "'Dancing Script', cursive" }}>{u.agreement_signature_name}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}
@@ -1560,6 +1815,42 @@ export default function AdminPage() {
                                         defaultValue={lesson.video_url || ''} 
                                         onBlur={(e) => handleUpdateLesson(lesson.id, 'video_url', e.target.value)} 
                                       />
+                                    </div>
+                                    <div className="space-y-2 pr-8">
+                                      <Label className="text-xs">Lesson Audio</Label>
+                                      <div className="flex flex-col gap-2 rounded-lg border border-dashed border-gray-200 bg-white p-3">
+                                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                                          <Input
+                                            type="file"
+                                            accept="audio/*"
+                                            className="text-[10px]"
+                                            disabled={uploadingImage === lesson.id}
+                                            onChange={(e) => {
+                                              if (e.target.files?.[0]) {
+                                                handleFileUpload('resources', lesson.id, e.target.files[0], 'lessons', 'audio_url')
+                                              }
+                                            }}
+                                          />
+                                          {lesson.audio_url && (
+                                            <a
+                                              href={lesson.audio_url}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="text-xs font-medium text-[#008080] hover:underline"
+                                            >
+                                              Open audio file
+                                            </a>
+                                          )}
+                                        </div>
+                                        {lesson.audio_url ? (
+                                          <audio controls preload="metadata" className="w-full">
+                                            <source src={lesson.audio_url} />
+                                            Your browser does not support the audio player.
+                                          </audio>
+                                        ) : (
+                                          <p className="text-xs text-gray-500">Upload an audio file to show it in the lesson course content.</p>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="space-y-2 pr-8">
                                       <Label className="text-xs">Course Content</Label>
