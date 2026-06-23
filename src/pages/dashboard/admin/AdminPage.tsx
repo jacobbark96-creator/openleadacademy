@@ -741,7 +741,24 @@ export default function AdminPage() {
       toast.dismiss(loadingToast)
 
       if (error) {
-        toast.error(error.message || "Failed to delete user")
+        const anyError = error as any
+        const status = anyError.status ?? anyError.context?.status
+        let body: unknown = undefined
+
+        if (anyError.context && typeof anyError.context.clone === "function") {
+          const cloned = anyError.context.clone()
+          body = await cloned.json().catch(async () => await cloned.text())
+        } else if (anyError.context?.body) {
+          body = anyError.context.body
+        }
+
+        const messageFromBody =
+          typeof body === "object" && body && "error" in (body as any)
+            ? String((body as any).error)
+            : undefined
+
+        const statusPrefix = status ? `(${status}) ` : ""
+        toast.error(`${statusPrefix}${messageFromBody || error.message || "Failed to delete user"}`)
         return
       }
 

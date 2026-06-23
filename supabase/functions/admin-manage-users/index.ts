@@ -169,14 +169,14 @@ serve(async (req) => {
       const { userId } = payload
 
       if (!userId) {
-        return new Response(JSON.stringify({ error: 'userId is required' }), {
+        return new Response(JSON.stringify({ error: 'userId is required', action }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         })
       }
 
       if (userId === user.id) {
-        return new Response(JSON.stringify({ error: 'You cannot delete your own account' }), {
+        return new Response(JSON.stringify({ error: 'You cannot delete your own account', action }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         })
@@ -190,14 +190,14 @@ serve(async (req) => {
 
       if (targetProfileError) throw targetProfileError
       if (!targetProfile) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
+        return new Response(JSON.stringify({ error: 'User not found', action }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 404,
         })
       }
 
       if (profile.role === 'trainer' && targetProfile.role !== 'student') {
-        return new Response(JSON.stringify({ error: 'Trainers can only delete student accounts' }), {
+        return new Response(JSON.stringify({ error: 'Trainers can only delete student accounts', action }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 403,
         })
@@ -218,7 +218,7 @@ serve(async (req) => {
     })
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error.message, code: error.code, details: error.details, hint: error.hint }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })
