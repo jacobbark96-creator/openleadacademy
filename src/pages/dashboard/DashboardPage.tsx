@@ -11,7 +11,7 @@ interface Lesson {
   title: string;
   description: string;
   week_number: number;
-  thumbnail_url?: string;
+  image_url?: string;
   module_id: string;
   order_index: number;
 }
@@ -21,6 +21,7 @@ interface Module {
   title: string;
   description: string;
   video_url?: string;
+  image_url?: string;
   order_index: number;
   lessons: Lesson[];
   status: 'completed' | 'unlocked' | 'locked';
@@ -318,7 +319,15 @@ export default function DashboardPage() {
                         <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${module.status !== 'locked' ? 'bg-gray-900' : 'bg-gray-100'}`}>
                           {module.status !== 'locked' ? (
                             <>
-                              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2940&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+                              {module.image_url ? (
+                                <img 
+                                  src={module.image_url} 
+                                  alt={module.title}
+                                  className="absolute inset-0 w-full h-full object-cover opacity-60"
+                                />
+                              ) : (
+                                <div className="absolute inset-0 bg-slate-800 opacity-40"></div>
+                              )}
                               <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <div className="w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center pl-0.5 shadow-sm">
                                   <PlayCircle className="w-3.5 h-3.5 text-gray-900" />

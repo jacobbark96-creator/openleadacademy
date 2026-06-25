@@ -48,7 +48,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
-  thumbnail_url?: string;
+  image_url?: string;
   created_at: string;
 }
 
@@ -58,7 +58,7 @@ interface Module {
   title: string;
   description: string;
   video_url?: string;
-  thumbnail_url?: string;
+  image_url?: string;
   order_index: number;
 }
 
@@ -86,7 +86,7 @@ interface Lesson {
   description: string;
   video_url?: string;
   audio_url?: string;
-  thumbnail_url?: string;
+  image_url?: string;
   order_index: number;
   week_number: number;
 }
@@ -96,7 +96,7 @@ interface LibraryResource {
   title: string;
   url: string;
   type: string;
-  thumbnail_url?: string;
+  image_url?: string;
   description?: string;
   category?: string;
   created_at: string;
@@ -1642,8 +1642,8 @@ export default function AdminPage() {
                     <Label className="text-xs">Cover Photo</Label>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded bg-gray-100 border overflow-hidden flex-shrink-0">
-                        {courses.find(c => c.id === selectedCourseId)?.thumbnail_url ? (
-                          <img src={courses.find(c => c.id === selectedCourseId)?.thumbnail_url} className="w-full h-full object-cover" />
+                        {courses.find(c => c.id === selectedCourseId)?.image_url ? (
+                          <img src={courses.find(c => c.id === selectedCourseId)?.image_url} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <Plus className="w-4 h-4" />
@@ -1654,7 +1654,7 @@ export default function AdminPage() {
                         type="file" 
                         accept="image/*"
                         className="h-8 text-[10px]"
-                        onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', selectedCourseId, e.target.files[0], 'courses', 'thumbnail_url')}
+                        onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', selectedCourseId, e.target.files[0], 'courses', 'image_url')}
                       />
                     </div>
                   </div>
@@ -1713,8 +1713,8 @@ export default function AdminPage() {
                           <Label className="text-xs text-gray-500">Cover Photo</Label>
                           <div className="flex items-center gap-2">
                             <div className="w-10 h-10 rounded bg-white border flex-shrink-0 overflow-hidden">
-                              {mod.thumbnail_url ? (
-                                <img src={mod.thumbnail_url} className="w-full h-full object-cover" />
+                              {mod.image_url ? (
+                                <img src={mod.image_url} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
                                   <Plus className="w-3 h-3" />
@@ -1725,7 +1725,7 @@ export default function AdminPage() {
                               type="file" 
                               accept="image/*"
                               className="h-8 text-[10px]"
-                              onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', mod.id, e.target.files[0], 'modules', 'thumbnail_url')}
+                              onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', mod.id, e.target.files[0], 'modules', 'image_url')}
                             />
                           </div>
                         </div>
@@ -1796,8 +1796,8 @@ export default function AdminPage() {
                                         <Label className="text-xs">Cover Photo</Label>
                                         <div className="flex items-center gap-2">
                                           <div className="w-10 h-10 rounded bg-white border flex-shrink-0 overflow-hidden">
-                                            {lesson.thumbnail_url ? (
-                                              <img src={lesson.thumbnail_url} className="w-full h-full object-cover" />
+                                            {lesson.image_url ? (
+                                              <img src={lesson.image_url} className="w-full h-full object-cover" />
                                             ) : (
                                               <div className="w-full h-full flex items-center justify-center text-gray-300">
                                                 <Plus className="w-3 h-3" />
@@ -1808,7 +1808,7 @@ export default function AdminPage() {
                                             type="file" 
                                             accept="image/*"
                                             className="h-8 text-[10px]"
-                                            onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', lesson.id, e.target.files[0], 'lessons', 'thumbnail_url')}
+                                            onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', lesson.id, e.target.files[0], 'lessons', 'image_url')}
                                           />
                                         </div>
                                       </div>
@@ -2002,8 +2002,8 @@ export default function AdminPage() {
                 <div key={res.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 space-y-4 relative group">
                   <div className="flex gap-4">
                     <div className="w-24 h-32 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0 relative">
-                      {res.thumbnail_url ? (
-                        <img src={res.thumbnail_url} className="w-full h-full object-cover" />
+                      {res.image_url ? (
+                        <img src={res.image_url} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <BookOpen className="w-8 h-8" />
@@ -2015,7 +2015,7 @@ export default function AdminPage() {
                           type="file" 
                           className="hidden" 
                           accept="image/*"
-                          onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', res.id, e.target.files[0], 'resources', 'thumbnail_url')}
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload('thumbnails', res.id, e.target.files[0], 'resources', 'image_url')}
                         />
                       </Label>
                     </div>

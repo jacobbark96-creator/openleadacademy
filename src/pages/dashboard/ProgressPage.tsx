@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 interface CourseProgress {
   id: string;
   title: string;
-  thumbnail_url?: string;
+  image_url?: string;
   total_lessons: number;
   completed_lessons: number;
   percentage: number;
@@ -75,7 +75,7 @@ export default function ProgressPage() {
           courseData.push({
             id: course.id,
             title: course.title,
-            thumbnail_url: course.thumbnail_url,
+            image_url: course.image_url,
             total_lessons: totalLessons || 0,
             completed_lessons: completedCount,
             percentage
@@ -170,8 +170,8 @@ export default function ProgressPage() {
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row items-stretch">
                     <div className="w-full md:w-48 h-32 bg-gray-100 flex-shrink-0">
-                      {course.thumbnail_url ? (
-                        <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                      {course.image_url ? (
+                        <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
                           <BookOpen className="w-10 h-10" />

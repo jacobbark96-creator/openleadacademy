@@ -9,7 +9,7 @@ interface LibraryResource {
   title: string;
   url: string;
   type: string;
-  thumbnail_url?: string;
+  image_url?: string;
   description?: string;
   category?: string;
   created_at: string;
@@ -73,9 +73,9 @@ export default function LibraryPage() {
           {filteredResources.map(res => (
             <Card key={res.id} className="group border-0 shadow-md rounded-[1.5rem] overflow-hidden bg-white transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
               <div className="aspect-[3/4] relative overflow-hidden bg-gray-100 flex-shrink-0">
-                {res.thumbnail_url ? (
+                {res.image_url ? (
                   <img 
-                    src={res.thumbnail_url} 
+                    src={res.image_url} 
                     alt={res.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
