@@ -38,6 +38,7 @@ export default function SettingsPage() {
   
   const [primaryColor, setPrimaryColor] = useState(company?.primary_color || "#000000")
   const [customDomain, setCustomDomain] = useState(company?.custom_domain || "")
+  const [isEditingDomain, setIsEditingDomain] = useState(!company?.custom_domain)
   const [logoHeight, setLogoHeight] = useState(company?.logo_height || 40)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   
@@ -364,12 +365,41 @@ export default function SettingsPage() {
                         </DialogContent>
                       </Dialog>
                     </div>
-                    <Input 
-                      type="text" 
-                      placeholder="e.g. training.yourcompany.com" 
-                      value={customDomain}
-                      onChange={(e) => setCustomDomain(e.target.value)}
-                    />
+                    {isEditingDomain ? (
+                      <div className="flex flex-col gap-2">
+                        <Input 
+                          type="text" 
+                          placeholder="e.g. training.yourcompany.com" 
+                          value={customDomain}
+                          onChange={(e) => setCustomDomain(e.target.value)}
+                        />
+                        {company.custom_domain && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                              setIsEditingDomain(false)
+                              setCustomDomain(company.custom_domain || "")
+                            }}
+                            className="self-end text-xs h-6"
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span className="font-mono text-sm text-gray-700 truncate">{company.custom_domain}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setIsEditingDomain(true)}
+                          className="h-7 text-xs shrink-0 ml-2"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-4 flex flex-col gap-2">
