@@ -279,10 +279,8 @@ export default function SettingsPage() {
                       <Dialog onOpenChange={(open) => {
                         if (open && customDomain) detectDnsProvider()
                       }}>
-                        <DialogTrigger asChild>
-                          <Button variant="link" className="h-auto p-0 text-xs text-primary">
-                            DNS Setup Guide
-                          </Button>
+                        <DialogTrigger render={<Button variant="link" className="h-auto p-0 text-xs text-primary" />}>
+                          DNS Setup Guide
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
@@ -336,12 +334,10 @@ export default function SettingsPage() {
                                     </p>
                                   </div>
                                   <Button 
-                                    asChild 
+                                    render={<a href={detectedProvider.url} target="_blank" rel="noreferrer" />}
                                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                                   >
-                                    <a href={detectedProvider.url} target="_blank" rel="noreferrer">
                                       Log in to {detectedProvider.name} <ExternalLink className="w-4 h-4 ml-2" />
-                                    </a>
                                   </Button>
                                 </div>
                               ) : (

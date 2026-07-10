@@ -108,10 +108,8 @@ export function Topbar() {
     <header className="flex h-16 md:h-20 items-center justify-between bg-white md:bg-transparent border-b md:border-b-0 px-4 md:px-8 shrink-0 sticky top-0 z-20">
       <div className="flex items-center gap-4 md:hidden">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <div className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100 md:hidden cursor-pointer text-gray-700">
-              <Menu className="h-5 w-5" />
-            </div>
+          <SheetTrigger render={<div className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100 md:hidden cursor-pointer text-gray-700" />}>
+            <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[240px]">
             <Sidebar className="w-full border-none h-full" />

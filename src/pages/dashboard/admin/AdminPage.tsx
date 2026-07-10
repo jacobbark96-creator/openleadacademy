@@ -169,7 +169,7 @@ export default function AdminPage() {
         
         if (profilesData && mounted) setUsers(profilesData)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("EDGE FUNCTION CATCH ERROR:", err)
       toast.error(`Edge function catch error: ${err.message || String(err)}`)
       console.warn("Could not fetch admin users, falling back to profiles", err)
@@ -229,7 +229,7 @@ export default function AdminPage() {
             if (modData && mounted) {
               setModules(modData)
               // Load quizzes for these modules
-              const modIds = modData.map(m => m.id)
+              const modIds = modData.map((m: any) => m.id)
               if (modIds.length > 0) {
                 const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
                 if (quizData) setQuizzes(quizData)
