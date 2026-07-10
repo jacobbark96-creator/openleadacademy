@@ -84,8 +84,8 @@ export default function ResetPasswordPage() {
       <Card className="bg-white/5 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
         <CardContent className="flex flex-col items-center justify-center py-16 space-y-6">
           <div className="relative">
-            <div className="absolute inset-0 bg-[#14B8A6]/20 blur-xl rounded-full animate-pulse" />
-            <Loader2 className="h-10 w-10 animate-spin text-[#14B8A6] relative z-10" />
+            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+            <Loader2 className="h-10 w-10 animate-spin text-primary relative z-10" />
           </div>
           <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-xs">Verifying Credentials...</p>
         </CardContent>
@@ -114,12 +114,12 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 pr-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 pr-12 focus:border-primary/50 focus:ring-primary/20 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-[#14B8A6] transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-primary transition-colors"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -135,12 +135,12 @@ export default function ResetPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-[#14B8A6]/50 focus:ring-[#14B8A6]/20 transition-all"
+              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 focus:border-primary/50 focus:ring-primary/20 transition-all"
             />
           </div>
           <Button
             type="submit"
-            className="w-full rounded-2xl h-14 text-white shadow-[0_0_30px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-0 font-black text-sm uppercase tracking-[0.2em]"
+            className="w-full rounded-2xl h-14 text-white shadow-[0_0_30px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.4)] transition-all bg-primary hover:bg-primary/90 border-0 font-black text-sm uppercase tracking-[0.2em]"
             disabled={loading}
           >
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Authorize New Key"}

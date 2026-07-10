@@ -162,7 +162,7 @@ export default function SupportPage() {
           <Card className="border-0 shadow-md rounded-[1.5rem] bg-gray-900 text-white overflow-hidden">
             <CardContent className="p-6 space-y-4 text-center">
               <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                <MessageSquare className="w-6 h-6 text-[#14B8A6]" />
+                <MessageSquare className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-lg font-bold">Help Articles</h3>
               <p className="text-xs text-gray-400 font-medium leading-relaxed">
@@ -170,7 +170,7 @@ export default function SupportPage() {
               </p>
               <a 
                 href="/dashboard/help"
-                className="flex items-center justify-center h-10 w-full bg-[#14B8A6] text-white rounded-lg font-bold text-sm hover:bg-[#0D9488] transition-colors"
+                className="flex items-center justify-center h-10 w-full bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-colors"
               >
                 Go to Help Centre
               </a>

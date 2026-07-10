@@ -82,20 +82,20 @@ export default function AboutPage() {
           <section className="mb-24">
             <h2 className="text-2xl md:text-3xl font-black text-white mb-12 uppercase tracking-widest text-center">Our Core Ethos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 max-w-5xl mx-auto">
-              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
-                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Radical Action</h3>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-primary/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-primary mb-4 uppercase tracking-wider">Radical Action</h3>
                 <p className="text-slate-400 leading-relaxed text-sm md:text-base">Theory is nothing without action. We prioritize reps, roleplays, and real-world application over abstract concepts.</p>
               </div>
-              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
-                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Continuous Evolution</h3>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-primary/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-primary mb-4 uppercase tracking-wider">Continuous Evolution</h3>
                 <p className="text-slate-400 leading-relaxed text-sm md:text-base">The market changes, and so do we. Our curriculum is constantly updated with the latest tactics working today.</p>
               </div>
-              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
-                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Integrity First</h3>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-primary/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-primary mb-4 uppercase tracking-wider">Integrity First</h3>
                 <p className="text-slate-400 leading-relaxed text-sm md:text-base">We teach sales as a service. We close deals by genuinely solving problems, not through manipulation.</p>
               </div>
-              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-[#14B8A6]/50 transition-colors duration-500">
-                <h3 className="text-lg md:text-xl font-black text-[#14B8A6] mb-4 uppercase tracking-wider">Elite Community</h3>
+              <div className="bg-white/5 border border-white/10 p-8 rounded-3xl hover:border-primary/50 transition-colors duration-500">
+                <h3 className="text-lg md:text-xl font-black text-primary mb-4 uppercase tracking-wider">Elite Community</h3>
                 <p className="text-slate-400 leading-relaxed text-sm md:text-base">You are the average of the people you surround yourself with. We cultivate a network of winners.</p>
               </div>
             </div>
@@ -109,27 +109,27 @@ export default function AboutPage() {
                 return (
                   <div key={i} className="bg-white/5 rounded-[32px] p-10 border border-white/5 hover:border-white/20 transition-all flex flex-col items-center group">
                     {leader.image_url ? (
-                      <div className="w-28 h-28 mb-6 rounded-full overflow-hidden border-2 border-[#14B8A6]/20 group-hover:border-[#14B8A6] transition-colors">
+                      <div className="w-28 h-28 mb-6 rounded-full overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-colors">
                         <img src={leader.image_url} alt={leader.name} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div className="w-28 h-28 bg-white/5 rounded-full mb-6 flex items-center justify-center text-3xl font-black text-slate-700 border-2 border-white/10 group-hover:border-[#14B8A6]/50 transition-colors">
+                      <div className="w-28 h-28 bg-white/5 rounded-full mb-6 flex items-center justify-center text-3xl font-black text-slate-700 border-2 border-white/10 group-hover:border-primary/50 transition-colors">
                         {initials}
                       </div>
                     )}
                     <h3 className="text-xl font-black text-white mb-1 tracking-tight">{leader.name}</h3>
-                    <p className="text-[#14B8A6] font-bold text-xs uppercase tracking-[0.2em]">{leader.role_title}</p>
+                    <p className="text-primary font-bold text-xs uppercase tracking-[0.2em]">{leader.role_title}</p>
                   </div>
                 )
               })}
             </div>
           </section>
 
-          <section className="bg-gradient-to-br from-[#14B8A6]/20 to-transparent rounded-[40px] p-16 text-center border border-[#14B8A6]/20">
+          <section className="bg-gradient-to-br from-primary/20 to-transparent rounded-[40px] p-16 text-center border border-primary/20">
             <h2 className="text-4xl font-black text-white mb-6 tracking-tight">Ready for the challenge?</h2>
             <p className="text-slate-400 mb-10 max-w-2xl mx-auto text-lg">Join the ranks of the world's most elite revenue generators.</p>
             <Link to="/signup">
-              <Button className="rounded-full h-16 px-12 text-xl text-white shadow-[0_0_30px_rgba(20,184,166,0.2)] hover:shadow-[0_0_50px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-none font-black uppercase tracking-widest">
+              <Button className="rounded-full h-16 px-12 text-xl text-white shadow-[0_0_30px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_50px_hsl(var(--primary)/0.4)] transition-all bg-primary hover:bg-primary/90 border-none font-black uppercase tracking-widest">
                 Request Admission
               </Button>
             </Link>

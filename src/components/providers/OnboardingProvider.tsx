@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { AgreementModal } from '@/components/onboarding/AgreementModal'
 import { NDA_CONTENT, SUBCONTRACTOR_CONTENT } from '@/constants/agreements'
 import { toast } from 'sonner'
+import { useTenant } from '@/providers/TenantProvider'
 
 interface OnboardingContextType {
   isComplete: boolean
@@ -16,18 +17,27 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [profile, setProfile] = useState<any>(null)
   const [showModal, setShowModal] = useState(false)
   const [currentStep, setCurrentStep] = useState(1) // 1: NDA, 2: Subcontractor
+  const { company: tenant } = useTenant()
 
   const fetchProfile = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, companies:company_id(slug)')
         .eq('id', session.user.id)
         .single()
       
       if (data) {
         setProfile(data)
+        
+        // Skip onboarding if not the default tenant
+        if (data.companies?.slug !== 'openlead') {
+          setShowModal(false)
+          setIsLoading(false)
+          return
+        }
+
         // Determine initial step
         if (!data.nda_signed) {
           setCurrentStep(1)
@@ -45,7 +55,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     fetchProfile()
-  }, [])
+  }, [tenant])
 
   const handleSign = async (signatureName: string) => {
     try {
@@ -98,7 +108,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
-  const isComplete = profile?.nda_signed && profile?.subcontractor_signed
+  const isComplete = (profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed)
 
   return (
     <OnboardingContext.Provider value={{ isComplete, isLoading }}>

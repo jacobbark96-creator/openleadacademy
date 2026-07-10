@@ -48,13 +48,13 @@ export default function ContactPage() {
               <Card className="bg-white/5 border-white/10 shadow-2xl rounded-[32px] overflow-hidden">
                 <CardContent className="p-10 space-y-8">
                   <div className="flex items-start gap-6">
-                    <div className="w-14 h-14 bg-[#14B8A6]/10 rounded-2xl flex items-center justify-center text-[#14B8A6] flex-shrink-0 border border-[#14B8A6]/20">
+                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary flex-shrink-0 border border-primary/20">
                       <Mail className="w-7 h-7" />
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-white mb-1">Priority Support</h3>
                       <p className="text-slate-500 mb-2">Typically replies within 2 hours.</p>
-                      <a href="mailto:admissions@openlead.academy" className="text-[#14B8A6] font-bold hover:underline">admissions@openlead.academy</a>
+                      <a href="mailto:admissions@openlead.academy" className="text-primary font-bold hover:underline">admissions@openlead.academy</a>
                     </div>
                   </div>
                   
@@ -97,7 +97,7 @@ export default function ContactPage() {
             </div>
 
             <Card className="bg-white/5 border-white/10 shadow-2xl rounded-[40px] overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#14B8A6]/5 blur-3xl" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl" />
               <CardContent className="p-10 md:p-12">
                 <h2 className="text-3xl font-black text-white mb-8 tracking-tight">Send a Message</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -108,7 +108,7 @@ export default function ContactPage() {
                       required 
                       value={formData.name}
                       onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] h-14"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-primary focus:ring-1 focus:ring-primary h-14"
                     />
                   </div>
                   <div className="space-y-2">
@@ -119,7 +119,7 @@ export default function ContactPage() {
                       required 
                       value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
-                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] h-14"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-primary focus:ring-1 focus:ring-primary h-14"
                     />
                   </div>
                   <div className="space-y-2">
@@ -130,10 +130,10 @@ export default function ContactPage() {
                       rows={5}
                       value={formData.message}
                       onChange={e => setFormData({...formData, message: e.target.value})}
-                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-[#14B8A6] focus:ring-1 focus:ring-[#14B8A6] resize-none"
+                      className="rounded-2xl bg-white/5 border-white/10 text-white focus:border-primary focus:ring-1 focus:ring-primary resize-none"
                     />
                   </div>
-                  <Button type="submit" className="w-full rounded-full h-16 text-white text-xl mt-4 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_40px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-none font-black uppercase tracking-widest" disabled={loading}>
+                  <Button type="submit" className="w-full rounded-full h-16 text-white text-xl mt-4 shadow-[0_0_20px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.4)] transition-all bg-primary hover:bg-primary/90 border-none font-black uppercase tracking-widest" disabled={loading}>
                     {loading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : "Submit Inquiry"}
                   </Button>
                 </form>

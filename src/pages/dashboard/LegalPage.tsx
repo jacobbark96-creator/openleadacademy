@@ -64,8 +64,8 @@ export default function LegalPage() {
             <Card className="overflow-hidden border-slate-200 shadow-sm">
               <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="p-2.5 bg-[#14B8A6]/10 rounded-xl">
-                    <ShieldCheck className="w-6 h-6 text-[#14B8A6]" />
+                  <div className="p-2.5 bg-primary/10 rounded-xl">
+                    <ShieldCheck className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">{agreement.title}</h2>
@@ -82,7 +82,7 @@ export default function LegalPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#14B8A6]/10 text-[#14B8A6] border border-[#14B8A6]/20">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                     Officially Executed
                   </span>
                 </div>
@@ -103,7 +103,7 @@ export default function LegalPage() {
                   </div>
                   <button 
                     onClick={() => window.print()}
-                    className="flex items-center gap-2 text-sm font-bold text-[#14B8A6] hover:text-[#0D9488] transition-colors"
+                    className="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary/90 transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     Print / Save PDF
@@ -124,7 +124,7 @@ export default function LegalPage() {
           Contact Admin
         </button>
         {/* Background glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#14B8A6]/10 blur-[80px] -mr-32 -mt-32" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[80px] -mr-32 -mt-32" />
       </div>
     </div>
   )

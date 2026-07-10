@@ -24,6 +24,7 @@ export function PublicHeader() {
         <nav className="hidden md:flex items-center gap-8 bg-white/5 backdrop-blur-md px-8 py-3 rounded-full border border-white/10 shadow-2xl">
           <Link to="/" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Home</Link>
           <Link to="/about" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">About Us</Link>
+          <Link to="/pricing" className="text-sm font-bold text-slate-400 hover:text-primary transition-colors">Platform</Link>
           <Link to="/vacancies" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Vacancies</Link>
           <Link to="/contact" className="text-sm font-bold text-slate-400 hover:text-white transition-colors">Contact</Link>
         </nav>
@@ -33,7 +34,7 @@ export function PublicHeader() {
             <Button variant="ghost" className="font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-full px-6">Login</Button>
           </Link>
           <Link to="/signup">
-            <Button className="rounded-full text-white px-8 shadow-[0_0_20px_rgba(20,184,166,0.2)] hover:shadow-[0_0_30px_rgba(20,184,166,0.4)] transition-all bg-[#14B8A6] hover:bg-[#0D9488] border-none font-black text-sm uppercase tracking-wider">Join Academy</Button>
+            <Button className="rounded-full text-white px-8 shadow-[0_0_20px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] transition-all bg-primary hover:bg-primary/90 border-none font-black text-sm uppercase tracking-wider">Join Academy</Button>
           </Link>
         </div>
       </div>

@@ -58,6 +58,8 @@ export default function DashboardPage() {
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
   const [currentCourse, setCurrentCourse] = useState<any>(null)
 
+  const [role, setRole] = useState<string>("student")
+  
   useEffect(() => {
     let mounted = true;
     async function loadDashboardData() {
@@ -72,6 +74,12 @@ export default function DashboardPage() {
         }
 
         if (mounted) {
+          // Fetch user role
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+          if (profile) {
+            setRole(profile.role)
+          }
+
           // Fetch enrolled courses for the current user
           const { data: enrollmentData, error: enrollError } = await supabase
             .from('course_enrollments')
@@ -223,9 +231,35 @@ export default function DashboardPage() {
   const currentModule = modules.find(m => m.status === 'unlocked') || modules[0]
   const nextLessonId = currentModule?.lessons?.[0]?.id
 
+  if (role === 'admin') {
+    return (
+      <div className="flex flex-col h-full lg:overflow-hidden pb-4">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+          <Trophy className="w-16 h-16 text-[#008080] mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to your Academy!</h1>
+          <p className="text-gray-500 max-w-md mb-8">
+            Your academy is ready to go. You can start setting up your brand, creating courses, and inviting your team or students.
+          </p>
+          <div className="flex gap-4">
+            <Link to="/dashboard/settings">
+              <Button className="bg-[#008080] hover:bg-[#006666] text-white font-bold px-6">
+                Customize Brand
+              </Button>
+            </Link>
+            <Link to="/dashboard/admin">
+              <Button variant="outline" className="font-bold px-6">
+                Go to Admin Panel
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col h-full overflow-hidden pb-4">
-      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-4 xl:gap-6 min-h-0 overflow-y-auto lg:overflow-hidden pr-1 lg:pr-0">
+    <div className="flex flex-col h-full lg:overflow-hidden pb-4">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[1fr_280px] gap-4 xl:gap-6 min-h-0 lg:overflow-hidden">
         {/* Main Content Area (Curriculum & Progress) */}
         <div className="flex flex-col min-h-0 space-y-4 lg:overflow-hidden">
           {/* Progress Card (Fixed) */}
@@ -314,44 +348,47 @@ export default function DashboardPage() {
 
                     {/* Card Content */}
                     <Card className={`flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors ${module.status === 'locked' ? 'opacity-75' : ''}`}>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center p-2.5 gap-3">
-                        {/* Thumbnail */}
-                        <div className={`w-full sm:w-[120px] h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${module.status !== 'locked' ? 'bg-gray-900' : 'bg-gray-100'}`}>
-                          {module.status !== 'locked' ? (
-                            <>
-                              {module.image_url ? (
-                                <img 
-                                  src={module.image_url} 
-                                  alt={module.title}
-                                  className="absolute inset-0 w-full h-full object-cover opacity-60"
-                                />
-                              ) : (
-                                <div className="absolute inset-0 bg-slate-800 opacity-40"></div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                <div className="w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center pl-0.5 shadow-sm">
-                                  <PlayCircle className="w-3.5 h-3.5 text-gray-900" />
+                      <div className="flex flex-col sm:flex-row p-3 gap-3 sm:items-center">
+                        {/* Mobile Top Row: Thumbnail + Info */}
+                        <div className="flex flex-row items-start gap-3 flex-1 min-w-0">
+                          {/* Thumbnail */}
+                          <div className={`w-[100px] sm:w-[120px] h-[60px] sm:h-[68px] rounded-lg flex-shrink-0 overflow-hidden relative ${module.status !== 'locked' ? 'bg-gray-900' : 'bg-gray-100'}`}>
+                            {module.status !== 'locked' ? (
+                              <>
+                                {module.image_url ? (
+                                  <img 
+                                    src={module.image_url} 
+                                    alt={module.title}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 bg-slate-800 opacity-40"></div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                  <div className="w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center pl-0.5 shadow-sm">
+                                    <PlayCircle className="w-3.5 h-3.5 text-gray-900" />
+                                  </div>
                                 </div>
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                                <Lock className="w-4 h-4 text-gray-300" />
                               </div>
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                              <Lock className="w-4 h-4 text-gray-300" />
-                            </div>
-                          )}
-                        </div>
+                            )}
+                          </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0 py-0.5">
-                          <h3 className="text-xs font-bold text-gray-900">Module {idx + 1}: {module.title}</h3>
-                          <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{module.description}</p>
-                          <div className="flex items-center gap-2 mt-1.5">
-                             <div className="text-[10px] font-medium text-gray-400">{module.lessons.length} Lessons</div>
+                          {/* Info */}
+                          <div className="flex-1 min-w-0 py-0.5">
+                            <h3 className="text-xs font-bold text-gray-900">Module {idx + 1}: {module.title}</h3>
+                            <p className="text-[11px] text-gray-500 mt-0.5 leading-snug line-clamp-2 pr-2">{module.description}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                               <div className="text-[10px] font-medium text-gray-400">{module.lessons.length} Lessons</div>
+                            </div>
                           </div>
                         </div>
 
                         {/* Actions/Status */}
-                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 pl-2">
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 sm:pl-2 w-full sm:w-auto mt-2 sm:mt-0">
                           {module.video_url && module.status !== 'locked' && (
                             <Dialog>
                               <DialogTrigger render={<Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#008080] hover:bg-[#EBF5F5] font-semibold gap-1" />}>

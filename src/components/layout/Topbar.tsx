@@ -16,6 +16,7 @@ import { useEffect, useState } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "./Sidebar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Logo } from "@/components/Logo"
 
 interface User {
   id: string;
@@ -40,6 +41,12 @@ export function Topbar() {
   const [user, setUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     let mounted = true;
@@ -100,16 +107,21 @@ export function Topbar() {
   return (
     <header className="flex h-16 md:h-20 items-center justify-between bg-white md:bg-transparent border-b md:border-b-0 px-4 md:px-8 shrink-0 sticky top-0 z-20">
       <div className="flex items-center gap-4 md:hidden">
-        <Sheet>
-          <SheetTrigger>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
             <div className="flex h-10 w-10 items-center justify-center rounded-md hover:bg-gray-100 md:hidden cursor-pointer text-gray-700">
               <Menu className="h-5 w-5" />
             </div>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-[240px]">
-            <Sidebar />
+            <Sidebar className="w-full border-none h-full" />
           </SheetContent>
         </Sheet>
+        <div className="md:hidden scale-75 origin-left">
+          <Link to="/dashboard">
+            <Logo variant="dark" />
+          </Link>
+        </div>
       </div>
 
       <div className="flex-1 hidden md:flex flex-col">

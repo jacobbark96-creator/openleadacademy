@@ -1,14 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 import { supabase } from "./lib/supabase/client"
+import { TenantProvider } from "./providers/TenantProvider"
 import HomePage from "./pages/HomePage"
 import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
+import RegisterAcademyPage from "./pages/RegisterAcademyPage"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import AboutPage from "./pages/AboutPage"
 import ContactPage from "./pages/ContactPage"
 import VacanciesPage from "./pages/VacanciesPage"
+import PricingPage from "./pages/PricingPage"
 import DashboardLayout from "./layouts/DashboardLayout"
 import AuthLayout from "./layouts/AuthLayout"
 import DashboardPage from "./pages/dashboard/DashboardPage"
@@ -44,18 +47,21 @@ function AuthListener() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthListener />
-      <Routes>
-        {/* Public Routes */}
+      <TenantProvider>
+        <AuthListener />
+        <Routes>
+          {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/vacancies" element={<VacanciesPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
         
         {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/register-academy" element={<RegisterAcademyPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
@@ -82,7 +88,8 @@ export default function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </TenantProvider>
     </BrowserRouter>
   )
 }

@@ -1,6 +1,7 @@
 import { Logo } from "@/components/Logo"
-import { Outlet } from "react-router-dom"
+import { Outlet, Link } from "react-router-dom"
 import { motion } from "framer-motion"
+import { ArrowRight } from "lucide-react"
 
 export default function AuthLayout() {
   return (
@@ -16,7 +17,7 @@ export default function AuthLayout() {
       </div>
 
       {/* Decorative Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#14B8A6]/5 blur-[120px] rounded-full z-0 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/5 blur-[120px] rounded-full z-0 pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10">
         <motion.div 
@@ -39,14 +40,20 @@ export default function AuthLayout() {
           <Outlet />
         </motion.div>
 
-        <motion.p 
+        <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
-          className="text-center mt-12 text-[10px] text-slate-500 font-bold uppercase tracking-widest"
+          className="mt-12 flex flex-col items-center gap-6"
         >
-          © 2026 Openlead Academy • All Rights Reserved
-        </motion.p>
+          <Link to="/pricing" className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:border-primary/50">
+            <span>Start Your Own Academy</span>
+            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <p className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+            © {new Date().getFullYear()} Openlead Academy • All Rights Reserved
+          </p>
+        </motion.div>
       </div>
     </div>
   )

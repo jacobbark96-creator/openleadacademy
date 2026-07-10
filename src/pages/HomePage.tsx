@@ -34,12 +34,12 @@ export default function HomePage() {
               transition={{ duration: 1, ease: "easeOut" }}
               className="max-w-4xl mx-auto"
             >
-              <span className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#14B8A6] text-xs font-bold tracking-[0.2em] uppercase mb-6">
+              <span className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-primary text-xs font-bold tracking-[0.2em] uppercase mb-6">
                 Admission by Application Only
               </span>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-[1.1] tracking-tight">
                 THE ELITE ARSENAL <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#14B8A6] to-white/60">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white/60">
                   FOR TOP 2% SELLERS
                 </span>
               </h1>
@@ -49,7 +49,7 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link to="/signup">
-                  <Button size="lg" className="h-14 px-10 text-base font-black bg-[#14B8A6] hover:bg-[#0D9488] text-white rounded-full shadow-[0_0_30px_rgba(20,184,166,0.3)] border-0">
+                  <Button size="lg" className="h-14 px-10 text-base font-black bg-primary hover:bg-primary/90 text-white rounded-full shadow-[0_0_30px_hsl(var(--primary)/0.3)] border-0">
                     APPLY FOR ADMISSION
                   </Button>
                 </Link>
@@ -90,7 +90,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1 }}
-              className="rounded-[40px] p-1 bg-gradient-to-br from-[#14B8A6]/30 via-white/5 to-transparent shadow-[0_0_100px_rgba(20,184,166,0.1)]"
+              className="rounded-[40px] p-1 bg-gradient-to-br from-primary/30 via-white/5 to-transparent shadow-[0_0_100px_hsl(var(--primary)/0.1)]"
             >
               <div className="rounded-[39px] bg-[#020617] overflow-hidden border border-white/10">
                 <div className="aspect-[16/10] md:aspect-[16/9] relative group">
@@ -112,21 +112,21 @@ export default function HomePage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                         <div className="md:col-span-2 h-48 md:h-64 bg-white/5 border border-white/10 rounded-3xl p-6 md:p-8 relative overflow-hidden">
                           <div className="absolute top-0 right-0 p-6 md:p-8">
-                             <div className="h-24 w-24 md:h-32 md:w-32 rounded-full border-[10px] md:border-[12px] border-[#14B8A6]/20 border-t-[#14B8A6]" />
+                             <div className="h-24 w-24 md:h-32 md:w-32 rounded-full border-[10px] md:border-[12px] border-primary/20 border-t-primary" />
                           </div>
                           <div className="space-y-3">
                             <div className="h-6 w-48 md:w-64 bg-white/10 rounded-xl" />
                             <div className="h-3 w-32 md:w-48 bg-white/5 rounded-lg" />
                             <div className="pt-8 md:pt-12">
                               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full w-[85%] bg-[#14B8A6]" />
+                                <div className="h-full w-[85%] bg-primary" />
                               </div>
                             </div>
                           </div>
                         </div>
-                        <div className="h-48 md:h-64 bg-[#14B8A6]/10 rounded-3xl p-6 md:p-8 flex flex-col justify-end">
+                        <div className="h-48 md:h-64 bg-primary/10 rounded-3xl p-6 md:p-8 flex flex-col justify-end">
                            <div className="text-3xl md:text-4xl font-black text-white mb-1">85%</div>
-                           <div className="text-xs font-bold text-[#14B8A6] uppercase tracking-widest">Mastery Level</div>
+                           <div className="text-xs font-bold text-primary uppercase tracking-widest">Mastery Level</div>
                         </div>
                       </div>
                     </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  className="inline-block px-4 py-1 rounded-full bg-[#14B8A6]/10 text-[#14B8A6] text-xs font-black uppercase tracking-widest mb-6"
+                  className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest mb-6"
                 >
                   The Selection Process
                 </motion.div>
@@ -169,7 +169,7 @@ export default function HomePage() {
                     { title: "Phase 3: Acceptance", desc: "Invitation to join the world's most elite sales network." }
                   ].map((step, i) => (
                     <div key={i} className="flex gap-6">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#14B8A6] font-black">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary font-black">
                         {i + 1}
                       </div>
                       <div>
@@ -181,7 +181,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="relative">
-                 <div className="absolute inset-0 bg-gradient-to-tr from-[#14B8A6]/20 to-transparent blur-3xl rounded-full" />
+                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-3xl rounded-full" />
                  <div className="relative rounded-[40px] overflow-hidden border border-white/10 shadow-2xl z-10 aspect-square md:aspect-auto">
                    <img 
                       src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=modern+luxury+boardroom+meeting+selective+focus+high+end+business+environment+teal+accents&image_size=square_hd" 
@@ -221,8 +221,8 @@ export default function HomePage() {
                 }
               ].map((feature, i) => (
                 <div key={i} className="p-10 rounded-[40px] bg-white/5 hover:bg-white/10 transition-all duration-500 border border-white/5 hover:border-white/20 group relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#14B8A6]/5 blur-3xl group-hover:bg-[#14B8A6]/20 transition-all" />
-                  <div className="w-16 h-16 bg-[#14B8A6]/10 rounded-2xl flex items-center justify-center mb-10 text-[#14B8A6] group-hover:scale-110 group-hover:bg-[#14B8A6] group-hover:text-white transition-all duration-500 border border-[#14B8A6]/20">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl group-hover:bg-primary/20 transition-all" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-10 text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-500 border border-primary/20">
                     <feature.icon className="w-8 h-8" />
                   </div>
                   <h3 className="text-2xl font-black text-white mb-4 tracking-tight">{feature.title}</h3>

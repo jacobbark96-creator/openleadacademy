@@ -1,4 +1,5 @@
-import { Helmet } from "react-helmet-async"
+import { Helmet } from 'react-helmet-async'
+import { useTenant } from '@/providers/TenantProvider'
 
 interface SEOProps {
   title?: string
@@ -17,7 +18,9 @@ export default function SEO({
   ogType = "website",
   twitterHandle = "@openleadacademy",
 }: SEOProps) {
-  const siteTitle = title ? `${title} | Openlead Academy` : "Openlead Academy"
+  const { company } = useTenant();
+  const siteTitle = title ? `${title} | ${company?.name || 'Openlead Academy'}` : company?.name || 'Openlead Academy'
+  const themeColor = company?.primary_color || "#14B8A6"
 
   return (
     <Helmet>
@@ -44,7 +47,7 @@ export default function SEO({
       {/* Additional SEO Tags */}
       <meta name="robots" content="index, follow" />
       <meta name="googlebot" content="index, follow" />
-      <meta name="theme-color" content="#14B8A6" />
+      <meta name="theme-color" content={themeColor} />
     </Helmet>
   )
 }

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useTenant } from "@/providers/TenantProvider"
 
 interface UserProfile {
   id: string;
@@ -119,6 +120,7 @@ interface HelpArticle {
 }
 
 export default function AdminPage() {
+  const { company } = useTenant()
   const [role, setRole] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("users")
@@ -153,13 +155,33 @@ export default function AdminPage() {
       if (mounted && !error) {
         setUsers(data)
       } else if (error) {
+        console.error("EDGE FUNCTION ERROR:", error)
+        toast.error(`Edge function error: ${error.message}`)
         console.warn("API error, falling back:", error)
-        const { data: profilesData } = await supabase.from('profiles').select('*')
+        
+        let query = supabase.from('profiles').select('*')
+        if (company?.id) {
+          query = query.eq('company_id', company.id)
+        } else {
+          query = query.is('company_id', null)
+        }
+        const { data: profilesData } = await query
+        
         if (profilesData && mounted) setUsers(profilesData)
       }
     } catch (err) {
+      console.error("EDGE FUNCTION CATCH ERROR:", err)
+      toast.error(`Edge function catch error: ${err.message || String(err)}`)
       console.warn("Could not fetch admin users, falling back to profiles", err)
-      const { data: profilesData } = await supabase.from('profiles').select('*')
+      
+      let query = supabase.from('profiles').select('*')
+      if (company?.id) {
+        query = query.eq('company_id', company.id)
+      } else {
+        query = query.is('company_id', null)
+      }
+      const { data: profilesData } = await query
+      
       if (profilesData && mounted) setUsers(profilesData)
     }
   }
@@ -180,41 +202,51 @@ export default function AdminPage() {
         // Load Users via Edge Function
         await loadUsers(mounted)
 
+        // Helper for scoping queries to the current tenant
+        const scopeQuery = (query: any) => {
+          if (company?.id) {
+            return query.eq('company_id', company.id)
+          }
+          return query.is('company_id', null)
+        }
+
         // Load Team
-        const { data: teamData } = await supabase.from('team_members').select('*').order('order_index')
+        const { data: teamData } = await scopeQuery(supabase.from('team_members').select('*')).order('order_index')
         if (teamData && mounted) setTeam(teamData)
 
         // Load Vacancies
-        const { data: vacData } = await supabase.from('vacancies').select('*').order('created_at', { ascending: false })
+        const { data: vacData } = await scopeQuery(supabase.from('vacancies').select('*')).order('created_at', { ascending: false })
         if (vacData && mounted) setVacancies(vacData)
 
         // Load Courses and Modules
-        const { data: coursesData } = await supabase.from('courses').select('*').order('created_at', { ascending: false })
+        const { data: coursesData } = await scopeQuery(supabase.from('courses').select('*')).order('created_at', { ascending: false })
         if (coursesData && mounted) {
           setCourses(coursesData)
           if (coursesData.length > 0) {
             const firstCourseId = coursesData[0].id
             setSelectedCourseId(firstCourseId)
-            const { data: modData } = await supabase.from('modules').select('*').eq('course_id', firstCourseId).order('order_index')
+            const { data: modData } = await scopeQuery(supabase.from('modules').select('*').eq('course_id', firstCourseId)).order('order_index')
             if (modData && mounted) {
               setModules(modData)
               // Load quizzes for these modules
               const modIds = modData.map(m => m.id)
-              const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
-              if (quizData) setQuizzes(quizData)
+              if (modIds.length > 0) {
+                const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
+                if (quizData) setQuizzes(quizData)
+              }
             }
           }
         }
 
         // Load Library Resources
-        const { data: resData } = await supabase.from('resources').select('*').order('created_at', { ascending: false })
+        const { data: resData } = await scopeQuery(supabase.from('resources').select('*')).order('created_at', { ascending: false })
         if (resData && mounted) setResources(resData)
 
         // Load Announcements
-        const { data: annData } = await supabase.from('announcements').select('*').order('created_at', { ascending: false })
+        const { data: annData } = await scopeQuery(supabase.from('announcements').select('*')).order('created_at', { ascending: false })
         if (annData && mounted) setAnnouncements(annData)
 
-        // Load Help Articles
+        // Load Help Articles (Global or Scoped? We will scope it just in case)
         const { data: helpData } = await supabase.from('help_articles').select('*').order('order_index', { ascending: true })
         if (helpData && mounted) setHelpArticles(helpData)
       } catch (err) {
@@ -388,7 +420,8 @@ export default function AdminPage() {
   const handleCreateCourse = async () => {
     const { data: newCourse, error } = await supabase.from('courses').insert({
       title: 'New Course',
-      description: 'Course description...'
+      description: 'Course description...',
+      company_id: company?.id
     }).select().single()
 
     if (error) {
@@ -527,7 +560,8 @@ export default function AdminPage() {
       location: 'London',
       type: 'Full-time',
       remote_hybrid: 'Remote',
-      description: 'Job description goes here...'
+      description: 'Job description goes here...',
+      company_id: company?.id
     }).select().single()
 
     if (error) {
@@ -780,7 +814,8 @@ export default function AdminPage() {
       title: 'New Resource',
       url: '',
       type: 'PDF',
-      category: 'General'
+      category: 'General',
+      company_id: company?.id
     }).select().single()
     if (error) toast.error(error.message)
     else {
@@ -810,7 +845,8 @@ export default function AdminPage() {
     const { data, error } = await supabase.from('announcements').insert({
       title: 'New Announcement',
       content: '',
-      created_by: user?.id
+      created_by: user?.id,
+      company_id: company?.id
     }).select().single()
     if (error) toast.error(error.message)
     else {
@@ -905,7 +941,7 @@ export default function AdminPage() {
             Signed Agreements
           </button>
         )}
-        {role === 'admin' && (
+        {role === 'admin' && company?.slug === 'openlead' && (
           <button
             onClick={() => setActiveTab("team")}
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'team' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
@@ -913,7 +949,7 @@ export default function AdminPage() {
             Leadership Team
           </button>
         )}
-        {role === 'admin' && (
+        {role === 'admin' && company?.slug === 'openlead' && (
           <button
             onClick={() => setActiveTab("vacancies")}
             className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'vacancies' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
@@ -991,7 +1027,7 @@ export default function AdminPage() {
                   </select>
                 </div>
                 <div className="md:col-span-2 pt-2">
-                  <Button type="submit" className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">Create User</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">Create User</Button>
                 </div>
               </form>
             </CardContent>
@@ -1013,7 +1049,7 @@ export default function AdminPage() {
                         <p className="font-bold text-gray-900 text-lg">{u.full_name || 'Unknown'}</p>
                         <span className="text-xs text-gray-500 capitalize bg-white border border-gray-200 px-2 py-0.5 rounded-full font-semibold shadow-sm">{u.role}</span>
                         {(u.nda_signed || u.subcontractor_signed) && (
-                          <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full border border-[#14B8A6]/20 font-bold uppercase tracking-wider">
+                          <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20 font-bold uppercase tracking-wider">
                             Agreements Signed
                           </span>
                         )}
@@ -1061,7 +1097,7 @@ export default function AdminPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/5 font-bold"
+                                className="h-9 border-primary text-primary hover:bg-primary/5 font-bold"
                               />
                             }
                           >
@@ -1070,7 +1106,7 @@ export default function AdminPage() {
                           <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-[#14B8A6]" />
+                                <ShieldCheck className="w-5 h-5 text-primary" />
                                 Signed Agreements: {u.full_name}
                               </DialogTitle>
                             </DialogHeader>
@@ -1079,7 +1115,7 @@ export default function AdminPage() {
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                                   <div className="flex items-center justify-between mb-2">
                                     <h4 className="font-bold text-slate-900">Non-Disclosure Agreement</h4>
-                                    <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full font-bold">SIGNED</span>
+                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">SIGNED</span>
                                   </div>
                                   <div className="space-y-1 text-sm text-slate-500">
                                     <p>Signed by: <span className="font-semibold text-slate-700">{u.agreement_signature_name}</span></p>
@@ -1097,7 +1133,7 @@ export default function AdminPage() {
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                                   <div className="flex items-center justify-between mb-2">
                                     <h4 className="font-bold text-slate-900">Subcontractor Agreement</h4>
-                                    <span className="text-[10px] bg-[#14B8A6]/10 text-[#14B8A6] px-2 py-0.5 rounded-full font-bold">SIGNED</span>
+                                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">SIGNED</span>
                                   </div>
                                   <div className="space-y-1 text-sm text-slate-500">
                                     <p>Signed by: <span className="font-semibold text-slate-700">{u.agreement_signature_name}</span></p>
@@ -1155,7 +1191,7 @@ export default function AdminPage() {
                                 />
                               </div>
                               <Button 
-                                className="w-full bg-[#14B8A6] hover:bg-[#0D9488]"
+                                className="w-full bg-primary hover:bg-primary/90"
                                 onClick={() => handleChangePassword(u.id)}
                               >
                                 Update Password
@@ -1301,7 +1337,7 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-[#14B8A6]" />
+                  <ShieldCheck className="w-5 h-5 text-primary" />
                   Agreement Compliance Tracker
                 </CardTitle>
                 <div className="flex items-center gap-2">
@@ -1347,7 +1383,7 @@ export default function AdminPage() {
                           <td className="py-4 text-center">
                             {u.nda_signed ? (
                               <div className="inline-flex flex-col items-center">
-                                <CheckCircle2 className="w-5 h-5 text-[#14B8A6]" />
+                                <CheckCircle2 className="w-5 h-5 text-primary" />
                                 <span className="text-[10px] text-gray-400 mt-0.5">
                                   {u.nda_signed_at ? new Date(u.nda_signed_at).toLocaleDateString() : 'N/A'}
                                 </span>
@@ -1359,7 +1395,7 @@ export default function AdminPage() {
                           <td className="py-4 text-center">
                             {u.subcontractor_signed ? (
                               <div className="inline-flex flex-col items-center">
-                                <CheckCircle2 className="w-5 h-5 text-[#14B8A6]" />
+                                <CheckCircle2 className="w-5 h-5 text-primary" />
                                 <span className="text-[10px] text-gray-400 mt-0.5">
                                   {u.subcontractor_signed_at ? new Date(u.subcontractor_signed_at).toLocaleDateString() : 'N/A'}
                                 </span>
@@ -1391,7 +1427,7 @@ export default function AdminPage() {
                                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                                       <h4 className="font-bold text-slate-900 mb-2">NDA</h4>
                                       <div className="space-y-1 text-sm">
-                                        <p className="text-gray-500">Status: <span className={u.nda_signed ? "text-[#14B8A6] font-bold" : "text-gray-400"}>{u.nda_signed ? "Signed" : "Pending"}</span></p>
+                                        <p className="text-gray-500">Status: <span className={u.nda_signed ? "text-primary font-bold" : "text-gray-400"}>{u.nda_signed ? "Signed" : "Pending"}</span></p>
                                         {u.nda_signed && (
                                           <>
                                             <p className="text-gray-500">Date: <span className="text-slate-700 font-medium">{new Date(u.nda_signed_at!).toLocaleString()}</span></p>
@@ -1403,7 +1439,7 @@ export default function AdminPage() {
                                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                                       <h4 className="font-bold text-slate-900 mb-2">Subcontractor</h4>
                                       <div className="space-y-1 text-sm">
-                                        <p className="text-gray-500">Status: <span className={u.subcontractor_signed ? "text-[#14B8A6] font-bold" : "text-gray-400"}>{u.subcontractor_signed ? "Signed" : "Pending"}</span></p>
+                                        <p className="text-gray-500">Status: <span className={u.subcontractor_signed ? "text-primary font-bold" : "text-gray-400"}>{u.subcontractor_signed ? "Signed" : "Pending"}</span></p>
                                         {u.subcontractor_signed && (
                                           <>
                                             <p className="text-gray-500">Date: <span className="text-slate-700 font-medium">{new Date(u.subcontractor_signed_at!).toLocaleString()}</span></p>
@@ -1434,7 +1470,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {activeTab === 'team' && role === 'admin' && (
+      {activeTab === 'team' && role === 'admin' && company?.slug === 'openlead' && (
         <Card className="border-0 shadow-sm rounded-2xl">
           <CardHeader>
             <CardTitle>Manage Leadership Team</CardTitle>
@@ -1484,7 +1520,7 @@ export default function AdminPage() {
         </Card>
       )}
 
-      {activeTab === 'vacancies' && role === 'admin' && (
+      {activeTab === 'vacancies' && role === 'admin' && company?.slug === 'openlead' && (
         <Card className="border-0 shadow-sm rounded-2xl">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -1492,7 +1528,7 @@ export default function AdminPage() {
                 <Briefcase className="w-5 h-5" />
                 Manage Vacancies
               </div>
-              <Button onClick={handleCreateVacancy} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+              <Button onClick={handleCreateVacancy} className="bg-primary hover:bg-primary/90 text-white">
                 <Plus className="w-4 h-4 mr-1" /> New Vacancy
               </Button>
             </CardTitle>
@@ -1588,7 +1624,7 @@ export default function AdminPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center justify-between">
                   Courses
-                  <Button size="sm" onClick={handleCreateCourse} className="h-8 bg-[#14B8A6] hover:bg-[#0D9488]">
+                  <Button size="sm" onClick={handleCreateCourse} className="h-8 bg-primary hover:bg-primary/90">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </CardTitle>
@@ -1684,7 +1720,7 @@ export default function AdminPage() {
                   <Button 
                     disabled={!selectedCourseId}
                     onClick={handleCreateModule} 
-                    className="bg-[#14B8A6] hover:bg-[#0D9488] text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                   >
                     <Plus className="w-4 h-4 mr-1" /> New Module
                   </Button>
@@ -1771,7 +1807,7 @@ export default function AdminPage() {
                             <div className="space-y-6 py-4">
                               <div className="flex justify-between items-center">
                                 <p className="text-sm text-gray-500">Add and manage the lessons for this module.</p>
-                                <Button size="sm" onClick={() => handleCreateLesson(mod.id)} className="bg-[#14B8A6] hover:bg-[#0D9488]">
+                                <Button size="sm" onClick={() => handleCreateLesson(mod.id)} className="bg-primary hover:bg-primary/90">
                                   <Plus className="w-4 h-4 mr-1" /> Add Lesson
                                 </Button>
                               </div>
@@ -1991,7 +2027,7 @@ export default function AdminPage() {
                 <BookOpen className="w-5 h-5" />
                 Resource Library
               </div>
-              <Button onClick={handleCreateResource} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+              <Button onClick={handleCreateResource} className="bg-primary hover:bg-primary/90 text-white">
                 <Plus className="w-4 h-4 mr-1" /> New Resource
               </Button>
             </CardTitle>
@@ -2089,7 +2125,7 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Announcements
-              <Button onClick={handleCreateAnnouncement} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+              <Button onClick={handleCreateAnnouncement} className="bg-primary hover:bg-primary/90 text-white">
                 <Plus className="w-4 h-4 mr-1" /> New Announcement
               </Button>
             </CardTitle>
@@ -2151,7 +2187,7 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Help Centre Articles
-              <Button onClick={handleCreateHelpArticle} className="bg-[#14B8A6] hover:bg-[#0D9488] text-white">
+              <Button onClick={handleCreateHelpArticle} className="bg-primary hover:bg-primary/90 text-white">
                 <Plus className="w-4 h-4 mr-1" /> New Article
               </Button>
             </CardTitle>

@@ -68,12 +68,12 @@ export function AgreementModal({
           <div className="shrink-0 p-6 border-b border-gray-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#14B8A6]/10 rounded-lg">
-                  <ShieldCheck className="w-6 h-6 text-[#14B8A6]" />
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ShieldCheck className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{title}</h2>
-                  <p className="text-xs font-semibold text-[#14B8A6] uppercase tracking-widest">Mandatory Onboarding • Step {step} of {totalSteps}</p>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-widest">Mandatory Onboarding • Step {step} of {totalSteps}</p>
                 </div>
               </div>
             </div>
@@ -82,7 +82,7 @@ export function AgreementModal({
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${(step / totalSteps) * 100}%` }}
-                className="h-full bg-[#14B8A6]"
+                className="h-full bg-primary"
               />
             </div>
           </div>
@@ -104,7 +104,7 @@ export function AgreementModal({
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center justify-center gap-2 text-xs font-bold text-[#14B8A6] uppercase tracking-widest bg-[#14B8A6]/5 py-2 rounded-lg border border-[#14B8A6]/20"
+                className="flex items-center justify-center gap-2 text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 py-2 rounded-lg border border-primary/20"
               >
                 <ScrollText className="w-4 h-4" />
                 Please scroll to the bottom to verify review
@@ -120,7 +120,7 @@ export function AgreementModal({
                     checked={hasAgreed}
                     onChange={(e) => setHasAgreed(e.target.checked)}
                     disabled={!hasScrolledToBottom}
-                    className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-gray-300 dark:border-white/20 transition-all checked:bg-[#14B8A6] checked:border-[#14B8A6] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-gray-300 dark:border-white/20 transition-all checked:bg-primary checked:border-primary disabled:cursor-not-allowed disabled:opacity-50"
                   />
                   <Check className="absolute left-1/2 top-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" strokeWidth={3} />
                 </div>
@@ -142,7 +142,7 @@ export function AgreementModal({
                   value={signatureName}
                   onChange={(e) => setSignatureName(e.target.value)}
                   disabled={!hasAgreed}
-                  className="bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 h-12 text-base px-4 font-semibold focus:ring-4 focus:ring-[#14B8A6]/10"
+                  className="bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 h-12 text-base px-4 font-semibold focus:ring-4 focus:ring-primary/10"
                 />
               </div>
             </div>
@@ -150,7 +150,7 @@ export function AgreementModal({
             <Button
               onClick={() => onSign(signatureName)}
               disabled={!canSign}
-              className="w-full h-14 text-base font-black uppercase tracking-[0.15em] shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:shadow-[0_15px_40px_rgba(20,184,166,0.5)] transition-all active:scale-[0.98] disabled:shadow-none"
+              className="w-full h-14 text-base font-black uppercase tracking-[0.15em] shadow-[0_10px_30px_hsl(var(--primary)/0.3)] hover:shadow-[0_15px_40px_hsl(var(--primary)/0.5)] transition-all active:scale-[0.98] disabled:shadow-none"
             >
               Sign & {step === totalSteps ? 'Finalize Access' : 'Proceed to Next Step'}
             </Button>

@@ -81,31 +81,31 @@ export default function VacanciesPage() {
 
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-10 h-10 animate-spin text-[#14B8A6]" />
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
             </div>
           ) : (
             <div className="space-y-8">
               {vacancies.map((job) => (
-                <Card key={job.id} className="bg-white/5 border-white/10 hover:border-[#14B8A6]/30 transition-all rounded-[32px] overflow-hidden group">
+                <Card key={job.id} className="bg-white/5 border-white/10 hover:border-primary/30 transition-all rounded-[32px] overflow-hidden group">
                   <CardContent className="p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                          <h2 className="text-3xl font-black text-white tracking-tight">{job.title}</h2>
-                         <Badge className="bg-[#14B8A6]/10 text-[#14B8A6] border-none rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest">
+                         <Badge className="bg-primary/10 text-primary border-none rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest">
                            {job.type}
                          </Badge>
                       </div>
                       <div className="flex flex-wrap items-center gap-6 text-slate-500 text-xs font-bold uppercase tracking-widest">
                         <div className="flex items-center gap-2">
-                          <Briefcase className="w-4 h-4 text-[#14B8A6]" />
+                          <Briefcase className="w-4 h-4 text-primary" />
                           {job.department}
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-[#14B8A6]" />
+                          <MapPin className="w-4 h-4 text-primary" />
                           {job.location}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Building className="w-4 h-4 text-[#14B8A6]" />
+                          <Building className="w-4 h-4 text-primary" />
                           {job.remote_hybrid}
                         </div>
                       </div>
@@ -161,7 +161,7 @@ function ApplicationModal({ vacancy }: { vacancy: Vacancy }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button className="rounded-xl px-8 text-white shadow-[0_4px_14px_rgba(20,184,166,0.2)] hover:shadow-[0_6px_20px_rgba(20,184,166,0.3)] transition-all bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.02] border border-transparent font-bold">Apply Now</Button>
+          <Button className="rounded-xl px-8 text-white shadow-[0_4px_14px_hsl(var(--primary)/0.2)] hover:shadow-[0_6px_20px_hsl(var(--primary)/0.3)] transition-all bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02] border border-transparent font-bold">Apply Now</Button>
         }
       />
       <DialogContent className="sm:max-w-md rounded-3xl">
@@ -201,7 +201,7 @@ function ApplicationModal({ vacancy }: { vacancy: Vacancy }) {
               className="rounded-xl"
             />
           </div>
-          <Button type="submit" className="w-full rounded-xl h-12 text-white shadow-[0_4px_14px_rgba(20,184,166,0.2)] hover:shadow-[0_6px_20px_rgba(20,184,166,0.3)] transition-all bg-gradient-to-r from-[#14B8A6] to-[#0D9488] hover:scale-[1.02] border border-transparent font-bold text-[15px]" disabled={loading}>
+          <Button type="submit" className="w-full rounded-xl h-12 text-white shadow-[0_4px_14px_hsl(var(--primary)/0.2)] hover:shadow-[0_6px_20px_hsl(var(--primary)/0.3)] transition-all bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02] border border-transparent font-bold text-[15px]" disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Submit Application"}
           </Button>
         </form>

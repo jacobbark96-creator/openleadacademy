@@ -34,7 +34,7 @@ const sidebarNavItems = [
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 
-export function Sidebar() {
+export function Sidebar({ className }: { className?: string }) {
   const { pathname } = useLocation()
   const [role, setRole] = useState<string>("student")
 
@@ -58,7 +58,7 @@ export function Sidebar() {
   }, [])
 
   return (
-    <div className="hidden md:flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0">
+    <div className={cn("flex h-screen w-[240px] flex-col bg-white border-r border-gray-100 flex-shrink-0", className)}>
       <div className="flex h-20 items-center px-6">
         <Link to="/dashboard">
           <Logo className="scale-90 origin-left" variant="dark" />

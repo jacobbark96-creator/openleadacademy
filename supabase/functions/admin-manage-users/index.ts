@@ -38,7 +38,7 @@ serve(async (req) => {
     // Check if user is admin or trainer
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('role')
+      .select('role, company_id')
       .eq('id', user.id)
       .single()
 
@@ -55,12 +55,24 @@ serve(async (req) => {
       const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
       if (usersError) throw usersError
 
-      const { data: profiles, error: profilesError } = await supabaseAdmin.from('profiles').select('*')
+      // Fetch profiles only for the requesting user's company
+      let profilesQuery = supabaseAdmin.from('profiles').select('*')
+      if (profile.company_id) {
+        profilesQuery = profilesQuery.eq('company_id', profile.company_id)
+      } else {
+        profilesQuery = profilesQuery.is('company_id', null)
+      }
+      const { data: profiles, error: profilesError } = await profilesQuery
       if (profilesError) throw profilesError
+
+      const profileIds = profiles.map(p => p.id)
+
+      // Filter auth users to only those belonging to the company
+      const filteredAuthUsers = usersData.users.filter(u => profileIds.includes(u.id))
 
       const { data: enrollments } = await supabaseAdmin.from('course_enrollments').select('user_id, course_id')
       
-      const result = usersData.users.map(u => {
+      const result = filteredAuthUsers.map(u => {
         const p = profiles.find(profile => profile.id === u.id)
         const userEnrollments = enrollments?.filter(e => e.user_id === u.id).map(e => e.course_id) || []
         return {
@@ -71,6 +83,11 @@ serve(async (req) => {
           phone: p?.phone || '',
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at,
+          nda_signed: p?.nda_signed,
+          nda_signed_at: p?.nda_signed_at,
+          subcontractor_signed: p?.subcontractor_signed,
+          subcontractor_signed_at: p?.subcontractor_signed_at,
+          agreement_signature_name: p?.agreement_signature_name,
           enrollments: userEnrollments
         }
       })
@@ -87,7 +104,10 @@ serve(async (req) => {
         email,
         password: password || 'TempPass123!',
         email_confirm: true,
-        user_metadata: { full_name: fullName }
+        user_metadata: { 
+          full_name: fullName,
+          company_id: profile.company_id // Assign the new user to the admin's company
+        }
       })
       
       if (error) throw error
@@ -95,7 +115,8 @@ serve(async (req) => {
       if (data.user) {
         await supabaseAdmin.from('profiles').update({ 
           role,
-          email
+          email,
+          company_id: profile.company_id // Ensure profile has the correct company_id
         }).eq('id', data.user.id)
 
         await supabaseAdmin.from('notifications').insert({
@@ -114,6 +135,21 @@ serve(async (req) => {
 
     if (action === 'reset-password') {
       const { email } = payload
+      
+      // Verify email belongs to same company
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('email', email)
+        .maybeSingle()
+        
+      if (!targetProfile || targetProfile.company_id !== profile.company_id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized: User not found in your company' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
       const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
       if (error) throw error
       return new Response(JSON.stringify({ success: true }), {
@@ -124,6 +160,21 @@ serve(async (req) => {
 
     if (action === 'update-password') {
       const { userId, password } = payload
+      
+      // Verify user belongs to same company
+      const { data: targetProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('id', userId)
+        .maybeSingle()
+        
+      if (!targetProfile || targetProfile.company_id !== profile.company_id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized: Cannot update password for user from another company' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
       const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password })
       if (error) throw error
       return new Response(JSON.stringify({ success: true }), {
@@ -135,6 +186,20 @@ serve(async (req) => {
     if (action === 'update-profile') {
       const { userId, role, fullName, phone, enrollments } = payload
       
+      // Verify user belongs to same company
+      const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
+        .from('profiles')
+        .select('company_id')
+        .eq('id', userId)
+        .maybeSingle()
+        
+      if (targetProfileError || !targetProfile || targetProfile.company_id !== profile.company_id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized: Cannot update user from another company' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
       // Update profile
       const { error: profileUpdateError } = await supabaseAdmin
         .from('profiles')
@@ -184,7 +249,7 @@ serve(async (req) => {
 
       const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
         .from('profiles')
-        .select('role')
+        .select('role, company_id')
         .eq('id', userId)
         .maybeSingle()
 
@@ -193,6 +258,13 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: 'User not found', action }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 404,
+        })
+      }
+
+      if (targetProfile.company_id !== profile.company_id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized: User belongs to a different company', action }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
         })
       }
 
