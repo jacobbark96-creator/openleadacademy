@@ -34,35 +34,37 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       try {
         const hostname = window.location.hostname;
         
-        // Local development fallback
-        if (hostname === "localhost" || hostname === "127.0.0.1") {
-          // For local testing, if user is logged in, use their company.
-          // Otherwise, default to "openlead".
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session?.user) {
-             const { data: profile } = await supabase
-              .from('profiles')
-              .select('company_id')
-              .eq('id', session.user.id)
-              .single();
-              
-             if (profile?.company_id) {
-                const { data, error } = await supabase
-                  .from("companies")
-                  .select("*")
-                  .eq("id", profile.company_id)
-                  .single();
-                  
-                if (!error && data) {
-                  setCompany(data);
-                  applyBranding(data);
-                  setIsLoading(false);
-                  return;
-                }
-             }
-          }
+        // 1. ALWAYS check if user is logged in first. 
+        // If they are logged in, we MUST load their specific company context.
+        // This prevents tenants from accidentally viewing or editing the master 'openlead' company 
+        // if they access the dashboard from the wrong URL or a fallback URL.
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+           const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', session.user.id)
+            .single();
+            
+           if (profile?.company_id) {
+              const { data, error } = await supabase
+                .from("companies")
+                .select("*")
+                .eq("id", profile.company_id)
+                .single();
+                
+              if (!error && data) {
+                setCompany(data);
+                applyBranding(data);
+                setIsLoading(false);
+                return;
+              }
+           }
+        }
 
+        // 2. Local development fallback (for logged out users)
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
           const { data, error } = await supabase
             .from("companies")
             .select("*")
@@ -76,8 +78,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Production Routing Logic
-        // 1. Check if it's a custom domain
+        // 3. Production Routing Logic (for logged out users viewing public pages)
+        // Check if it's a custom domain
         let { data, error } = await supabase
           .from("companies")
           .select("*")

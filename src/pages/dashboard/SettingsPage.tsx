@@ -117,16 +117,23 @@ export default function SettingsPage() {
   const handleSaveBranding = async () => {
     if (!company) return
     try {
+      const cleanDomain = customDomain.trim()
       const { error } = await supabase
         .from("companies")
         .update({
           primary_color: primaryColor,
-          custom_domain: customDomain === "" ? null : customDomain,
+          custom_domain: cleanDomain === "" ? null : cleanDomain,
           logo_height: logoHeight
         })
         .eq("id", company.id)
 
-      if (error) throw error
+      if (error) {
+        if (error.message.includes('unique constraint "companies_custom_domain_key"')) {
+          throw new Error("This custom domain is already registered to another academy. Please choose a different one.")
+        }
+        throw error
+      }
+      
       toast.success("Platform settings updated!")
       
       setTimeout(() => {
