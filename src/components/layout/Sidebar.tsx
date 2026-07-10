@@ -75,11 +75,11 @@ export function Sidebar({ className }: { className?: string }) {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
                   isActive
-                    ? "bg-[#EBF5F5] text-[#008080]"
+                    ? "bg-primary/10 text-primary"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
               >
-                <item.icon className={cn("h-4 w-4", isActive ? "text-[#008080]" : "text-gray-500")} strokeWidth={isActive ? 2.5 : 2} />
+                <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-gray-500")} strokeWidth={isActive ? 2.5 : 2} />
                 {item.title}
               </Link>
             )
@@ -107,7 +107,7 @@ export function Sidebar({ className }: { className?: string }) {
       <div className="p-4">
         <Link to="/dashboard/support" className="block p-3 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow group">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#EBF5F5] flex items-center justify-center text-[#008080]">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <Headphones className="w-4 h-4" />
             </div>
             <div>

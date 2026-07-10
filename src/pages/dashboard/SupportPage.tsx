@@ -76,7 +76,7 @@ export default function SupportPage() {
             <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden bg-white">
               <CardHeader className="p-8 md:p-10 pb-0">
                 <CardTitle className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
-                  <MessageSquare className="w-6 h-6 text-[#008080]" />
+                  <MessageSquare className="w-6 h-6 text-primary" />
                   How can we help?
                 </CardTitle>
               </CardHeader>
@@ -101,13 +101,13 @@ export default function SupportPage() {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       required
-                      className="flex min-h-[200px] w-full rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3 text-sm ring-offset-background focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008080] focus:ring-offset-2 transition-all"
+                      className="flex min-h-[200px] w-full rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3 text-sm ring-offset-background focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all"
                     />
                   </div>
                   <Button 
                     type="submit" 
                     disabled={submitting}
-                    className="w-full h-14 bg-[#008080] hover:bg-[#006666] text-white rounded-xl font-bold text-lg shadow-lg shadow-[#008080]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold text-lg shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
                   >
                     {submitting ? "Sending..." : (
                       <span className="flex items-center gap-2">
@@ -125,13 +125,13 @@ export default function SupportPage() {
           <Card className="border-0 shadow-md rounded-[1.5rem] bg-white overflow-hidden">
             <CardContent className="p-6 space-y-6">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <LifeBuoy className="w-5 h-5 text-[#008080]" />
+                <LifeBuoy className="w-5 h-5 text-primary" />
                 Support Info
               </h3>
               
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
@@ -141,7 +141,7 @@ export default function SupportPage() {
                 </div>
                 
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#EBF5F5] flex items-center justify-center text-[#008080] flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                     <Headphones className="w-5 h-5" />
                   </div>
                   <div>

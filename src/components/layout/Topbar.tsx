@@ -133,7 +133,7 @@ export function Topbar() {
             <p className="text-gray-500 text-[11px] font-medium">You&apos;re on track. Keep learning and keep growing.</p>
           </div>
         ) : (isLessonPage || isQuizPage) ? (
-          <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-[#008080] transition-colors group w-fit">
+          <Link to="/dashboard" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-primary transition-colors group w-fit">
             <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center mr-3 group-hover:scale-110 transition-transform">
               <ArrowLeft className="w-4 h-4" />
             </div>
@@ -148,7 +148,7 @@ export function Topbar() {
             <Button variant="ghost" size="icon" className="relative rounded-full text-gray-500 hover:bg-gray-100">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#008080]" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
               )}
             </Button>
           </PopoverTrigger>
@@ -156,7 +156,7 @@ export function Topbar() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <h4 className="font-semibold text-sm text-gray-900">Notifications</h4>
               {unreadCount > 0 && (
-                <span className="text-xs bg-[#008080]/10 text-[#008080] px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
                   {unreadCount} new
                 </span>
               )}
@@ -170,7 +170,7 @@ export function Topbar() {
                 notifications.map((notif) => (
                   <div 
                     key={notif.id} 
-                    className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-[#008080]/5' : ''}`}
+                    className={`p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.is_read ? 'bg-primary/5' : ''}`}
                     onClick={() => {
                       if (!notif.is_read) handleMarkAsRead(notif.id)
                       if (notif.link) navigate(notif.link)
@@ -178,7 +178,7 @@ export function Topbar() {
                   >
                     <div className="flex items-start gap-3">
                       {!notif.is_read && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#008080] mt-1.5 flex-shrink-0" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm ${!notif.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>

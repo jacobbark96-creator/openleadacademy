@@ -80,19 +80,19 @@ export default function LibraryPage() {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#008080]/20">
+                  <div className="w-full h-full flex items-center justify-center text-primary/20">
                     <FileText className="w-16 h-16" />
                   </div>
                 )}
                 <div className="absolute top-3 left-3">
-                  <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold text-[#008080] shadow-sm uppercase tracking-wider">
+                  <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold text-primary shadow-sm uppercase tracking-wider">
                     {res.category || res.type}
                   </span>
                 </div>
               </div>
               <CardContent className="p-5 flex flex-col flex-1">
                 <div className="flex-1 space-y-2">
-                  <h3 className="font-bold text-gray-900 leading-snug group-hover:text-[#008080] transition-colors">
+                  <h3 className="font-bold text-gray-900 leading-snug group-hover:text-primary transition-colors">
                     {res.title}
                   </h3>
                   <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
@@ -104,7 +104,7 @@ export default function LibraryPage() {
                     href={res.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-[#EBF5F5] text-[#008080] font-bold text-sm transition-all hover:bg-[#008080] hover:text-white group/btn"
+                    className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-primary/10 text-primary font-bold text-sm transition-all hover:bg-primary hover:text-white group/btn"
                   >
                     {res.type === 'Link' ? (
                       <>

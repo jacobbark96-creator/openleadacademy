@@ -67,8 +67,8 @@ export default function AnnouncementsPage() {
                   </div>
                 )}
                 <CardContent className="p-6 md:p-8 flex-1">
-                  <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-[#008080] mb-4">
-                    <div className="flex items-center gap-1.5 bg-[#EBF5F5] px-3 py-1.5 rounded-full">
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-primary mb-4">
+                    <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-full">
                       <Calendar className="w-3.5 h-3.5" />
                       {new Date(ann.created_at).toLocaleDateString()}
                     </div>

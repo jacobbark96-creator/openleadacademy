@@ -929,14 +929,14 @@ export default function AdminPage() {
       <div className="flex space-x-2 border-b border-gray-200">
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'users' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >
           Manage Users
         </button>
         {role === 'admin' && (
           <button
             onClick={() => setActiveTab("agreements")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'agreements' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'agreements' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Signed Agreements
           </button>
@@ -944,7 +944,7 @@ export default function AdminPage() {
         {role === 'admin' && company?.slug === 'openlead' && (
           <button
             onClick={() => setActiveTab("team")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'team' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'team' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Leadership Team
           </button>
@@ -952,7 +952,7 @@ export default function AdminPage() {
         {role === 'admin' && company?.slug === 'openlead' && (
           <button
             onClick={() => setActiveTab("vacancies")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'vacancies' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'vacancies' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Vacancies
           </button>
@@ -960,7 +960,7 @@ export default function AdminPage() {
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("modules")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'modules' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'modules' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Manage Modules
           </button>
@@ -968,7 +968,7 @@ export default function AdminPage() {
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("library")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'library' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'library' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Library
           </button>
@@ -976,7 +976,7 @@ export default function AdminPage() {
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("announcements")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'announcements' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'announcements' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Announcements
           </button>
@@ -984,7 +984,7 @@ export default function AdminPage() {
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("help")}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'help' ? 'border-[#008080] text-[#008080]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'help' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
           >
             Help Centre
           </button>
@@ -1056,7 +1056,7 @@ export default function AdminPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2">
                         {u.email && (
-                          <div className="flex items-center gap-2 text-[#008080] font-bold bg-[#008080]/10 px-3 py-1.5 rounded-lg border border-[#008080]/20 shadow-sm">
+                          <div className="flex items-center gap-2 text-primary font-bold bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm">
                             <Mail className="w-4 h-4" />
                             <span className="text-base">{u.email}</span>
                           </div>
@@ -1085,7 +1085,7 @@ export default function AdminPage() {
                         onClick={() => handleOpenDetails(u)}
                         variant="default" 
                         size="sm" 
-                        className="h-9 bg-[#008080] hover:bg-[#006666] text-white flex items-center gap-2"
+                        className="h-9 bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
                       >
                         <Settings className="w-4 h-4" /> Manage User
                       </Button>
@@ -1274,7 +1274,7 @@ export default function AdminPage() {
 
                     <div className="space-y-3">
                       <Label className="text-base font-bold flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-[#008080]" />
+                        <BookOpen className="w-4 h-4 text-primary" />
                         Course Enrollments
                       </Label>
                       <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto p-1">
@@ -1289,15 +1289,15 @@ export default function AdminPage() {
                               onClick={() => toggleEnrollment(course.id)}
                               className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                                 isEnrolled 
-                                  ? 'border-[#008080] bg-[#008080]/5' 
+                                  ? 'border-primary bg-primary/5' 
                                   : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
                               }`}
                             >
-                              <span className={`text-sm font-medium ${isEnrolled ? 'text-[#008080]' : 'text-gray-700'}`}>
+                              <span className={`text-sm font-medium ${isEnrolled ? 'text-primary' : 'text-gray-700'}`}>
                                 {course.title}
                               </span>
                               {isEnrolled ? (
-                                <CheckCircle2 className="w-5 h-5 text-[#008080]" />
+                                <CheckCircle2 className="w-5 h-5 text-primary" />
                               ) : (
                                 <Plus className="w-4 h-4 text-gray-400" />
                               )}
@@ -1316,7 +1316,7 @@ export default function AdminPage() {
                         Cancel
                       </Button>
                       <Button 
-                        className="flex-1 bg-[#008080] hover:bg-[#006666]"
+                        className="flex-1 bg-primary hover:bg-primary/90"
                         onClick={handleUpdateUserDetails}
                         disabled={isUpdatingDetails}
                       >
@@ -1413,7 +1413,7 @@ export default function AdminPage() {
                             <Dialog>
                               <DialogTrigger
                                 render={
-                                  <Button variant="ghost" size="sm" className="text-[#008080] hover:text-[#006666] hover:bg-[#008080]/5 h-8" />
+                                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary/90 hover:bg-primary/5 h-8" />
                                 }
                               >
                                 Details
@@ -1450,8 +1450,8 @@ export default function AdminPage() {
                                     </div>
                                   </div>
                                   {u.agreement_signature_name && (
-                                    <div className="p-4 rounded-xl bg-[#008080]/5 border border-[#008080]/10">
-                                      <p className="text-xs text-[#008080] font-bold uppercase tracking-wider mb-1">Legal Signature</p>
+                                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                      <p className="text-xs text-primary font-bold uppercase tracking-wider mb-1">Legal Signature</p>
                                       <p className="text-2xl font-signature text-slate-800 italic" style={{ fontFamily: "'Dancing Script', cursive" }}>{u.agreement_signature_name}</p>
                                     </div>
                                   )}
@@ -1639,12 +1639,12 @@ export default function AdminPage() {
                     onClick={() => setSelectedCourseId(course.id)}
                     className={`p-3 rounded-xl border cursor-pointer transition-all ${
                       selectedCourseId === course.id 
-                        ? 'border-[#008080] bg-[#008080]/5 shadow-sm' 
+                        ? 'border-primary bg-primary/5 shadow-sm' 
                         : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <p className={`font-semibold text-sm ${selectedCourseId === course.id ? 'text-[#008080]' : 'text-gray-900'}`}>
+                      <p className={`font-semibold text-sm ${selectedCourseId === course.id ? 'text-primary' : 'text-gray-900'}`}>
                         {course.title}
                       </p>
                       <button 
@@ -1794,13 +1794,13 @@ export default function AdminPage() {
 
                       <div className="pt-2 flex flex-wrap gap-2 pr-8">
                         <Dialog open={selectedModuleId === mod.id} onOpenChange={(open) => setSelectedModuleId(open ? mod.id : null)}>
-                          <DialogTrigger render={<Button variant="outline" size="sm" className="text-[#008080] border-[#008080]/30 hover:bg-[#008080]/5" />}>
+                          <DialogTrigger render={<Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/5" />}>
                               <Plus className="w-4 h-4 mr-2" /> Manage Lessons
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2">
-                                <BookOpen className="w-5 h-5 text-[#008080]" />
+                                <BookOpen className="w-5 h-5 text-primary" />
                                 Lessons in {mod.title}
                               </DialogTitle>
                             </DialogHeader>
@@ -1893,7 +1893,7 @@ export default function AdminPage() {
                                               href={lesson.audio_url}
                                               target="_blank"
                                               rel="noreferrer"
-                                              className="text-xs font-medium text-[#008080] hover:underline"
+                                              className="text-xs font-medium text-primary hover:underline"
                                             >
                                               Open audio file
                                             </a>

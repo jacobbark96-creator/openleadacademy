@@ -66,13 +66,13 @@ export default function HelpPage() {
         <div className="space-y-6">
           <button 
             onClick={() => setSelectedArticle(null)}
-            className="text-[#008080] font-bold text-sm flex items-center gap-2 hover:underline"
+            className="text-primary font-bold text-sm flex items-center gap-2 hover:underline"
           >
             ← Back to Help Centre
           </button>
           <Card className="border-0 shadow-lg rounded-[2rem] overflow-hidden bg-white">
             <CardContent className="p-8 md:p-12">
-              <span className="px-3 py-1 rounded-full bg-[#EBF5F5] text-[10px] font-bold text-[#008080] shadow-sm uppercase tracking-wider mb-6 inline-block">
+              <span className="px-3 py-1 rounded-full bg-primary/10 text-[10px] font-bold text-primary shadow-sm uppercase tracking-wider mb-6 inline-block">
                 {selectedArticle.category}
               </span>
               <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-8 tracking-tight leading-tight">
@@ -93,7 +93,7 @@ export default function HelpPage() {
               return (
                 <div key={cat} className="space-y-4">
                   <h2 className="text-xl font-extrabold text-gray-900 px-2 flex items-center gap-2">
-                    <Book className="w-5 h-5 text-[#008080]" />
+                    <Book className="w-5 h-5 text-primary" />
                     {cat}
                   </h2>
                   <div className="grid gap-3">
@@ -101,12 +101,12 @@ export default function HelpPage() {
                       <button
                         key={art.id}
                         onClick={() => setSelectedArticle(art)}
-                        className="flex items-center justify-between p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-[#008080]/30 transition-all text-left group"
+                        className="flex items-center justify-between p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/30 transition-all text-left group"
                       >
-                        <span className="font-bold text-gray-800 group-hover:text-[#008080] transition-colors">
+                        <span className="font-bold text-gray-800 group-hover:text-primary transition-colors">
                           {art.title}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#008080] group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </button>
                     ))}
                   </div>
@@ -126,15 +126,15 @@ export default function HelpPage() {
           </div>
           
           <div className="space-y-6">
-            <Card className="border-0 shadow-md rounded-[1.5rem] bg-[#008080] text-white overflow-hidden">
+            <Card className="border-0 shadow-md rounded-[1.5rem] bg-primary text-white overflow-hidden">
               <CardContent className="p-6 space-y-4">
                 <h3 className="text-lg font-bold">Still need help?</h3>
-                <p className="text-sm text-[#EBF5F5] leading-relaxed font-medium">
+                <p className="text-sm text-primary/10 leading-relaxed font-medium">
                   Can't find what you're looking for? Our support team is here to help you with any technical or course-related issues.
                 </p>
                 <a 
                   href="/dashboard/support"
-                  className="flex items-center justify-center h-11 w-full bg-white text-[#008080] rounded-xl font-bold text-sm shadow-sm hover:bg-[#EBF5F5] transition-colors"
+                  className="flex items-center justify-center h-11 w-full bg-white text-primary rounded-xl font-bold text-sm shadow-sm hover:bg-primary/10 transition-colors"
                 >
                   Contact Support
                 </a>

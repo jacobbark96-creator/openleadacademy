@@ -235,14 +235,14 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col h-full lg:overflow-hidden pb-4">
         <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-          <Trophy className="w-16 h-16 text-[#008080] mb-4" />
+          <Trophy className="w-16 h-16 text-primary mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to your Academy!</h1>
           <p className="text-gray-500 max-w-md mb-8">
             Your academy is ready to go. You can start setting up your brand, creating courses, and inviting your team or students.
           </p>
           <div className="flex gap-4">
             <Link to="/dashboard/settings">
-              <Button className="bg-[#008080] hover:bg-[#006666] text-white font-bold px-6">
+              <Button className="bg-primary hover:bg-primary/90 text-white font-bold px-6">
                 Customize Brand
               </Button>
             </Link>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
                       cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" 
                       strokeDasharray="251.2" 
                       strokeDashoffset={251.2 - (251.2 * progressPercentage) / 100}
-                      className="text-[#008080] transition-all duration-1000 ease-out" 
+                      className="text-primary transition-all duration-1000 ease-out" 
                       strokeLinecap="round"
                     />
                   </svg>
@@ -297,12 +297,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-1 pt-1">
                     <div className="h-1 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#008080] rounded-full transition-all duration-1000" style={{ width: `${progressPercentage}%` }} />
+                      <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${progressPercentage}%` }} />
                     </div>
                     <div className="flex justify-between items-center">
                       <p className="text-[11px] font-medium text-gray-500">{completedModules} of {totalModules} modules completed</p>
                       <Link to="/dashboard/progress">
-                        <Button variant="ghost" className="px-0 text-[#008080] hover:bg-transparent hover:text-[#006666] font-semibold flex items-center gap-1 h-auto py-0 text-xs">
+                        <Button variant="ghost" className="px-0 text-primary hover:bg-transparent hover:text-primary/90 font-semibold flex items-center gap-1 h-auto py-0 text-xs">
                           View My Progress <ArrowRightIcon className="w-3 h-3" />
                         </Button>
                       </Link>
@@ -317,7 +317,7 @@ export default function DashboardPage() {
           <div className="flex-none lg:flex-1 flex flex-col min-h-0 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex-none p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-sm font-bold text-gray-900">Program Curriculum</h2>
-              <Button variant="ghost" className="text-[#008080] font-semibold hover:bg-gray-100 rounded-md h-7 px-3 text-[11px]">
+              <Button variant="ghost" className="text-primary font-semibold hover:bg-gray-100 rounded-md h-7 px-3 text-[11px]">
                 View Full Curriculum
               </Button>
             </div>
@@ -329,11 +329,11 @@ export default function DashboardPage() {
                     {/* Status Icon & Line */}
                     <div className="w-6 flex flex-col items-center flex-shrink-0 relative pt-3">
                       {module.status === 'completed' ? (
-                        <div className="w-5 h-5 rounded-full bg-[#008080] flex items-center justify-center text-white z-10 shadow-sm">
+                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-white z-10 shadow-sm">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                       ) : module.status === 'unlocked' ? (
-                        <div className="w-5 h-5 rounded-full border-2 border-[#008080] flex items-center justify-center text-[#008080] z-10 bg-white shadow-sm">
+                        <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center text-primary z-10 bg-white shadow-sm">
                           <PlayCircle className="w-2.5 h-2.5" />
                         </div>
                       ) : (
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Card Content */}
-                    <Card className={`flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-[#008080]/30 transition-colors ${module.status === 'locked' ? 'opacity-75' : ''}`}>
+                    <Card className={`flex-1 border border-gray-100 shadow-sm bg-white rounded-xl overflow-hidden hover:border-primary/30 transition-colors ${module.status === 'locked' ? 'opacity-75' : ''}`}>
                       <div className="flex flex-col sm:flex-row p-3 gap-3 sm:items-center">
                         {/* Mobile Top Row: Thumbnail + Info */}
                         <div className="flex flex-row items-start gap-3 flex-1 min-w-0">
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                         <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center min-w-[100px] gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-50 sm:pl-2 w-full sm:w-auto mt-2 sm:mt-0">
                           {module.video_url && module.status !== 'locked' && (
                             <Dialog>
-                              <DialogTrigger render={<Button variant="ghost" size="sm" className="h-7 text-[10px] text-[#008080] hover:bg-[#EBF5F5] font-semibold gap-1" />}>
+                              <DialogTrigger render={<Button variant="ghost" size="sm" className="h-7 text-[10px] text-primary hover:bg-primary/10 font-semibold gap-1" />}>
                                   <Video className="w-3 h-3" /> Watch Intro
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden bg-black border-0">
@@ -417,8 +417,8 @@ export default function DashboardPage() {
                           )}
                           {module.status === 'completed' && (
                             <>
-                              <span className="text-[10px] font-semibold text-[#008080] bg-[#EBF5F5] px-2 py-0.5 rounded-full">Completed</span>
-                              <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex">
+                              <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Completed</span>
+                              <div className="flex items-center gap-1 text-[9px] text-primary font-medium hidden sm:flex">
                                 <CheckCircle className="w-3 h-3" /> Test passed
                               </div>
                             </>
@@ -433,12 +433,12 @@ export default function DashboardPage() {
                                 </Link>
                               ) : (
                                 <Link to={module.lessons.length > 0 ? `/dashboard/lessons/${module.lessons[0].id}` : '#'} className="w-full sm:w-auto">
-                                  <Button className="bg-[#008080] hover:bg-[#006666] text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
+                                  <Button className="bg-primary hover:bg-primary/90 text-white rounded-md px-3 h-7 font-semibold w-full text-[10px] shadow-sm">
                                     {module.lessons.length > 0 ? 'Start Module' : 'No Lessons'}
                                   </Button>
                                 </Link>
                               )}
-                              <div className="flex items-center gap-1 text-[9px] text-[#008080] font-medium hidden sm:flex mt-0.5">
+                              <div className="flex items-center gap-1 text-[9px] text-primary font-medium hidden sm:flex mt-0.5">
                                 <PlayCircle className="w-3 h-3" /> Current
                               </div>
                             </>
@@ -483,10 +483,10 @@ export default function DashboardPage() {
         {/* Right Sidebar Area (Scrollable independently) */}
         <div className="flex-none lg:flex flex-col min-h-0 space-y-4 lg:overflow-y-auto pr-1">
           {/* Keep it up Card */}
-          <Card className="flex-none border-0 shadow-sm rounded-xl bg-[#EBF5F5] overflow-hidden">
+          <Card className="flex-none border-0 shadow-sm rounded-xl bg-primary/10 overflow-hidden">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-[#008080]/10">
-                <Trophy className="w-5 h-5 text-[#008080]" />
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm border border-primary/10">
+                <Trophy className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <h3 className="text-xs font-bold text-gray-900 mb-0.5">Keep it up!</h3>
@@ -499,12 +499,12 @@ export default function DashboardPage() {
           <div className="flex-none space-y-2">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-xs font-bold text-gray-900">Announcements</h3>
-              <Link to="/dashboard/announcements" className="text-[10px] font-semibold text-[#008080] hover:underline">View all</Link>
+              <Link to="/dashboard/announcements" className="text-[10px] font-semibold text-primary hover:underline">View all</Link>
             </div>
             <Card className="border border-gray-100 shadow-sm rounded-xl">
               <CardContent className="p-4 space-y-4">
                 <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#EBF5F5] flex items-center justify-center flex-shrink-0 text-[#008080]">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
                     <Megaphone className="w-3.5 h-3.5" />
                   </div>
                   <div>
@@ -515,7 +515,7 @@ export default function DashboardPage() {
                 </div>
                 
                 <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#EBF5F5] flex items-center justify-center flex-shrink-0 text-[#008080]">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
                     <Calendar className="w-3.5 h-3.5" />
                   </div>
                   <div>
@@ -547,7 +547,7 @@ export default function DashboardPage() {
                 <Link to="/dashboard/learning">
                   <Button variant="ghost" className="w-full justify-between h-12 px-3 hover:bg-gray-50 rounded-lg group font-normal">
                     <div className="flex items-center gap-2.5">
-                      <BookOpen className="w-3.5 h-3.5 text-gray-600 group-hover:text-[#008080] transition-colors" />
+                      <BookOpen className="w-3.5 h-3.5 text-gray-600 group-hover:text-primary transition-colors" />
                       <div className="text-left">
                         <div className="text-[11px] font-semibold text-gray-900">My Learning</div>
                         <div className="text-[9px] text-gray-500">Continue where you left off</div>
@@ -560,7 +560,7 @@ export default function DashboardPage() {
                 <Link to="/dashboard/quizzes">
                   <Button variant="ghost" className="w-full justify-between h-12 px-3 hover:bg-gray-50 rounded-lg group font-normal">
                     <div className="flex items-center gap-2.5">
-                      <CheckSquare className="w-3.5 h-3.5 text-gray-600 group-hover:text-[#008080] transition-colors" />
+                      <CheckSquare className="w-3.5 h-3.5 text-gray-600 group-hover:text-primary transition-colors" />
                       <div className="text-left">
                         <div className="text-[11px] font-semibold text-gray-900">Quizzes</div>
                         <div className="text-[9px] text-gray-500">View your quiz history</div>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
                 <Link to="/dashboard/resources">
                   <Button variant="ghost" className="w-full justify-between h-12 px-3 hover:bg-gray-50 rounded-lg group font-normal">
                     <div className="flex items-center gap-2.5">
-                      <FileText className="w-3.5 h-3.5 text-gray-600 group-hover:text-[#008080] transition-colors" />
+                      <FileText className="w-3.5 h-3.5 text-gray-600 group-hover:text-primary transition-colors" />
                       <div className="text-left">
                         <div className="text-[11px] font-semibold text-gray-900">Resources</div>
                         <div className="text-[9px] text-gray-500">Helpful documents and guides</div>
@@ -590,9 +590,9 @@ export default function DashboardPage() {
 
       {/* Footer Notification Bar */}
       <div className="hidden md:flex fixed bottom-4 left-[260px] right-6 z-10 pointer-events-none">
-        <div className="bg-[#EBF5F5]/90 backdrop-blur-md border border-[#008080]/20 text-gray-900 p-2.5 px-4 rounded-xl flex items-center justify-between shadow-sm pointer-events-auto max-w-[800px] mx-auto w-full">
+        <div className="bg-primary/10/90 backdrop-blur-md border border-primary/20 text-gray-900 p-2.5 px-4 rounded-xl flex items-center justify-between shadow-sm pointer-events-auto max-w-[800px] mx-auto w-full">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded border border-[#008080]/30 flex items-center justify-center text-[#008080] bg-white shadow-sm">
+            <div className="w-6 h-6 rounded border border-primary/30 flex items-center justify-center text-primary bg-white shadow-sm">
               <Calendar className="w-3 h-3" />
             </div>
             <p className="text-[11px]"><span className="font-semibold">Stay on track!</span> New lessons unlock every week after you pass the quiz. Keep learning and keep growing!</p>

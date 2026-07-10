@@ -132,7 +132,7 @@ export default function QuizPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#008080]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -147,9 +147,9 @@ export default function QuizPage() {
     <div className="max-w-4xl mx-auto px-4 pt-2 md:pt-4 pb-12 md:pb-20">
       <div className="space-y-4 text-center">
         {quiz.lessons ? (
-          <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
+          <p className="text-primary font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.lessons.modules.title}: {quiz.lessons.title}</p>
         ) : quiz.modules ? (
-          <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.modules.title}: Final Module Test</p>
+          <p className="text-primary font-bold tracking-widest uppercase text-xs sm:text-sm">{quiz.modules.title}: Final Module Test</p>
         ) : null}
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">{quiz.title}</h1>
       </div>
@@ -158,7 +158,7 @@ export default function QuizPage() {
         <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2.5rem] overflow-hidden bg-white">
           <CardHeader className="p-10 md:p-16 pb-0">
             <div className="flex justify-between items-center mb-6">
-               <span className="text-xs font-bold text-[#008080] uppercase tracking-widest bg-[#EBF5F5] px-3 py-1 rounded-full">Question {currentQuestionIndex + 1} of {questions.length}</span>
+               <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">Question {currentQuestionIndex + 1} of {questions.length}</span>
                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Passing score: {quiz.passing_score}%</span>
             </div>
             <CardTitle className="text-2xl md:text-3xl text-gray-900 leading-relaxed font-extrabold tracking-tight">
@@ -176,7 +176,7 @@ export default function QuizPage() {
                   key={idx}
                   className={`flex items-center space-x-4 p-6 rounded-2xl border-2 transition-all cursor-pointer ${
                     selectedAnswers[currentQuestionIndex] === idx 
-                      ? 'border-[#008080] bg-[#EBF5F5]/50 shadow-md scale-[1.01]' 
+                      ? 'border-primary bg-primary/10/50 shadow-md scale-[1.01]' 
                       : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                   }`}
                   onClick={() => setSelectedAnswers(prev => ({ ...prev, [currentQuestionIndex]: idx }))}
@@ -191,7 +191,7 @@ export default function QuizPage() {
               <Button 
                 onClick={handleNext} 
                 disabled={selectedAnswers[currentQuestionIndex] === undefined}
-                className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-[#008080] hover:bg-[#006666] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-primary hover:bg-primary/90 shadow-xl hover:scale-105 active:scale-95 transition-all"
               >
                 {currentQuestionIndex === questions.length - 1 ? "Finish Quiz" : "Next Question"}
               </Button>
@@ -226,7 +226,7 @@ export default function QuizPage() {
               {passed ? (
                 <Button 
                   onClick={() => navigate('/dashboard')}
-                  className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-[#008080] hover:bg-[#006666] shadow-xl hover:scale-105 transition-all"
+                  className="rounded-2xl h-14 px-12 text-base font-bold text-white bg-primary hover:bg-primary/90 shadow-xl hover:scale-105 transition-all"
                 >
                   Continue to Next Module
                 </Button>

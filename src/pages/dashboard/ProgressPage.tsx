@@ -118,9 +118,9 @@ export default function ProgressPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-0 shadow-sm bg-[#EBF5F5] rounded-2xl">
+        <Card className="border-0 shadow-sm bg-primary/10 rounded-2xl">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-[#008080] shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
               <CheckCircle className="w-6 h-6" />
             </div>
             <div>
@@ -166,7 +166,7 @@ export default function ProgressPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {courses.map(course => (
-              <Card key={course.id} className="border border-gray-100 shadow-sm bg-white rounded-2xl overflow-hidden hover:border-[#008080]/30 transition-all">
+              <Card key={course.id} className="border border-gray-100 shadow-sm bg-white rounded-2xl overflow-hidden hover:border-primary/30 transition-all">
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row items-stretch">
                     <div className="w-full md:w-48 h-32 bg-gray-100 flex-shrink-0">
@@ -192,7 +192,7 @@ export default function ProgressPage() {
                           </div>
                         </div>
                         <Link to={`/dashboard?course=${course.id}`}>
-                          <Button variant="outline" className="text-[#008080] border-[#008080]/20 hover:bg-[#008080]/5 gap-2">
+                          <Button variant="outline" className="text-primary border-primary/20 hover:bg-primary/5 gap-2">
                             Continue Learning <ArrowRight className="w-4 h-4" />
                           </Button>
                         </Link>
@@ -200,7 +200,7 @@ export default function ProgressPage() {
                       <div className="mt-4">
                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-[#008080] rounded-full transition-all duration-500" 
+                            className="h-full bg-primary rounded-full transition-all duration-500" 
                             style={{ width: `${course.percentage}%` }} 
                           />
                         </div>

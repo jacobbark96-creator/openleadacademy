@@ -189,7 +189,7 @@ export default function LessonPage() {
             <Card className="border-0 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden bg-black aspect-video relative ring-1 ring-gray-100 transition-transform duration-500 group-hover:scale-[1.005]">
               {loading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#008080]" />
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
               ) : null}
               
@@ -212,7 +212,7 @@ export default function LessonPage() {
 
           {/* Title and Module info - Moved below video for stability */}
           <div className="space-y-2 md:space-y-3">
-            <p className="text-[#008080] font-bold tracking-widest uppercase text-xs sm:text-sm">
+            <p className="text-primary font-bold tracking-widest uppercase text-xs sm:text-sm">
               {lesson.modules?.title}
             </p>
             <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
@@ -243,7 +243,7 @@ export default function LessonPage() {
               className={`rounded-xl h-12 w-full text-sm font-bold shadow-md transition-all ${
                 completed 
                   ? "bg-green-600 hover:bg-green-700 text-white hover:scale-[1.02] active:scale-[0.98]" 
-                  : "bg-[#008080] hover:bg-[#006666] text-white hover:scale-[1.02] active:scale-[0.98]"
+                  : "bg-primary hover:bg-primary/90 text-white hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
               {saving ? (
@@ -263,16 +263,16 @@ export default function LessonPage() {
           <Card className="border-0 shadow-lg rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white">
             <CardContent className="p-6 md:p-8">
               <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-gray-50">
-                <div className="w-8 h-8 rounded-lg bg-[#EBF5F5] flex items-center justify-center text-[#008080] shadow-sm">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm">
                   <FileText className="w-4 h-4" />
                 </div>
                 <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
               </div>
               
-              <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-[#008080]">
+              <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-primary">
                 {lesson.audio_url && (
-                  <div className="mb-5 rounded-2xl border border-[#008080]/10 bg-[#EBF5F5] p-4">
-                    <p className="mb-3 text-sm font-semibold text-[#006666]">Lesson Audio</p>
+                  <div className="mb-5 rounded-2xl border border-primary/10 bg-primary/10 p-4">
+                    <p className="mb-3 text-sm font-semibold text-primary/90">Lesson Audio</p>
                     <audio controls preload="metadata" className="w-full">
                       <source src={lesson.audio_url} />
                       Your browser does not support the audio player.

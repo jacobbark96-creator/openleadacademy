@@ -64,7 +64,7 @@ export default function LearningPage() {
       {enrollments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enrollments.map((enrollment) => (
-            <Card key={enrollment.course_id} className="border border-gray-100 shadow-sm bg-white rounded-2xl overflow-hidden hover:border-[#008080]/30 transition-all group">
+            <Card key={enrollment.course_id} className="border border-gray-100 shadow-sm bg-white rounded-2xl overflow-hidden hover:border-primary/30 transition-all group">
               <div className="aspect-video bg-gray-100 relative overflow-hidden">
                 {enrollment.courses.image_url ? (
                   <img 
@@ -82,7 +82,7 @@ export default function LearningPage() {
                 </div>
               </div>
               <CardHeader className="p-5 pb-2">
-                <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-[#008080] transition-colors line-clamp-1">
+                <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors line-clamp-1">
                   {enrollment.courses.title}
                 </CardTitle>
               </CardHeader>
@@ -103,7 +103,7 @@ export default function LearningPage() {
                   </div>
                 </div>
                 <Link to={`/dashboard?course=${enrollment.course_id}`} className="block">
-                  <Button className="w-full bg-[#008080] hover:bg-[#006666] text-white rounded-xl h-10 font-bold">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-10 font-bold">
                     Continue Learning
                   </Button>
                 </Link>
