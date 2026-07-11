@@ -50,6 +50,7 @@ serve(async (req) => {
     }
 
     const { action, ...payload } = await req.json()
+    console.log(`ACTION: ${action}, PAYLOAD:`, JSON.stringify(payload))
 
     if (action === 'list') {
       const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
@@ -121,14 +122,24 @@ serve(async (req) => {
       if (error) throw error
         
       if (data.user) {
-        await supabaseAdmin.from('profiles').update({ 
+        // Use upsert to handle potential race conditions with the database trigger
+        const { error: profileError } = await supabaseAdmin.from('profiles').upsert({ 
+          id: data.user.id,
           role,
           email,
           company_id: targetCompanyId,
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
-          has_paid_signup_fee: hasPaidSignupFee ?? true
-        }).eq('id', data.user.id)
+          has_paid_signup_fee: hasPaidSignupFee ?? true,
+          full_name: fullName // Ensure name is also set
+        })
+        
+        if (profileError) {
+          console.error("Error updating profile:", profileError)
+          throw profileError
+        }
+
+        console.log(`Successfully created user and profile for ${email}`)
 
         await supabaseAdmin.from('notifications').insert({
           user_id: data.user.id,

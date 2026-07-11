@@ -31,6 +31,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         .single()
       
       if (data) {
+        console.log("ONBOARDING: Profile Loaded:", {
+          id: data.id,
+          email: data.email,
+          signup_fee: data.signup_fee,
+          has_paid: data.has_paid_signup_fee,
+          company_slug: data.companies?.slug
+        })
         setProfile(data)
         
         // 1. Check for unpaid signup fee first (applies to tenants)

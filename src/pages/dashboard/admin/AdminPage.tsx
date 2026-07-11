@@ -377,19 +377,23 @@ export default function AdminPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     const loadingToast = toast.loading("Creating user...")
+    const payload = {
+      action: 'create',
+      email: newUserEmail,
+      fullName: newUserName,
+      role: newUserRole,
+      password: newUserPassword,
+      signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
+      signupFeeCurrency: newUserFeeCurrency,
+      hasPaidSignupFee: !newUserHasFee,
+      companyId: company?.id
+    }
+    
+    console.log("SENDING CREATE USER PAYLOAD:", payload)
+
     try {
       const { data, error } = await supabase.functions.invoke('admin-manage-users', {
-        body: {
-          action: 'create',
-          email: newUserEmail,
-          fullName: newUserName,
-          role: newUserRole,
-          password: newUserPassword,
-          signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
-          signupFeeCurrency: newUserFeeCurrency,
-          hasPaidSignupFee: !newUserHasFee,
-          companyId: company?.id // Added optional chaining
-        }
+        body: payload
       })
       
       toast.dismiss(loadingToast)
