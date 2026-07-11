@@ -127,6 +127,15 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadTenant();
+
+    // Listen for auth changes to reload the correct tenant context when logging in/out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadTenant();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const hexToHsl = (hex: string) => {
@@ -162,7 +171,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (company.primary_color) {
       const hslValue = hexToHsl(company.primary_color);
       document.documentElement.style.setProperty('--primary', hslValue);
-      // You can expand this to generate lighter/darker shades for a full theme
+    } else {
+      // Fallback to a default primary color (e.g. Openlead's teal/green) if none is set
+      const defaultHsl = hexToHsl("#0eb7cd");
+      document.documentElement.style.setProperty('--primary', defaultHsl);
     }
 
     // Update document title
@@ -170,9 +182,18 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     
     // Update favicon if logo exists
     if (company.logo_url) {
+      let favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!favicon) {
+        favicon = document.createElement("link");
+        favicon.rel = "icon";
+        document.head.appendChild(favicon);
+      }
+      favicon.href = company.logo_url;
+    } else {
+      // Reset to default favicon if none exists
       const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
       if (favicon) {
-        favicon.href = company.logo_url;
+        favicon.href = "/favicon.ico"; // Or whatever your default is
       }
     }
   };
