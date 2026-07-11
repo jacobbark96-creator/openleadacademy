@@ -2,11 +2,19 @@ import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
 import SEO from "@/components/SEO"
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
+import { Link, Navigate } from "react-router-dom"
 import { ArrowRight, TrendingUp, Users, Target } from "lucide-react"
 import { motion } from "framer-motion"
+import { useTenant } from "@/providers/TenantProvider"
 
 export default function HomePage() {
+  const { company } = useTenant()
+
+  // If this is a tenant subdomain, redirect directly to login
+  if (company && company.slug !== 'openlead') {
+    return <Navigate to="/login" replace />
+  }
+
   return (
     <div className="min-h-screen bg-[#020617] text-white overflow-hidden">
       <SEO 
