@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 interface Lesson {
   id: string;
@@ -14,6 +15,14 @@ interface Lesson {
   image_url?: string;
   module_id: string;
   order_index: number;
+  has_homework?: boolean;
+  homework_type?: 'link' | 'upload';
+}
+
+interface HomeworkSubmission {
+  lesson_id: string;
+  submission_url: string;
+  created_at: string;
 }
 
 interface Module {
@@ -57,9 +66,73 @@ export default function DashboardPage() {
   const [progressData, setProgressData] = useState<Progress[]>([])
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
   const [currentCourse, setCurrentCourse] = useState<any>(null)
+  const [homeworkDue, setHomeworkDue] = useState<Lesson[]>([])
+  const [submittingHomework, setSubmittingHomework] = useState<string | null>(null)
+  const [homeworkLink, setHomeworkLink] = useState("")
+  const [homeworkFile, setHomeworkFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [role, setRole] = useState<string>("student")
   
+  const handleHomeworkSubmit = async (lesson: Lesson) => {
+    if (lesson.homework_type === 'link' && !homeworkLink) {
+      toast.error("Please paste your homework link")
+      return
+    }
+    if (lesson.homework_type === 'upload' && !homeworkFile) {
+      toast.error("Please select a file to upload")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      let submissionUrl = homeworkLink
+
+      if (lesson.homework_type === 'upload' && homeworkFile) {
+        const fileExt = homeworkFile.name.split('.').pop()
+        const fileName = `${user.id}/${lesson.id}-${Date.now()}.${fileExt}`
+        
+        const { error: uploadError } = await supabase.storage
+          .from('homework')
+          .upload(fileName, homeworkFile)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('homework')
+          .getPublicUrl(fileName)
+        
+        submissionUrl = publicUrl
+      }
+
+      const { error } = await supabase
+        .from('homework_submissions')
+        .insert({
+          lesson_id: lesson.id,
+          user_id: user.id,
+          submission_type: lesson.homework_type,
+          submission_url: submissionUrl,
+          company_id: currentCourse?.company_id
+        })
+
+      if (error) throw error
+
+      toast.success("Homework submitted successfully!")
+      setHomeworkDue(prev => prev.filter(l => l.id !== lesson.id))
+      setSubmittingHomework(null)
+      setHomeworkLink("")
+      setHomeworkFile(null)
+    } catch (err: any) {
+      console.error("Submission error:", err)
+      toast.error(err.message || "Failed to submit homework")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   useEffect(() => {
     let mounted = true;
     async function loadDashboardData() {
@@ -132,7 +205,13 @@ export default function DashboardPage() {
                    .select('quiz_id, passed')
                    .eq('user_id', session.user.id)
 
-                 // 5. Fetch quizzes to link them to lessons or modules
+                 // 5. Fetch homework submissions
+                 const { data: submissions } = await supabase
+                   .from('homework_submissions')
+                   .select('lesson_id')
+                   .eq('user_id', session.user.id)
+
+                 // 6. Fetch quizzes to link them to lessons or modules
                  const { data: quizData } = await supabase
                    .from('quizzes')
                    .select('id, lesson_id, module_id')
@@ -143,6 +222,21 @@ export default function DashboardPage() {
                    const quizResults = (attempts as QuizAttempt[]) || []
                    const quizzes = quizData || []
                    const allLessons = (lessonData as Lesson[]) || []
+                   const homeworkSubmissions = (submissions as { lesson_id: string }[]) || []
+                   
+                   // Calculate homework due
+                   const due = allLessons.filter(lesson => {
+                     if (!lesson.has_homework) return false
+                     
+                     // Check if lesson is completed
+                     const isLessonCompleted = progress.some(p => p.lesson_id === lesson.id && p.completed)
+                     if (!isLessonCompleted) return false
+                     
+                     // Check if already submitted
+                     const alreadySubmitted = homeworkSubmissions.some(s => s.lesson_id === lesson.id)
+                     return !alreadySubmitted
+                   })
+                   setHomeworkDue(due)
                    
                    // Group lessons by module and calculate status
                    let allModulesCompleted = true
@@ -495,46 +589,126 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Announcements Panel */}
+          {/* Announcements / Homework Due Panel */}
           <div className="flex-none space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-xs font-bold text-gray-900">Announcements</h3>
-              <Link to="/dashboard/announcements" className="text-[10px] font-semibold text-primary hover:underline">View all</Link>
+              <h3 className="text-xs font-bold text-gray-900">
+                {homeworkDue.length > 0 ? "Homework Due" : "Announcements"}
+              </h3>
+              {homeworkDue.length === 0 && (
+                <Link to="/dashboard/announcements" className="text-[10px] font-semibold text-primary hover:underline">View all</Link>
+              )}
             </div>
             <Card className="border border-gray-100 shadow-sm rounded-xl">
               <CardContent className="p-4 space-y-4">
-                <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-                    <Megaphone className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-[11px]">Welcome to the Openlead Academy!</h4>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Kick off your learning journey.</p>
-                    <p className="text-[9px] text-gray-400 mt-1">2 days ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
-                    <Calendar className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-[11px]">Live Q&A Session</h4>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Join us this Friday at 11:00 AM</p>
-                    <p className="text-[9px] text-gray-400 mt-1">5 days ago</p>
-                  </div>
-                </div>
+                {homeworkDue.length > 0 ? (
+                  homeworkDue.map((lesson) => (
+                    <div key={lesson.id} className="flex items-center justify-between gap-2.5">
+                      <div className="flex gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 text-orange-600">
+                          <BookOpen className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-[11px] line-clamp-1">{lesson.title}</h4>
+                          <p className="text-[10px] text-gray-500 mt-0.5">Homework pending</p>
+                        </div>
+                      </div>
+                      
+                      <Dialog open={submittingHomework === lesson.id} onOpenChange={(open) => setSubmittingHomework(open ? lesson.id : null)}>
+                        <DialogTrigger render={<Button size="sm" className="h-7 px-3 text-[10px] bg-primary hover:bg-primary/90 text-white font-bold rounded-lg" />}>
+                            Turn In
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg font-bold">Turn In Homework</DialogTitle>
+                            <p className="text-sm text-gray-500 mt-1">Submit your work for "{lesson.title}"</p>
+                          </DialogHeader>
+                          <div className="py-4 space-y-4">
+                            {lesson.homework_type === 'link' ? (
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-700">Homework Link</label>
+                                <input 
+                                  type="url"
+                                  placeholder="https://..."
+                                  value={homeworkLink}
+                                  onChange={(e) => setHomeworkLink(e.target.value)}
+                                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none"
+                                />
+                                <p className="text-[10px] text-gray-400">Paste the link to your Google Doc, Figma, or other online work.</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-700">Upload File</label>
+                                <div className="border-2 border-dashed border-gray-100 rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer relative">
+                                  <input 
+                                    type="file"
+                                    onChange={(e) => setHomeworkFile(e.target.files?.[0] || null)}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  />
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary">
+                                      <FileText className="w-5 h-5" />
+                                    </div>
+                                    <p className="text-xs font-medium text-gray-600">
+                                      {homeworkFile ? homeworkFile.name : "Click to select a file"}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400">PDF, ZIP, or Image (Max 10MB)</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => setSubmittingHomework(null)} className="text-xs font-bold">Cancel</Button>
+                            <Button 
+                              size="sm" 
+                              disabled={isSubmitting}
+                              onClick={() => handleHomeworkSubmit(lesson)} 
+                              className="text-xs font-bold bg-primary hover:bg-primary/90 text-white"
+                            >
+                              {isSubmitting ? "Submitting..." : "Submit Homework"}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                        <Megaphone className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-[11px]">Welcome to the Openlead Academy!</h4>
+                        <p className="text-[10px] text-gray-500 mt-0.5">Kick off your learning journey.</p>
+                        <p className="text-[9px] text-gray-400 mt-1">2 days ago</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                        <Calendar className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-[11px]">Live Q&A Session</h4>
+                        <p className="text-[10px] text-gray-500 mt-0.5">Join us this Friday at 11:00 AM</p>
+                        <p className="text-[9px] text-gray-400 mt-1">5 days ago</p>
+                      </div>
+                    </div>
 
-                <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#FCF8E3] flex items-center justify-center flex-shrink-0 text-[#EAB308]">
-                    <Star className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-[11px]">New Resource Added</h4>
-                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">Check out the Customer Success Guide.</p>
-                    <p className="text-[9px] text-gray-400 mt-1">1 week ago</p>
-                  </div>
-                </div>
+                    <div className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-[#FCF8E3] flex items-center justify-center flex-shrink-0 text-[#EAB308]">
+                        <Star className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-[11px]">New Resource Added</h4>
+                        <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">Check out the Customer Success Guide.</p>
+                        <p className="text-[9px] text-gray-400 mt-1">1 week ago</p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

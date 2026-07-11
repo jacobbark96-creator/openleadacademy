@@ -90,6 +90,8 @@ interface Lesson {
   image_url?: string;
   order_index: number;
   week_number: number;
+  has_homework: boolean;
+  homework_type?: 'link' | 'upload';
 }
 
 interface LibraryResource {
@@ -532,7 +534,8 @@ export default function AdminPage() {
       video_url: '',
       audio_url: '',
       order_index: newOrderIndex,
-      week_number: 1
+      week_number: 1,
+      has_homework: false
     }).select().single()
 
     if (error) {
@@ -543,7 +546,7 @@ export default function AdminPage() {
     }
   }
 
-  const handleUpdateLesson = async (id: string, field: string, value: string | number) => {
+  const handleUpdateLesson = async (id: string, field: string, value: string | number | boolean) => {
     const { error } = await supabase.from('lessons').update({ [field]: value }).eq('id', id)
     if (error) {
       toast.error(`Failed to update ${field}`)
@@ -1967,6 +1970,46 @@ export default function AdminPage() {
                                         onBlur={(e) => handleUpdateLesson(lesson.id, 'description', e.target.value)}
                                         className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
                                       />
+                                    </div>
+                                    <div className="space-y-4 pr-8 pt-2 border-t border-gray-100">
+                                      <div className="flex items-center gap-2">
+                                        <input 
+                                          type="checkbox" 
+                                          id={`homework-${lesson.id}`}
+                                          checked={lesson.has_homework}
+                                          onChange={(e) => handleUpdateLesson(lesson.id, 'has_homework', e.target.checked)}
+                                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <Label htmlFor={`homework-${lesson.id}`} className="text-sm font-semibold">Include Homework</Label>
+                                      </div>
+                                      
+                                      {lesson.has_homework && (
+                                        <div className="pl-6 space-y-3">
+                                          <p className="text-xs text-gray-500 font-medium">Submission Method:</p>
+                                          <div className="flex gap-4">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                              <input 
+                                                type="radio" 
+                                                name={`homework-type-${lesson.id}`}
+                                                checked={lesson.homework_type === 'link'}
+                                                onChange={() => handleUpdateLesson(lesson.id, 'homework_type', 'link')}
+                                                className="w-4 h-4 text-primary focus:ring-primary"
+                                              />
+                                              <span className="text-xs">Paste Link</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                              <input 
+                                                type="radio" 
+                                                name={`homework-type-${lesson.id}`}
+                                                checked={lesson.homework_type === 'upload'}
+                                                onChange={() => handleUpdateLesson(lesson.id, 'homework_type', 'upload')}
+                                                className="w-4 h-4 text-primary focus:ring-primary"
+                                              />
+                                              <span className="text-xs">File Upload</span>
+                                            </label>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                     <Button 
                                       variant="ghost" 
