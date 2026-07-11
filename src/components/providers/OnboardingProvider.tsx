@@ -151,10 +151,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   }
 
   // A user's onboarding is complete if:
-  // 1. They don't have an unpaid signup fee AND
-  // 2. They are either a tenant user OR they've signed both NDAs
+  // 1. They are NOT loading AND
+  // 2. They don't have an unpaid signup fee AND
+  // 3. They are either a tenant user OR they've signed both NDAs
   const hasUnpaidFee = profile?.signup_fee > 0 && !profile?.has_paid_signup_fee
-  const isComplete = !hasUnpaidFee && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
+  const isComplete = !isLoading && !!profile && !hasUnpaidFee && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
 
   return (
     <OnboardingContext.Provider value={{ isComplete, isLoading }}>

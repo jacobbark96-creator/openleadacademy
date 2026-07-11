@@ -110,7 +110,11 @@ serve(async (req) => {
         email_confirm: true,
         user_metadata: { 
           full_name: fullName,
-          company_id: targetCompanyId
+          company_id: targetCompanyId,
+          role: role,
+          signup_fee: signupFee || 0,
+          signup_fee_currency: signupFeeCurrency || 'GBP',
+          has_paid_signup_fee: hasPaidSignupFee ?? true
         }
       })
       
