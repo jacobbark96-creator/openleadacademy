@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy, ShieldCheck, Search, Filter } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy, ShieldCheck, Search, Filter, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,11 @@ interface UserProfile {
   subcontractor_signed?: boolean;
   subcontractor_signed_at?: string;
   agreement_signature_name?: string;
+  signup_fee?: number;
+  signup_fee_currency?: string;
+  has_paid_signup_fee?: boolean;
+  fee_breakdown?: { name: string; amount: number }[];
+  accepted_legal_documents?: string[];
 }
 
 interface TeamMember {
@@ -172,7 +177,7 @@ export default function AdminPage() {
     setNewUserFeeBreakdown(updated)
     
     // Auto-calculate total fee amount
-    const total = updated.reduce((sum, item) => sum + item.amount, 0)
+    const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
     setNewUserFeeAmount(total.toString())
   }
 
@@ -736,7 +741,11 @@ export default function AdminPage() {
     full_name: "",
     phone: "",
     role: "",
-    enrollments: [] as string[]
+    enrollments: [] as string[],
+    signup_fee: 0,
+    signup_fee_currency: "GBP",
+    has_paid_signup_fee: true,
+    fee_breakdown: [] as { name: string; amount: number }[]
   })
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false)
 
@@ -1486,7 +1495,7 @@ export default function AdminPage() {
                               className="h-6 text-[10px] font-bold"
                               onClick={() => {
                                 const updated = [...editingUserDetails.fee_breakdown, { name: "", amount: 0 }]
-                                const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
                                 setEditingUserDetails({
                                   ...editingUserDetails, 
                                   fee_breakdown: updated,
@@ -1517,7 +1526,7 @@ export default function AdminPage() {
                                 onChange={e => {
                                   const updated = [...editingUserDetails.fee_breakdown]
                                   updated[idx] = { ...updated[idx], amount: Number(e.target.value) }
-                                  const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                  const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
                                   setEditingUserDetails({
                                     ...editingUserDetails, 
                                     fee_breakdown: updated,
@@ -1532,7 +1541,7 @@ export default function AdminPage() {
                                 className="h-8 w-8 p-0 text-red-400"
                                 onClick={() => {
                                   const updated = editingUserDetails.fee_breakdown.filter((_: any, i: number) => i !== idx)
-                                  const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                  const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
                                   setEditingUserDetails({
                                     ...editingUserDetails, 
                                     fee_breakdown: updated,
