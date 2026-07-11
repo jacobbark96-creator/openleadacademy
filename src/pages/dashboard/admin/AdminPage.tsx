@@ -215,6 +215,12 @@ export default function AdminPage() {
 
   const loadUsers = async (mounted: boolean) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.warn("No active session found for Edge Function call")
+        return
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-manage-users', {
         body: { action: 'list' }
       })
@@ -552,7 +558,8 @@ export default function AdminPage() {
       course_id: selectedCourseId,
       title: 'New Module',
       description: 'Module description...',
-      order_index: newOrderIndex
+      order_index: newOrderIndex,
+      company_id: company?.id
     }).select().single()
 
     if (error) {
@@ -606,7 +613,8 @@ export default function AdminPage() {
       audio_url: '',
       order_index: newOrderIndex,
       week_number: 1,
-      has_homework: false
+      has_homework: false,
+      company_id: company?.id
     }).select().single()
 
     if (error) {
