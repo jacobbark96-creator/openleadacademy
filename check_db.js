@@ -7,8 +7,5 @@ const supabase = createClient(
 async function check() {
   const { data: companies } = await supabase.from('companies').select('*');
   console.log('COMPANIES:', JSON.stringify(companies, null, 2));
-
-  const { data: profiles } = await supabase.from('profiles').select('id, full_name, role, company_id');
-  console.log('\nPROFILES:', JSON.stringify(profiles, null, 2));
 }
 check();

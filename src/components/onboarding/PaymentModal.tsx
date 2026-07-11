@@ -6,10 +6,11 @@ import { useTenant } from '@/providers/TenantProvider'
 interface PaymentModalProps {
   isOpen: boolean
   feeAmount: number
+  feeCurrency?: string
   onPay: () => void
 }
 
-export function PaymentModal({ isOpen, feeAmount, onPay }: PaymentModalProps) {
+export function PaymentModal({ isOpen, feeAmount, feeCurrency = 'GBP', onPay }: PaymentModalProps) {
   const { company } = useTenant()
   const [loading, setLoading] = useState(false)
 
@@ -17,6 +18,15 @@ export function PaymentModal({ isOpen, feeAmount, onPay }: PaymentModalProps) {
     setLoading(true)
     await onPay()
     setLoading(false)
+  }
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    switch (currencyCode.toUpperCase()) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return '$';
+    }
   }
 
   return (
@@ -30,8 +40,10 @@ export function PaymentModal({ isOpen, feeAmount, onPay }: PaymentModalProps) {
         </DialogHeader>
         
         <div className="py-6 flex flex-col items-center justify-center space-y-4">
-          <div className="text-4xl font-bold text-gray-900">${Number(feeAmount).toFixed(2)}</div>
-          <p className="text-sm text-gray-500">One-time payment</p>
+          <div className="text-4xl font-bold text-gray-900">
+            {getCurrencySymbol(feeCurrency)}{Number(feeAmount).toFixed(2)}
+          </div>
+          <p className="text-sm text-gray-500">One-time payment ({feeCurrency})</p>
         </div>
 
         <DialogFooter>

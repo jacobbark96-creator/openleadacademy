@@ -125,6 +125,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         body: { 
           action: 'checkout-signup-fee',
           feeAmount: profile.signup_fee,
+          feeCurrency: profile.signup_fee_currency || 'GBP',
           companyId: profile.company_id
         }
       })
@@ -161,6 +162,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       <PaymentModal
         isOpen={showPaymentModal}
         feeAmount={profile?.signup_fee || 0}
+        feeCurrency={profile?.signup_fee_currency || 'GBP'}
         onPay={handlePaySignupFee}
       />
       <AgreementModal

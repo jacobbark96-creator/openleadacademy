@@ -147,6 +147,7 @@ export default function AdminPage() {
   const [newUserName, setNewUserName] = useState("")
   const [newUserHasFee, setNewUserHasFee] = useState(false)
   const [newUserFeeAmount, setNewUserFeeAmount] = useState("0")
+  const [newUserFeeCurrency, setNewUserFeeCurrency] = useState("GBP")
 
   const loadUsers = async (mounted: boolean) => {
     try {
@@ -385,6 +386,7 @@ export default function AdminPage() {
           role: newUserRole,
           password: newUserPassword,
           signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
+          signupFeeCurrency: newUserFeeCurrency,
           hasPaidSignupFee: !newUserHasFee
         }
       })
@@ -1043,16 +1045,29 @@ export default function AdminPage() {
                   </div>
                   {newUserHasFee && (
                     <div className="space-y-2 pl-7">
-                      <Label>Fee Amount ($)</Label>
-                      <Input 
-                        type="number" 
-                        min="0"
-                        step="0.01"
-                        value={newUserFeeAmount} 
-                        onChange={e => setNewUserFeeAmount(e.target.value)} 
-                        required 
-                        className="max-w-[200px]"
-                      />
+                      <Label>Fee Amount</Label>
+                      <div className="flex items-center gap-2 max-w-[300px]">
+                        <select
+                          value={newUserFeeCurrency}
+                          onChange={e => setNewUserFeeCurrency(e.target.value)}
+                          className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background w-24"
+                        >
+                          <option value="GBP">GBP (£)</option>
+                          <option value="USD">USD ($)</option>
+                          <option value="EUR">EUR (€)</option>
+                          <option value="AUD">AUD ($)</option>
+                          <option value="CAD">CAD ($)</option>
+                        </select>
+                        <Input 
+                          type="number" 
+                          min="0"
+                          step="0.01"
+                          value={newUserFeeAmount} 
+                          onChange={e => setNewUserFeeAmount(e.target.value)} 
+                          required 
+                          className="flex-1"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

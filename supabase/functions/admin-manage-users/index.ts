@@ -99,7 +99,7 @@ serve(async (req) => {
     }
 
     if (action === 'create') {
-      const { email, fullName, password, role, signupFee, hasPaidSignupFee } = payload
+      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee } = payload
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: password || 'TempPass123!',
@@ -118,6 +118,7 @@ serve(async (req) => {
           email,
           company_id: profile.company_id, // Ensure profile has the correct company_id
           signup_fee: signupFee || 0,
+          signup_fee_currency: signupFeeCurrency || 'GBP',
           has_paid_signup_fee: hasPaidSignupFee ?? true
         }).eq('id', data.user.id)
 
