@@ -309,7 +309,7 @@ export default function SettingsPage() {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-slate-500">Value / Target</span>
-                                <span className="font-semibold text-slate-900">openleadacademy.com</span>
+                                <span className="font-semibold text-slate-900">openlead-academy.pages.dev</span>
                               </div>
                             </div>
                             

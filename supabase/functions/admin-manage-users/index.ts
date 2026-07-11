@@ -99,14 +99,18 @@ serve(async (req) => {
     }
 
     if (action === 'create') {
-      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee } = payload
+      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee, companyId } = payload
+      
+      // Use the provided companyId or fallback to the admin's company_id
+      const targetCompanyId = companyId || profile.company_id
+
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: password || 'TempPass123!',
         email_confirm: true,
         user_metadata: { 
           full_name: fullName,
-          company_id: profile.company_id // Assign the new user to the admin's company
+          company_id: targetCompanyId
         }
       })
       
@@ -116,7 +120,7 @@ serve(async (req) => {
         await supabaseAdmin.from('profiles').update({ 
           role,
           email,
-          company_id: profile.company_id, // Ensure profile has the correct company_id
+          company_id: targetCompanyId,
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
           has_paid_signup_fee: hasPaidSignupFee ?? true

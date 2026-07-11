@@ -387,7 +387,8 @@ export default function AdminPage() {
           password: newUserPassword,
           signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
           signupFeeCurrency: newUserFeeCurrency,
-          hasPaidSignupFee: !newUserHasFee
+          hasPaidSignupFee: !newUserHasFee,
+          companyId: company?.id // Added optional chaining
         }
       })
       
