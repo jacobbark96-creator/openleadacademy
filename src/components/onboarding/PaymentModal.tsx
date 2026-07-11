@@ -30,8 +30,13 @@ export function PaymentModal({ isOpen, feeAmount, feeCurrency = 'GBP', onPay }: 
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[425px]" showCloseButton={false}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Prevent closing
+    }}>
+      <DialogContent 
+        className="sm:max-w-[425px]" 
+        showCloseButton={false}
+      >
         <DialogHeader>
           <DialogTitle>Complete Your Registration</DialogTitle>
           <DialogDescription>
@@ -39,15 +44,22 @@ export function PaymentModal({ isOpen, feeAmount, feeCurrency = 'GBP', onPay }: 
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-6 flex flex-col items-center justify-center space-y-4">
-          <div className="text-4xl font-bold text-gray-900">
-            {getCurrencySymbol(feeCurrency)}{Number(feeAmount).toFixed(2)}
+        <div className="py-6 space-y-6">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+            <h4 className="text-sm font-semibold text-slate-900 border-b border-slate-200 pb-2">Cost Breakdown</h4>
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>Platform Access</span>
+              <span>{getCurrencySymbol(feeCurrency)}{Number(feeAmount).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm font-bold text-slate-900 border-t border-slate-200 pt-2">
+              <span>Total Due</span>
+              <span>{getCurrencySymbol(feeCurrency)}{Number(feeAmount).toFixed(2)}</span>
+            </div>
           </div>
-          <p className="text-sm text-gray-500">One-time payment ({feeCurrency})</p>
         </div>
 
         <DialogFooter>
-          <Button onClick={handlePayment} className="w-full bg-primary hover:bg-primary/90 text-white" disabled={loading}>
+          <Button onClick={handlePayment} className="w-full bg-primary hover:bg-primary/90 text-white font-semibold h-11" disabled={loading}>
             {loading ? 'Processing...' : 'Pay with Stripe'}
           </Button>
         </DialogFooter>
