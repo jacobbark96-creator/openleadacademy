@@ -150,6 +150,63 @@ export default function AdminPage() {
   const [newUserHasFee, setNewUserHasFee] = useState(false)
   const [newUserFeeAmount, setNewUserFeeAmount] = useState("0")
   const [newUserFeeCurrency, setNewUserFeeCurrency] = useState("GBP")
+  const [newUserFeeBreakdown, setNewUserFeeBreakdown] = useState<{ name: string; amount: number }[]>([
+    { name: "Platform Access", amount: 0 }
+  ])
+
+  // Tenant Legal Documents state
+  const [legalDocuments, setLegalDocuments] = useState<{ title: string; content: string }[]>([])
+  const [isUpdatingLegal, setIsUpdatingLegal] = useState(false)
+
+  const handleAddFeeItem = () => {
+    setNewUserFeeBreakdown([...newUserFeeBreakdown, { name: "", amount: 0 }])
+  }
+
+  const handleRemoveFeeItem = (index: number) => {
+    setNewUserFeeBreakdown(newUserFeeBreakdown.filter((_, i) => i !== index))
+  }
+
+  const handleFeeItemChange = (index: number, field: 'name' | 'amount', value: string | number) => {
+    const updated = [...newUserFeeBreakdown]
+    updated[index] = { ...updated[index], [field]: field === 'amount' ? Number(value) : value }
+    setNewUserFeeBreakdown(updated)
+    
+    // Auto-calculate total fee amount
+    const total = updated.reduce((sum, item) => sum + item.amount, 0)
+    setNewUserFeeAmount(total.toString())
+  }
+
+  const handleAddLegalDoc = () => {
+    setLegalDocuments([...legalDocuments, { title: "", content: "" }])
+  }
+
+  const handleRemoveLegalDoc = (index: number) => {
+    setLegalDocuments(legalDocuments.filter((_, i) => i !== index))
+  }
+
+  const handleLegalDocChange = (index: number, field: 'title' | 'content', value: string) => {
+    const updated = [...legalDocuments]
+    updated[index] = { ...updated[index], [field]: value }
+    setLegalDocuments(updated)
+  }
+
+  const handleSaveLegalDocuments = async () => {
+    setIsUpdatingLegal(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
+        body: {
+          action: 'update-company-legal',
+          legalDocuments
+        }
+      })
+      if (error) throw error
+      toast.success("Legal documents updated successfully")
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update legal documents")
+    } finally {
+      setIsUpdatingLegal(false)
+    }
+  }
 
   const loadUsers = async (mounted: boolean) => {
     try {
@@ -246,6 +303,14 @@ export default function AdminPage() {
         // Load Library Resources
         const { data: resData } = await scopeQuery(supabase.from('resources').select('*')).order('created_at', { ascending: false })
         if (resData && mounted) setResources(resData)
+
+        // Load Legal Documents from company
+        if (company?.id) {
+          const { data: compData } = await supabase.from('companies').select('legal_documents').eq('id', company.id).single()
+          if (compData?.legal_documents && mounted) {
+            setLegalDocuments(compData.legal_documents)
+          }
+        }
 
         // Load Announcements
         const { data: annData } = await scopeQuery(supabase.from('announcements').select('*')).order('created_at', { ascending: false })
@@ -388,7 +453,8 @@ export default function AdminPage() {
       signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
       signupFeeCurrency: newUserFeeCurrency,
       hasPaidSignupFee: !newUserHasFee,
-      companyId: company?.id
+      companyId: company?.id,
+      feeBreakdown: newUserHasFee ? newUserFeeBreakdown : []
     }
     
     console.log("SENDING CREATE USER PAYLOAD:", payload)
@@ -719,8 +785,12 @@ export default function AdminPage() {
     setEditingUserDetails({
       full_name: user.full_name || "",
       phone: user.phone || "",
-      role: user.role || "student",
-      enrollments: user.enrollments || []
+      role: user.role || 'student',
+      enrollments: user.enrollments || [],
+      signup_fee: user.signup_fee || 0,
+      signup_fee_currency: user.signup_fee_currency || 'GBP',
+      has_paid_signup_fee: user.has_paid_signup_fee ?? true,
+      fee_breakdown: user.fee_breakdown || []
     })
     setIsDetailsModalOpen(true)
   }
@@ -737,7 +807,11 @@ export default function AdminPage() {
           fullName: editingUserDetails.full_name,
           phone: editingUserDetails.phone,
           role: editingUserDetails.role,
-          enrollments: editingUserDetails.enrollments
+          enrollments: editingUserDetails.enrollments,
+          signupFee: editingUserDetails.signup_fee,
+          signupFeeCurrency: editingUserDetails.signup_fee_currency,
+          hasPaidSignupFee: editingUserDetails.has_paid_signup_fee,
+          feeBreakdown: editingUserDetails.fee_breakdown
         }
       })
 
@@ -971,6 +1045,14 @@ export default function AdminPage() {
             Vacancies
           </button>
         )}
+        {role === 'admin' && (
+          <button
+            onClick={() => setActiveTab("legal")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'legal' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Legal Documents
+          </button>
+        )}
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("modules")}
@@ -1052,29 +1134,82 @@ export default function AdminPage() {
                     <Label htmlFor="fee-toggle" className="font-semibold cursor-pointer">Require Sign Up Fee</Label>
                   </div>
                   {newUserHasFee && (
-                    <div className="space-y-2 pl-7">
-                      <Label>Fee Amount</Label>
-                      <div className="flex items-center gap-2 max-w-[300px]">
-                        <select
-                          value={newUserFeeCurrency}
-                          onChange={e => setNewUserFeeCurrency(e.target.value)}
-                          className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background w-24"
+                    <div className="space-y-4 pl-7">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-bold text-gray-700">Fee Breakdown</Label>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleAddFeeItem}
+                          className="h-7 text-[10px] font-bold"
                         >
-                          <option value="GBP">GBP (£)</option>
-                          <option value="USD">USD ($)</option>
-                          <option value="EUR">EUR (€)</option>
-                          <option value="AUD">AUD ($)</option>
-                          <option value="CAD">CAD ($)</option>
-                        </select>
-                        <Input 
-                          type="number" 
-                          min="0"
-                          step="0.01"
-                          value={newUserFeeAmount} 
-                          onChange={e => setNewUserFeeAmount(e.target.value)} 
-                          required 
-                          className="flex-1"
-                        />
+                          <Plus className="w-3 h-3 mr-1" /> Add Line Item
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {newUserFeeBreakdown.map((item, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Input 
+                              placeholder="Item Name (e.g. Platform Access)"
+                              value={item.name}
+                              onChange={e => handleFeeItemChange(index, 'name', e.target.value)}
+                              className="flex-1 h-8 text-xs"
+                            />
+                            <div className="flex items-center gap-1 w-32">
+                              <span className="text-xs text-gray-400 font-bold">
+                                {newUserFeeCurrency === 'GBP' ? '£' : 
+                                 newUserFeeCurrency === 'USD' ? '$' : 
+                                 newUserFeeCurrency === 'EUR' ? '€' : '$'}
+                              </span>
+                              <Input 
+                                type="number"
+                                placeholder="0.00"
+                                value={item.amount}
+                                onChange={e => handleFeeItemChange(index, 'amount', e.target.value)}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            {newUserFeeBreakdown.length > 1 && (
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleRemoveFeeItem(index)}
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs font-bold text-gray-500">Currency</Label>
+                          <select
+                            value={newUserFeeCurrency}
+                            onChange={e => setNewUserFeeCurrency(e.target.value)}
+                            className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background w-24"
+                          >
+                            <option value="GBP">GBP (£)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="AUD">AUD ($)</option>
+                            <option value="CAD">CAD ($)</option>
+                          </select>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Signup Fee</p>
+                          <p className="text-lg font-black text-primary">
+                            {newUserFeeCurrency === 'GBP' ? '£' : 
+                             newUserFeeCurrency === 'USD' ? '$' : 
+                             newUserFeeCurrency === 'EUR' ? '€' : '$'}
+                            {newUserFeeAmount}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1322,6 +1457,110 @@ export default function AdminPage() {
                           <option value="trainer">Trainer</option>
                           {role === 'admin' && <option value="admin">Admin</option>}
                         </select>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-bold flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-primary" />
+                            Signup Fee & Breakdown
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="checkbox" 
+                              id="edit-has-paid"
+                              checked={editingUserDetails.has_paid_signup_fee}
+                              onChange={e => setEditingUserDetails({...editingUserDetails, has_paid_signup_fee: e.target.checked})}
+                              className="w-4 h-4 rounded border-gray-300 text-primary"
+                            />
+                            <Label htmlFor="edit-has-paid" className="text-xs font-medium">Mark as Paid</Label>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-xs font-bold text-gray-500 uppercase">Fee Items</p>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-6 text-[10px] font-bold"
+                              onClick={() => {
+                                const updated = [...editingUserDetails.fee_breakdown, { name: "", amount: 0 }]
+                                const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                setEditingUserDetails({
+                                  ...editingUserDetails, 
+                                  fee_breakdown: updated,
+                                  signup_fee: total
+                                })
+                              }}
+                            >
+                              Add Item
+                            </Button>
+                          </div>
+                          
+                          {editingUserDetails.fee_breakdown.map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <Input 
+                                placeholder="Item name"
+                                value={item.name}
+                                onChange={e => {
+                                  const updated = [...editingUserDetails.fee_breakdown]
+                                  updated[idx] = { ...updated[idx], name: e.target.value }
+                                  setEditingUserDetails({...editingUserDetails, fee_breakdown: updated})
+                                }}
+                                className="flex-1 h-8 text-xs"
+                              />
+                              <Input 
+                                type="number"
+                                placeholder="0.00"
+                                value={item.amount}
+                                onChange={e => {
+                                  const updated = [...editingUserDetails.fee_breakdown]
+                                  updated[idx] = { ...updated[idx], amount: Number(e.target.value) }
+                                  const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                  setEditingUserDetails({
+                                    ...editingUserDetails, 
+                                    fee_breakdown: updated,
+                                    signup_fee: total
+                                  })
+                                }}
+                                className="w-20 h-8 text-xs"
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0 text-red-400"
+                                onClick={() => {
+                                  const updated = editingUserDetails.fee_breakdown.filter((_: any, i: number) => i !== idx)
+                                  const total = updated.reduce((sum, item) => sum + item.amount, 0)
+                                  setEditingUserDetails({
+                                    ...editingUserDetails, 
+                                    fee_breakdown: updated,
+                                    signup_fee: total
+                                  })
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                          
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
+                            <select
+                              value={editingUserDetails.signup_fee_currency}
+                              onChange={e => setEditingUserDetails({...editingUserDetails, signup_fee_currency: e.target.value})}
+                              className="h-7 text-[10px] rounded border bg-white px-1 font-bold"
+                            >
+                              <option value="GBP">GBP (£)</option>
+                              <option value="USD">USD ($)</option>
+                              <option value="EUR">EUR (€)</option>
+                            </select>
+                            <p className="text-sm font-black text-primary">
+                              Total: {editingUserDetails.signup_fee_currency === 'GBP' ? '£' : '$'}
+                              {editingUserDetails.signup_fee}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -1667,6 +1906,83 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {activeTab === 'legal' && role === 'admin' && (
+        <div className="space-y-6">
+          <Card className="border-0 shadow-sm rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  Tenant Legal Documents
+                </CardTitle>
+                <p className="text-xs text-gray-500 mt-1">These documents must be accepted by all new users before they can access the platform.</p>
+              </div>
+              <Button 
+                onClick={handleAddLegalDoc}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Document
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {legalDocuments.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">No legal documents added yet.</p>
+                  <Button variant="link" onClick={handleAddLegalDoc} className="text-primary font-bold">Create your first document</Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {legalDocuments.map((doc, index) => (
+                    <div key={index} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 relative group">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleRemoveLegalDoc(index)}
+                        className="absolute top-4 right-4 text-red-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Document Title</Label>
+                          <Input 
+                            placeholder="e.g. Terms & Conditions"
+                            value={doc.title}
+                            onChange={e => handleLegalDocChange(index, 'title', e.target.value)}
+                            className="font-bold text-lg"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Document Content (Markdown/Text)</Label>
+                          <textarea 
+                            placeholder="Enter the document content here..."
+                            value={doc.content}
+                            onChange={e => handleLegalDocChange(index, 'content', e.target.value)}
+                            className="w-full h-48 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm ring-offset-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4 flex justify-end">
+                    <Button 
+                      onClick={handleSaveLegalDocuments}
+                      disabled={isUpdatingLegal}
+                      className="bg-primary hover:bg-primary/90 text-white min-w-[200px]"
+                    >
+                      {isUpdatingLegal ? 'Saving...' : 'Save Legal Documents'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {activeTab === 'modules' && (role === 'admin' || role === 'trainer') && (

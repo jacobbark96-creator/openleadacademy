@@ -47,6 +47,16 @@ export default function SettingsPage() {
   const [detectedProvider, setDetectedProvider] = useState<DnsProvider | null>(null)
   const [dnsError, setDnsError] = useState<string | null>(null)
 
+  // Sync state when company loads
+  useEffect(() => {
+    if (company) {
+      setPrimaryColor(company.primary_color || "#000000")
+      setCustomDomain(company.custom_domain || "")
+      setIsEditingDomain(!company.custom_domain)
+      setLogoHeight(company.logo_height || 40)
+    }
+  }, [company])
+
   const detectDnsProvider = async () => {
     if (!customDomain) {
       setDnsError("Please enter a custom domain first.")

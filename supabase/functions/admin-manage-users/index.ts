@@ -100,7 +100,7 @@ serve(async (req) => {
     }
 
     if (action === 'create') {
-      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee, companyId } = payload
+      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee, companyId, feeBreakdown } = payload
       
       // Use the provided companyId or fallback to the admin's company_id
       const targetCompanyId = companyId || profile.company_id
@@ -115,7 +115,8 @@ serve(async (req) => {
           role: role,
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
-          has_paid_signup_fee: hasPaidSignupFee ?? true
+          has_paid_signup_fee: hasPaidSignupFee ?? true,
+          fee_breakdown: feeBreakdown || []
         }
       })
       
@@ -131,7 +132,8 @@ serve(async (req) => {
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
           has_paid_signup_fee: hasPaidSignupFee ?? true,
-          full_name: fullName // Ensure name is also set
+          full_name: fullName, // Ensure name is also set
+          fee_breakdown: feeBreakdown || []
         })
         
         if (profileError) {
@@ -206,7 +208,7 @@ serve(async (req) => {
     }
 
     if (action === 'update-profile') {
-      const { userId, role, fullName, phone, enrollments } = payload
+      const { userId, role, fullName, phone, enrollments, signupFee, signupFeeCurrency, hasPaidSignupFee, feeBreakdown } = payload
       
       // Verify user belongs to same company
       const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
@@ -225,7 +227,15 @@ serve(async (req) => {
       // Update profile
       const { error: profileUpdateError } = await supabaseAdmin
         .from('profiles')
-        .update({ role, full_name: fullName, phone })
+        .update({ 
+          role, 
+          full_name: fullName, 
+          phone,
+          signup_fee: signupFee,
+          signup_fee_currency: signupFeeCurrency,
+          has_paid_signup_fee: hasPaidSignupFee,
+          fee_breakdown: feeBreakdown
+        })
         .eq('id', userId)
       
       if (profileUpdateError) throw profileUpdateError
@@ -246,6 +256,28 @@ serve(async (req) => {
         }
       }
       
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    if (action === 'update-company-legal') {
+      const { legalDocuments } = payload
+      
+      if (profile.role !== 'admin') {
+        return new Response(JSON.stringify({ error: 'Unauthorized: Admin only' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        })
+      }
+
+      const { error } = await supabaseAdmin
+        .from('companies')
+        .update({ legal_documents: legalDocuments })
+        .eq('id', profile.company_id)
+      
+      if (error) throw error
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

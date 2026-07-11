@@ -26,7 +26,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (session?.user) {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, companies:company_id(slug)')
+        .select('*, companies:company_id(*)')
         .eq('id', session.user.id)
         .single()
       
@@ -126,8 +126,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
-  const handlePaySignupFee = async () => {
+  const handlePaySignupFee = async (acceptedDocs: string[]) => {
     try {
+      // 1. Update accepted legal documents first
+      if (acceptedDocs.length > 0) {
+        await supabase
+          .from('profiles')
+          .update({ accepted_legal_documents: acceptedDocs })
+          .eq('id', profile.id)
+      }
+
       const { data, error } = await supabase.functions.invoke('stripe', {
         body: { 
           action: 'checkout-signup-fee',
@@ -160,9 +168,15 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // A user's onboarding is complete if:
   // 1. They are NOT loading AND
   // 2. They don't have an unpaid signup fee AND
-  // 3. They are either a tenant user OR they've signed both NDAs
+  // 3. They have accepted all tenant legal documents AND
+  // 4. They are either a tenant user OR they've signed both NDAs
   const hasUnpaidFee = profile?.signup_fee > 0 && !profile?.has_paid_signup_fee
-  const isComplete = !isLoading && !!profile && !hasUnpaidFee && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
+  
+  const tenantDocs = profile?.companies?.legal_documents || []
+  const acceptedTenantDocs = profile?.accepted_legal_documents || []
+  const hasAcceptedAllTenantDocs = tenantDocs.length === 0 || tenantDocs.every((doc: any) => acceptedTenantDocs.includes(doc.title))
+
+  const isComplete = !isLoading && !!profile && !hasUnpaidFee && hasAcceptedAllTenantDocs && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
 
   return (
     <OnboardingContext.Provider value={{ isComplete, isLoading }}>
@@ -171,6 +185,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         isOpen={showPaymentModal}
         feeAmount={profile?.signup_fee || 0}
         feeCurrency={profile?.signup_fee_currency || 'GBP'}
+        feeBreakdown={profile?.fee_breakdown || []}
+        legalDocuments={profile?.companies?.legal_documents || []}
         onPay={handlePaySignupFee}
       />
       <AgreementModal
