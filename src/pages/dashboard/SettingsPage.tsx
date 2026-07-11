@@ -38,7 +38,9 @@ export default function SettingsPage() {
   
   const [primaryColor, setPrimaryColor] = useState(company?.primary_color || "#000000")
   const [customDomain, setCustomDomain] = useState(company?.custom_domain || "")
-  const [isEditingDomain, setIsEditingDomain] = useState(!company?.custom_domain)
+  const [slug, setSlug] = useState(company?.slug || "")
+  const [isEditingDomain, setIsEditingDomain] = useState(false)
+  const [isEditingSlug, setIsEditingSlug] = useState(false)
   const [logoHeight, setLogoHeight] = useState(company?.logo_height || 40)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   
@@ -52,7 +54,9 @@ export default function SettingsPage() {
     if (company) {
       setPrimaryColor(company.primary_color || "#000000")
       setCustomDomain(company.custom_domain || "")
-      setIsEditingDomain(!company.custom_domain)
+      setSlug(company.slug || "")
+      setIsEditingDomain(false)
+      setIsEditingSlug(false)
       setLogoHeight(company.logo_height || 40)
     }
   }, [company])
@@ -128,12 +132,26 @@ export default function SettingsPage() {
   const handleSaveBranding = async () => {
     if (!company) return
     try {
+      // Uniqueness check for slug if it changed
+      if (slug !== company.slug) {
+        const { data: existing } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle()
+        
+        if (existing) {
+          throw new Error("This academy URL is already taken. Please choose another.")
+        }
+      }
+
       const cleanDomain = customDomain.trim()
       const { error } = await supabase
         .from("companies")
         .update({
           primary_color: primaryColor,
           custom_domain: cleanDomain === "" ? null : cleanDomain,
+          slug: slug.toLowerCase().replace(/[^a-z0-9-]+/g, ''),
           logo_height: logoHeight
         })
         .eq("id", company.id)
@@ -290,21 +308,71 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" /> Academy URL
+                    </Label>
+                    {isEditingSlug ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Input 
+                              type="text" 
+                              value={slug}
+                              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, ''))}
+                              className="font-bold text-primary text-right pr-4"
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-slate-500">.openleadacademy.com</span>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                              setIsEditingSlug(false)
+                              setSlug(company.slug)
+                            }}
+                            className="text-xs h-7"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3 bg-primary/5 border border-primary/10 rounded-xl group">
+                        <div className="flex items-center gap-1">
+                          <span className="font-black text-primary">{company.slug}</span>
+                          <span className="text-slate-400 font-bold">.openleadacademy.com</span>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setIsEditingSlug(true)}
+                          className="h-7 text-[10px] font-black uppercase tracking-wider border-primary/20 text-primary hover:bg-primary/10"
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-slate-400">This is your permanent, hassle-free academy URL.</p>
+                  </div>
+
+                  <div className="pt-4 space-y-4 border-t border-slate-100 mt-4">
                     <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" /> Custom Domain
+                      <Label className="flex items-center gap-2 text-slate-400 grayscale">
+                        <Globe className="w-4 h-4" /> Custom Domain (Advanced)
                       </Label>
                       <Dialog onOpenChange={(open) => {
                         if (open && customDomain) detectDnsProvider()
                       }}>
-                        <DialogTrigger render={<Button variant="link" className="h-auto p-0 text-xs text-primary" />}>
+                        <DialogTrigger render={<Button variant="link" className="h-auto p-0 text-[10px] text-slate-400 font-bold uppercase tracking-widest hover:text-primary" />}>
                           DNS Setup Guide
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Connect Your Domain</DialogTitle>
+                            <DialogTitle>Connect Your Own Domain</DialogTitle>
                             <DialogDescription>
-                              To use a custom domain, you need to add a CNAME record in your domain provider's DNS settings.
+                              To use your own domain (e.g. training.yourcompany.com), add this CNAME record.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 pt-4">
@@ -383,7 +451,7 @@ export default function SettingsPage() {
                           value={customDomain}
                           onChange={(e) => setCustomDomain(e.target.value)}
                         />
-                        {company.custom_domain && (
+                        <div className="flex justify-end gap-2">
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -391,22 +459,24 @@ export default function SettingsPage() {
                               setIsEditingDomain(false)
                               setCustomDomain(company.custom_domain || "")
                             }}
-                            className="self-end text-xs h-6"
+                            className="text-xs h-7"
                           >
                             Cancel
                           </Button>
-                        )}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                        <span className="font-mono text-sm text-gray-700 truncate">{company.custom_domain}</span>
+                        <span className="font-mono text-sm text-gray-500 truncate italic">
+                          {company.custom_domain || "Not configured"}
+                        </span>
                         <Button 
                           variant="outline" 
                           size="sm" 
                           onClick={() => setIsEditingDomain(true)}
                           className="h-7 text-xs shrink-0 ml-2"
                         >
-                          Edit
+                          {company.custom_domain ? "Edit" : "Configure"}
                         </Button>
                       </div>
                     )}

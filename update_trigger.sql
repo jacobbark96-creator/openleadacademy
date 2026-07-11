@@ -8,8 +8,12 @@ BEGIN
   v_company_name := new.raw_user_meta_data->>'new_company_name';
   
   IF v_company_name IS NOT NULL THEN
-    -- Generate a unique slug from company name
-    v_slug := lower(regexp_replace(v_company_name, '[^a-zA-Z0-9]+', '-', 'g')) || '-' || substr(md5(random()::text), 1, 6);
+    -- Use provided slug or generate a unique slug from company name
+    v_slug := new.raw_user_meta_data->>'new_company_slug';
+    
+    IF v_slug IS NULL THEN
+      v_slug := lower(regexp_replace(v_company_name, '[^a-zA-Z0-9]+', '-', 'g')) || '-' || substr(md5(random()::text), 1, 6);
+    END IF;
     
     -- Insert new company
     INSERT INTO public.companies (name, slug, subscription_status)

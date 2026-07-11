@@ -7,11 +7,13 @@ BEGIN
   -- Check if they are trying to create a new academy
   IF new.raw_user_meta_data->>'new_company_name' IS NOT NULL THEN
     
-    -- Generate a slug from the company name (lowercase, replace spaces with hyphens)
-    new_slug := regexp_replace(lower(new.raw_user_meta_data->>'new_company_name'), '[^a-z0-9]+', '-', 'g');
+    -- Use provided slug or generate one from the company name
+    new_slug := new.raw_user_meta_data->>'new_company_slug';
     
-    -- Append a random string to prevent collisions
-    new_slug := new_slug || '-' || substr(new.id::text, 1, 6);
+    IF new_slug IS NULL THEN
+      new_slug := regexp_replace(lower(new.raw_user_meta_data->>'new_company_name'), '[^a-z0-9]+', '-', 'g');
+      new_slug := new_slug || '-' || substr(new.id::text, 1, 6);
+    END IF;
 
     -- Insert the new company
     INSERT INTO public.companies (name, slug, subscription_status)

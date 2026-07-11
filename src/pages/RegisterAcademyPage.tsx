@@ -16,17 +16,36 @@ export default function RegisterAcademyPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     companyName: "",
+    subdomain: "",
     location: "",
     fullName: "",
     email: "",
     password: "",
   })
 
+  const handleCompanyNameChange = (name: string) => {
+    const slug = name.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    setFormData(prev => ({ ...prev, companyName: name, subdomain: slug }));
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
+      // Basic uniqueness check for slug (this is just a UX helper, the DB will enforce it)
+      const { data: existing } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('slug', formData.subdomain)
+        .maybeSingle()
+
+      if (existing) {
+        throw new Error("This subdomain is already taken. Please choose another.")
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -34,6 +53,7 @@ export default function RegisterAcademyPage() {
           data: {
             full_name: formData.fullName,
             new_company_name: formData.companyName,
+            new_company_slug: formData.subdomain,
             location: formData.location,
           },
         },
@@ -86,9 +106,30 @@ export default function RegisterAcademyPage() {
                   placeholder="e.g. Acme Corp Training"
                   className="pl-10 bg-black/50 border-white/10 text-white placeholder:text-slate-600 h-12"
                   value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  onChange={(e) => handleCompanyNameChange(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="subdomain" className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Your Academy URL
+              </Label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="subdomain"
+                    type="text"
+                    required
+                    placeholder="my-academy"
+                    className="bg-black/50 border-white/10 text-white placeholder:text-slate-600 h-12 pr-4 text-right font-bold text-primary"
+                    value={formData.subdomain}
+                    onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '') })}
+                  />
+                </div>
+                <span className="text-sm font-bold text-slate-500 whitespace-nowrap">.openleadacademy.com</span>
+              </div>
+              <p className="text-[10px] text-slate-500">This will be your permanent platform URL.</p>
             </div>
 
             <div className="space-y-2">
