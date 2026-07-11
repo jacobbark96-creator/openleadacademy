@@ -99,7 +99,7 @@ serve(async (req) => {
     }
 
     if (action === 'create') {
-      const { email, fullName, password, role } = payload
+      const { email, fullName, password, role, signupFee, hasPaidSignupFee } = payload
       const { data, error } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: password || 'TempPass123!',
@@ -116,7 +116,9 @@ serve(async (req) => {
         await supabaseAdmin.from('profiles').update({ 
           role,
           email,
-          company_id: profile.company_id // Ensure profile has the correct company_id
+          company_id: profile.company_id, // Ensure profile has the correct company_id
+          signup_fee: signupFee || 0,
+          has_paid_signup_fee: hasPaidSignupFee ?? true
         }).eq('id', data.user.id)
 
         await supabaseAdmin.from('notifications').insert({

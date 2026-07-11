@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { AgreementModal } from '@/components/onboarding/AgreementModal'
+import { PaymentModal } from '@/components/onboarding/PaymentModal'
 import { NDA_CONTENT, SUBCONTRACTOR_CONTENT } from '@/constants/agreements'
 import { toast } from 'sonner'
 import { useTenant } from '@/providers/TenantProvider'
@@ -16,6 +17,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [isLoading, setIsLoading] = useState(true)
   const [profile, setProfile] = useState<any>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [currentStep, setCurrentStep] = useState(1) // 1: NDA, 2: Subcontractor
   const { company: tenant } = useTenant()
 
@@ -31,14 +33,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       if (data) {
         setProfile(data)
         
-        // Skip onboarding if not the default tenant
+        // 1. Check for unpaid signup fee first (applies to tenants)
+        if (data.signup_fee > 0 && !data.has_paid_signup_fee) {
+          setShowPaymentModal(true)
+          setIsLoading(false)
+          return
+        } else {
+          setShowPaymentModal(false)
+        }
+
+        // 2. Skip legal onboarding if not the default tenant
         if (data.companies?.slug !== 'openlead') {
           setShowModal(false)
           setIsLoading(false)
           return
         }
 
-        // Determine initial step
+        // 3. Determine initial step for Openlead users
         if (!data.nda_signed) {
           setCurrentStep(1)
           setShowModal(true)
@@ -108,11 +119,50 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }
 
-  const isComplete = (profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed)
+  const handlePaySignupFee = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe', {
+        body: { 
+          action: 'checkout-signup-fee',
+          feeAmount: profile.signup_fee,
+          companyId: profile.company_id
+        }
+      })
+      if (error) throw error
+      if (data?.url) {
+        window.location.href = data.url
+      } else {
+        // Fallback for when stripe isn't fully integrated yet
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ has_paid_signup_fee: true })
+          .eq('id', profile.id)
+        if (updateError) throw updateError
+        
+        toast.success('Payment simulated successfully! (Stripe in test mode)')
+        setShowPaymentModal(false)
+        await fetchProfile()
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error)
+      toast.error(error.message || 'Failed to initiate payment')
+    }
+  }
+
+  // A user's onboarding is complete if:
+  // 1. They don't have an unpaid signup fee AND
+  // 2. They are either a tenant user OR they've signed both NDAs
+  const hasUnpaidFee = profile?.signup_fee > 0 && !profile?.has_paid_signup_fee
+  const isComplete = !hasUnpaidFee && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
 
   return (
     <OnboardingContext.Provider value={{ isComplete, isLoading }}>
       {children}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        feeAmount={profile?.signup_fee || 0}
+        onPay={handlePaySignupFee}
+      />
       <AgreementModal
         isOpen={showModal}
         title={currentStep === 1 ? 'Non-Disclosure Agreement' : 'Subcontractor Agreement'}

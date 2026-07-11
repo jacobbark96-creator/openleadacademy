@@ -143,8 +143,10 @@ export default function AdminPage() {
   // Form states
   const [newUserEmail, setNewUserEmail] = useState("")
   const [newUserRole, setNewUserRole] = useState("student")
-  const [newUserName, setNewUserName] = useState("")
   const [newUserPassword, setNewUserPassword] = useState("")
+  const [newUserName, setNewUserName] = useState("")
+  const [newUserHasFee, setNewUserHasFee] = useState(false)
+  const [newUserFeeAmount, setNewUserFeeAmount] = useState("0")
 
   const loadUsers = async (mounted: boolean) => {
     try {
@@ -381,7 +383,9 @@ export default function AdminPage() {
           email: newUserEmail,
           fullName: newUserName,
           role: newUserRole,
-          password: newUserPassword
+          password: newUserPassword,
+          signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
+          hasPaidSignupFee: !newUserHasFee
         }
       })
       
@@ -1025,6 +1029,32 @@ export default function AdminPage() {
                     <option value="trainer">Trainer</option>
                     {role === 'admin' && <option value="admin">Admin</option>}
                   </select>
+                </div>
+                <div className="space-y-4 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="fee-toggle"
+                      checked={newUserHasFee}
+                      onChange={(e) => setNewUserHasFee(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <Label htmlFor="fee-toggle" className="font-semibold cursor-pointer">Require Sign Up Fee</Label>
+                  </div>
+                  {newUserHasFee && (
+                    <div className="space-y-2 pl-7">
+                      <Label>Fee Amount ($)</Label>
+                      <Input 
+                        type="number" 
+                        min="0"
+                        step="0.01"
+                        value={newUserFeeAmount} 
+                        onChange={e => setNewUserFeeAmount(e.target.value)} 
+                        required 
+                        className="max-w-[200px]"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="md:col-span-2 pt-2">
                   <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">Create User</Button>
