@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Loader2, Mail, Lock, ArrowRight } from "lucide-react"
+import { useTenant } from "@/providers/TenantProvider"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const navigate = useNavigate()
+  const { company } = useTenant()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,9 +47,13 @@ export default function LoginPage() {
   return (
     <Card className="bg-white/5 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
       <CardHeader className="space-y-2 pb-8">
-        <CardTitle className="text-2xl font-black text-white text-center uppercase tracking-wider">Member Access</CardTitle>
+        <CardTitle className="text-2xl font-black text-white text-center uppercase tracking-wider">
+          {company?.slug !== 'openlead' ? `${company?.name} Access` : 'Member Access'}
+        </CardTitle>
         <CardDescription className="text-center text-slate-400 font-medium">
-          Secure portal for elite revenue leaders
+          {company?.slug !== 'openlead' 
+            ? `Secure portal for ${company?.name} students`
+            : "Secure portal for elite revenue leaders"}
         </CardDescription>
       </CardHeader>
       <CardContent>
