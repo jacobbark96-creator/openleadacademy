@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("")
   const navigate = useNavigate()
   const { company } = useTenant()
+  const isTenant = company && company.slug !== 'openlead'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,13 +46,13 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="bg-white/5 backdrop-blur-xl border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
+    <Card className={`backdrop-blur-xl rounded-[32px] overflow-hidden shadow-2xl transition-all duration-500 ${isTenant ? 'bg-white/80 border-slate-200' : 'bg-white/5 border-white/10'}`}>
       <CardHeader className="space-y-2 pb-8">
-        <CardTitle className="text-2xl font-black text-white text-center uppercase tracking-wider">
-          {company?.slug !== 'openlead' ? `${company?.name} Access` : 'Member Access'}
+        <CardTitle className={`text-2xl font-black text-center uppercase tracking-wider transition-colors ${isTenant ? 'text-slate-900' : 'text-white'}`}>
+          {isTenant ? `${company?.name} Access` : 'Member Access'}
         </CardTitle>
-        <CardDescription className="text-center text-slate-400 font-medium">
-          {company?.slug !== 'openlead' 
+        <CardDescription className={`text-center font-medium transition-colors ${isTenant ? 'text-slate-500' : 'text-slate-400'}`}>
+          {isTenant 
             ? `Secure portal for ${company?.name} students`
             : "Secure portal for elite revenue leaders"}
         </CardDescription>
@@ -59,14 +60,14 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-6">
           {errorMsg && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs font-bold uppercase tracking-wider text-center">
+            <div className={`p-4 border rounded-2xl text-xs font-bold uppercase tracking-wider text-center transition-all ${isTenant ? 'bg-red-50 border-red-200 text-red-600' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
               {errorMsg}
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Email Address</Label>
+            <Label htmlFor="email" className={`text-xs font-bold uppercase tracking-widest ml-1 transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`} />
               <Input
                 id="email"
                 type="email"
@@ -75,13 +76,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 pl-12 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                className={`rounded-2xl h-12 pl-12 focus:border-primary/50 focus:ring-primary/20 transition-all ${isTenant ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-slate-600'}`}
               />
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between ml-1">
-              <Label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-slate-500">Security Key</Label>
+              <Label htmlFor="password" className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>Security Key</Label>
               <Link
                 to="/forgot-password"
                 className="text-xs font-bold text-primary hover:text-primary/90 uppercase tracking-widest transition-colors"
@@ -90,7 +91,7 @@ export default function LoginPage() {
               </Link>
             </div>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`} />
               <Input
                 id="password"
                 type="password"
@@ -98,7 +99,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 rounded-2xl h-12 pl-12 focus:border-primary/50 focus:ring-primary/20 transition-all"
+                className={`rounded-2xl h-12 pl-12 focus:border-primary/50 focus:ring-primary/20 transition-all ${isTenant ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-white placeholder:text-slate-600'}`}
               />
             </div>
           </div>
@@ -116,7 +117,7 @@ export default function LoginPage() {
         </form>
       </CardContent>
       <CardFooter className="flex justify-center pb-8">
-        <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
+        <div className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>
           Not a member?{" "}
           <Link to="/signup" className="text-primary hover:text-primary/90 transition-colors ml-1">
             Apply for Admission
