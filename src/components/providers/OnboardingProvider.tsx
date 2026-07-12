@@ -144,7 +144,22 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           companyId: profile.company_id
         }
       })
-      if (error) throw error
+      
+      if (error) {
+        console.error('Supabase Function Error:', error)
+        // Try to parse the error body if it's a response object
+        let errorMessage = error.message
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            const errorBody = await error.context.json()
+            errorMessage = errorBody.error || errorMessage
+          } catch (e) {
+            console.error('Failed to parse error body:', e)
+          }
+        }
+        throw new Error(errorMessage)
+      }
+
       if (data?.url) {
         window.location.href = data.url
       } else {

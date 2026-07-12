@@ -2,7 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import Stripe from 'https://esm.sh/stripe@14.14.0'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')
+
+const stripe = new Stripe(STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
   httpClient: Stripe.createFetchHttpClient(),
 })
@@ -19,6 +21,14 @@ serve(async (req) => {
   }
 
   try {
+    if (!STRIPE_SECRET_KEY) {
+      throw new Error("STRIPE_SECRET_KEY is not set in Supabase secrets. Please run 'supabase secrets set STRIPE_SECRET_KEY=sk_live_...' in your terminal.")
+    }
+
+    if (STRIPE_SECRET_KEY.startsWith('pk_')) {
+      throw new Error("Invalid STRIPE_SECRET_KEY. You provided a Publishable Key (pk_...) instead of a Secret Key (sk_...). Please update your Supabase secrets with the correct Secret Key.")
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -26,7 +36,10 @@ serve(async (req) => {
     )
 
     const url = new URL(req.url)
-    const { action: bodyAction, ...payload } = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
+    console.log('Stripe Function Request:', { method: req.method, url: req.url, body })
+    
+    const { action: bodyAction, ...payload } = body
     const action = url.searchParams.get('action') || bodyAction || 'connect'
 
     if (action === 'connect') {
@@ -104,7 +117,8 @@ serve(async (req) => {
       const { feeAmount, feeCurrency, companyId } = payload
       
       if (!feeAmount || !feeCurrency || !companyId) {
-        throw new Error("Missing required parameters for checkout")
+        console.error('Missing parameters:', { feeAmount, feeCurrency, companyId })
+        throw new Error(`Missing required parameters: ${!feeAmount ? 'feeAmount ' : ''}${!feeCurrency ? 'feeCurrency ' : ''}${!companyId ? 'companyId' : ''}`)
       }
 
       // 1. Get the authenticated user
