@@ -89,6 +89,7 @@ serve(async (req) => {
           subcontractor_signed: p?.subcontractor_signed,
           subcontractor_signed_at: p?.subcontractor_signed_at,
           agreement_signature_name: p?.agreement_signature_name,
+          custom_payment_url: p?.custom_payment_url,
           enrollments: userEnrollments
         }
       })
@@ -100,7 +101,7 @@ serve(async (req) => {
     }
 
     if (action === 'create') {
-      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee, companyId, feeBreakdown } = payload
+      const { email, fullName, password, role, signupFee, signupFeeCurrency, hasPaidSignupFee, companyId, feeBreakdown, paymentUrl } = payload
       
       // Use the provided companyId or fallback to the admin's company_id
       const targetCompanyId = companyId || profile.company_id
@@ -116,7 +117,8 @@ serve(async (req) => {
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
           has_paid_signup_fee: hasPaidSignupFee ?? true,
-          fee_breakdown: feeBreakdown || []
+          fee_breakdown: feeBreakdown || [],
+          custom_payment_url: paymentUrl
         }
       })
       
@@ -133,7 +135,8 @@ serve(async (req) => {
           signup_fee_currency: signupFeeCurrency || 'GBP',
           has_paid_signup_fee: hasPaidSignupFee ?? true,
           full_name: fullName, // Ensure name is also set
-          fee_breakdown: feeBreakdown || []
+          fee_breakdown: feeBreakdown || [],
+          custom_payment_url: paymentUrl
         })
         
         if (profileError) {
@@ -208,7 +211,7 @@ serve(async (req) => {
     }
 
     if (action === 'update-profile') {
-      const { userId, role, fullName, phone, enrollments, signupFee, signupFeeCurrency, hasPaidSignupFee, feeBreakdown } = payload
+      const { userId, role, fullName, phone, enrollments, signupFee, signupFeeCurrency, hasPaidSignupFee, feeBreakdown, customPaymentUrl } = payload
       
       // Verify user belongs to same company
       const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
@@ -223,6 +226,8 @@ serve(async (req) => {
           status: 403,
         })
       }
+      
+      console.log('Updating profile for user:', userId, { customPaymentUrl })
 
       // Update profile
       const { error: profileUpdateError } = await supabaseAdmin
@@ -234,7 +239,8 @@ serve(async (req) => {
           signup_fee: signupFee,
           signup_fee_currency: signupFeeCurrency,
           has_paid_signup_fee: hasPaidSignupFee,
-          fee_breakdown: feeBreakdown
+          fee_breakdown: feeBreakdown,
+          custom_payment_url: customPaymentUrl
         })
         .eq('id', userId)
       

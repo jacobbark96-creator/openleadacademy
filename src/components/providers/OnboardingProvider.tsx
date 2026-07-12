@@ -136,6 +136,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           .eq('id', profile.id)
       }
 
+      if (profile.custom_payment_url) {
+        toast.info("Redirecting to academy payment link...")
+        window.location.href = profile.custom_payment_url
+        return
+      }
+
       const { data: { session } } = await supabase.auth.getSession()
       console.log('Payment session check:', { 
         hasSession: !!session,

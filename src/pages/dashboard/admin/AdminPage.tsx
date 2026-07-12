@@ -28,6 +28,7 @@ interface UserProfile {
   has_paid_signup_fee?: boolean;
   fee_breakdown?: { name: string; amount: number }[];
   accepted_legal_documents?: string[];
+  custom_payment_url?: string;
 }
 
 interface TeamMember {
@@ -158,6 +159,7 @@ export default function AdminPage() {
   const [newUserFeeBreakdown, setNewUserFeeBreakdown] = useState<{ name: string; amount: number }[]>([
     { name: "Platform Access", amount: 0 }
   ])
+  const [newUserPaymentUrl, setNewUserPaymentUrl] = useState("")
 
   // Tenant Legal Documents state
   const [legalDocuments, setLegalDocuments] = useState<{ title: string; content: string }[]>([])
@@ -465,7 +467,8 @@ export default function AdminPage() {
       signupFeeCurrency: newUserFeeCurrency,
       hasPaidSignupFee: !newUserHasFee,
       companyId: company?.id,
-      feeBreakdown: newUserHasFee ? newUserFeeBreakdown : []
+      feeBreakdown: newUserHasFee ? newUserFeeBreakdown : [],
+      paymentUrl: newUserPaymentUrl
     }
     
     console.log("SENDING CREATE USER PAYLOAD:", payload)
@@ -753,7 +756,8 @@ export default function AdminPage() {
     signup_fee: 0,
     signup_fee_currency: "GBP",
     has_paid_signup_fee: true,
-    fee_breakdown: [] as { name: string; amount: number }[]
+    fee_breakdown: [] as { name: string; amount: number }[],
+    custom_payment_url: ""
   })
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false)
 
@@ -807,7 +811,8 @@ export default function AdminPage() {
       signup_fee: user.signup_fee || 0,
       signup_fee_currency: user.signup_fee_currency || 'GBP',
       has_paid_signup_fee: user.has_paid_signup_fee ?? true,
-      fee_breakdown: user.fee_breakdown || []
+      fee_breakdown: user.fee_breakdown || [],
+      custom_payment_url: user.custom_payment_url || ""
     })
     setIsDetailsModalOpen(true)
   }
@@ -828,7 +833,8 @@ export default function AdminPage() {
           signupFee: editingUserDetails.signup_fee,
           signupFeeCurrency: editingUserDetails.signup_fee_currency,
           hasPaidSignupFee: editingUserDetails.has_paid_signup_fee,
-          feeBreakdown: editingUserDetails.fee_breakdown
+          feeBreakdown: editingUserDetails.fee_breakdown,
+          customPaymentUrl: editingUserDetails.custom_payment_url
         }
       })
 
@@ -1228,6 +1234,17 @@ export default function AdminPage() {
                           </p>
                         </div>
                       </div>
+
+                      <div className="pt-4 border-t border-gray-100 space-y-2">
+                        <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link (Optional)</Label>
+                        <Input 
+                          placeholder="https://buy.stripe.com/..."
+                          value={newUserPaymentUrl}
+                          onChange={e => setNewUserPaymentUrl(e.target.value)}
+                          className="h-9 text-xs"
+                        />
+                        <p className="text-[10px] text-gray-400">If provided, the student will be redirected here instead of the default platform checkout.</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1577,6 +1594,16 @@ export default function AdminPage() {
                               {editingUserDetails.signup_fee}
                             </p>
                           </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                          <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link</Label>
+                          <Input 
+                            placeholder="https://buy.stripe.com/..."
+                            value={editingUserDetails.custom_payment_url}
+                            onChange={e => setEditingUserDetails({...editingUserDetails, custom_payment_url: e.target.value})}
+                            className="h-9 text-xs"
+                          />
                         </div>
                       </div>
                     </div>
