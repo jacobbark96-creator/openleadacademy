@@ -136,6 +136,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           .eq('id', profile.id)
       }
 
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Payment session check:', { 
+        hasSession: !!session,
+        userId: session?.user?.id,
+        profileId: profile.id
+      })
+
       const { data, error } = await supabase.functions.invoke('stripe', {
         body: { 
           action: 'checkout-signup-fee',

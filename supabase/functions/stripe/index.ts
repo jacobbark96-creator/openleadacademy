@@ -29,23 +29,35 @@ serve(async (req) => {
       throw new Error("Invalid STRIPE_SECRET_KEY. You provided a Publishable Key (pk_...) instead of a Secret Key (sk_...). Please update your Supabase secrets with the correct Secret Key.")
     }
 
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error("No Authorization header provided")
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     const url = new URL(req.url)
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {}
-    console.log('Stripe Function Request:', { method: req.method, url: req.url, body })
     
     const { action: bodyAction, ...payload } = body
     const action = url.searchParams.get('action') || bodyAction || 'connect'
+    
+    console.log(`Stripe Function [${action}]:`, { 
+      hasAuth: !!authHeader,
+      payload 
+    })
 
     if (action === 'connect') {
       // 1. Get the authenticated user
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
-      if (userError || !user) throw new Error("Unauthorized")
+      if (userError || !user) {
+        console.error('Auth error:', userError)
+        throw new Error("Unauthorized")
+      }
 
       // 2. Get their company
       const { data: profile } = await supabaseClient
@@ -120,10 +132,15 @@ serve(async (req) => {
         console.error('Missing parameters:', { feeAmount, feeCurrency, companyId })
         throw new Error(`Missing required parameters: ${!feeAmount ? 'feeAmount ' : ''}${!feeCurrency ? 'feeCurrency ' : ''}${!companyId ? 'companyId' : ''}`)
       }
+      
+      console.log('Processing signup fee checkout:', { feeAmount, feeCurrency, companyId })
 
       // 1. Get the authenticated user
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
-      if (userError || !user) throw new Error("Unauthorized")
+      if (userError || !user) {
+        console.error('Auth error (checkout):', userError)
+        throw new Error("Unauthorized")
+      }
 
       // Use a Service Role key to bypass RLS for checking company details
       const supabaseAdmin = createClient(
