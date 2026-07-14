@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText, Link as LinkIcon } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText, Link as LinkIcon, BookOpen } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"

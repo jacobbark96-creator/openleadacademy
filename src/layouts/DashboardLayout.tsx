@@ -1,26 +1,34 @@
 import { Sidebar } from "@/components/layout/Sidebar"
 import { Topbar } from "@/components/layout/Topbar"
-import AuthProvider, { useAuth } from "@/components/providers/AuthProvider"
+import AuthProvider from "@/components/providers/AuthProvider"
 import { OnboardingProvider, useOnboarding } from "@/components/providers/OnboardingProvider"
 import { Outlet, useLocation } from "react-router-dom"
-import { useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
 
 function DashboardContent() {
   const { isComplete, isLoading } = useOnboarding()
-  const { user } = useAuth()
+  const [userId, setUserId] = useState<string | null>(null)
   const location = useLocation()
 
   // Heartbeat for presence tracking
   useEffect(() => {
-    if (!user) return
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
+    }
+    checkUser()
+  }, [])
+
+  useEffect(() => {
+    if (!userId) return
 
     const updatePresence = async () => {
       try {
         await supabase
           .from('user_presence')
           .upsert({
-            user_id: user.id,
+            user_id: userId,
             last_path: location.pathname,
             updated_at: new Date().toISOString(),
             last_seen_at: new Date().toISOString()
@@ -36,7 +44,7 @@ function DashboardContent() {
     // Update every 2 minutes
     const interval = setInterval(updatePresence, 2 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [user, location.pathname])
+  }, [userId, location.pathname])
 
   if (isLoading) {
     return (
