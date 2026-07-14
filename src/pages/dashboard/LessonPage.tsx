@@ -28,6 +28,7 @@ export default function LessonPage() {
   const [lesson, setLesson] = useState<Lesson | null>(null)
   const [loading, setLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
+  const [quizPassed, setQuizPassed] = useState(false)
   const [homeworkCompleted, setHomeworkCompleted] = useState(false)
   const [homeworkLink, setHomeworkLink] = useState("")
   const [homeworkFile, setHomeworkFile] = useState<File | null>(null)
@@ -49,6 +50,7 @@ export default function LessonPage() {
       setLoading(true)
       // Reset lesson-specific states for the new ID
       setCompleted(false)
+      setQuizPassed(false)
       setHomeworkCompleted(false)
       setQuizId(null)
       setNextLessonId(null)
@@ -95,7 +97,23 @@ export default function LessonPage() {
           .eq('lesson_id', id)
           .maybeSingle()
         
-        if (quizData) setQuizId(quizData.id)
+        if (quizData) {
+          setQuizId(quizData.id)
+          
+          // Check if user has already passed this quiz
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session) {
+            const { data: attempt } = await supabase
+              .from('quiz_attempts')
+              .select('passed')
+              .eq('user_id', session.user.id)
+              .eq('quiz_id', quizData.id)
+              .eq('passed', true)
+              .maybeSingle()
+            
+            if (attempt) setQuizPassed(true)
+          }
+        }
 
         // Find next lesson in the same module
         const { data: nextLesson } = await supabase
@@ -239,7 +257,7 @@ export default function LessonPage() {
   }
 
   const handleNavigateNext = () => {
-    if (quizId) {
+    if (quizId && !quizPassed) {
       navigate(`/dashboard/quizzes/${quizId}`)
     } else if (nextLessonId) {
       navigate(`/dashboard/lessons/${nextLessonId}`)

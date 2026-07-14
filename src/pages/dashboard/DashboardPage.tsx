@@ -252,17 +252,15 @@ export default function DashboardPage() {
                        // Check lesson quiz if exists
                        const quiz = quizzes.find(q => q.lesson_id === lesson.id)
                        if (quiz) {
-                         const attempt = quizResults.find(a => a.quiz_id === quiz.id)
-                         return attempt?.passed
+                         return quizResults.some(a => a.quiz_id === quiz.id && a.passed)
                        }
                        return true
                      })
-
+ 
                      // 2. Module quiz must be passed if it exists
                      let moduleQuizPassed = true
                      if (modQuiz) {
-                       const attempt = quizResults.find(a => a.quiz_id === modQuiz.id)
-                       moduleQuizPassed = !!attempt?.passed
+                       moduleQuizPassed = quizResults.some(a => a.quiz_id === modQuiz.id && a.passed)
                      }
 
                      const isCompleted = lessonsFinished && moduleQuizPassed
