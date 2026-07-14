@@ -35,6 +35,8 @@ interface UserProfile {
   completed_modules_count?: number;
   total_modules_count?: number;
   completed_module_titles?: string[];
+  completed_lesson_ids?: string[];
+  passed_quiz_ids?: string[];
 }
 
 interface TeamMember {
@@ -153,6 +155,8 @@ export default function AdminPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [helpArticles, setHelpArticles] = useState<HelpArticle[]>([])
   const [loading, setLoading] = useState(true)
+  const [allModules, setAllModules] = useState<Module[]>([])
+  const [allLessons, setAllLessons] = useState<Lesson[]>([])
 
   // Form states
   const [newUserEmail, setNewUserEmail] = useState("")
@@ -303,18 +307,29 @@ export default function AdminPage() {
         const { data: coursesData } = await scopeQuery(supabase.from('courses').select('*')).order('created_at', { ascending: false })
         if (coursesData && mounted) {
           setCourses(coursesData)
-          if (coursesData.length > 0) {
-            const firstCourseId = coursesData[0].id
-            setSelectedCourseId(firstCourseId)
-            const { data: modData } = await scopeQuery(supabase.from('modules').select('*').eq('course_id', firstCourseId)).order('order_index')
-            if (modData && mounted) {
-              setModules(modData)
+          
+          // Load all modules for this company
+          const { data: modData } = await scopeQuery(supabase.from('modules').select('*')).order('order_index')
+          if (modData && mounted) {
+            setAllModules(modData)
+            
+            // Load all lessons for these modules
+            const modIds = modData.map((m: any) => m.id)
+            if (modIds.length > 0) {
+              const { data: lessonData } = await supabase.from('lessons').select('*').in('module_id', modIds).order('order_index')
+              if (lessonData && mounted) setAllLessons(lessonData)
+              
               // Load quizzes for these modules
-              const modIds = modData.map((m: any) => m.id)
-              if (modIds.length > 0) {
-                const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
-                if (quizData) setQuizzes(quizData)
-              }
+              const { data: quizData } = await supabase.from('quizzes').select('*').in('module_id', modIds)
+              if (quizData && mounted) setQuizzes(quizData)
+            }
+
+            // Set initial selection for modules tab
+            if (coursesData.length > 0) {
+              const firstCourseId = coursesData[0].id
+              setSelectedCourseId(firstCourseId)
+              const filteredModules = modData.filter((m: any) => m.course_id === firstCourseId)
+              setModules(filteredModules)
             }
           }
         }
@@ -754,6 +769,7 @@ export default function AdminPage() {
   // User Details Modal States
   const [selectedUserForDetails, setSelectedUserForDetails] = useState<UserProfile | null>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [activeDetailsTab, setActiveDetailsTab] = useState("settings")
   const [editingUserDetails, setEditingUserDetails] = useState({
     full_name: "",
     phone: "",
@@ -1049,6 +1065,12 @@ export default function AdminPage() {
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
         >
           Manage Users
+        </button>
+        <button
+          onClick={() => setActiveTab("progress")}
+          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'progress' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          Student Progress
         </button>
         {role === 'admin' && (
           <button
@@ -1486,213 +1508,377 @@ export default function AdminPage() {
                 
                 {selectedUserForDetails && (
                   <div className="space-y-6 py-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2">
-                        <Label>Full Name</Label>
-                        <Input 
-                          value={editingUserDetails.full_name}
-                          onChange={e => setEditingUserDetails({...editingUserDetails, full_name: e.target.value})}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Email Address</Label>
-                        <Input value={selectedUserForDetails.email} disabled className="bg-gray-50 opacity-70" />
-                        <p className="text-[10px] text-gray-400">Email cannot be changed here</p>
-                      </div>
+                    <div className="flex border-b border-gray-100">
+                      <button 
+                        onClick={() => setActiveDetailsTab("settings")}
+                        className={`px-4 py-2 text-sm font-bold transition-colors border-b-2 ${activeDetailsTab === 'settings' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                      >
+                        User Settings
+                      </button>
+                      <button 
+                        onClick={() => setActiveDetailsTab("progress")}
+                        className={`px-4 py-2 text-sm font-bold transition-colors border-b-2 ${activeDetailsTab === 'progress' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                      >
+                        Detailed Progress
+                      </button>
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label>Phone Number</Label>
-                        <Input 
-                          placeholder="+44 7000 000000"
-                          value={editingUserDetails.phone}
-                          onChange={e => setEditingUserDetails({...editingUserDetails, phone: e.target.value})}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>System Role</Label>
-                        <select 
-                          value={editingUserDetails.role} 
-                          onChange={e => setEditingUserDetails({...editingUserDetails, role: e.target.value})}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                        >
-                          <option value="student">Student</option>
-                          <option value="trainer">Trainer</option>
-                          {role === 'admin' && <option value="admin">Admin</option>}
-                        </select>
-                      </div>
-
-                      <div className="space-y-4 pt-4 border-t border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-bold flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-primary" />
-                            Signup Fee & Breakdown
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <input 
-                              type="checkbox" 
-                              id="edit-has-paid"
-                              checked={editingUserDetails.has_paid_signup_fee}
-                              onChange={e => setEditingUserDetails({...editingUserDetails, has_paid_signup_fee: e.target.checked})}
-                              className="w-4 h-4 rounded border-gray-300 text-primary"
+                    {activeDetailsTab === 'settings' ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-2">
+                            <Label>Full Name</Label>
+                            <Input 
+                              value={editingUserDetails.full_name}
+                              onChange={e => setEditingUserDetails({...editingUserDetails, full_name: e.target.value})}
                             />
-                            <Label htmlFor="edit-has-paid" className="text-xs font-medium">Mark as Paid</Label>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Email Address</Label>
+                            <Input value={selectedUserForDetails.email} disabled className="bg-gray-50 opacity-70" />
+                            <p className="text-[10px] text-gray-400">Email cannot be changed here</p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Phone Number</Label>
+                            <Input 
+                              placeholder="+44 7000 000000"
+                              value={editingUserDetails.phone}
+                              onChange={e => setEditingUserDetails({...editingUserDetails, phone: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>System Role</Label>
+                            <select 
+                              value={editingUserDetails.role} 
+                              onChange={e => setEditingUserDetails({...editingUserDetails, role: e.target.value})}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                            >
+                              <option value="student">Student</option>
+                              <option value="trainer">Trainer</option>
+                              {role === 'admin' && <option value="admin">Admin</option>}
+                            </select>
+                          </div>
+
+                          <div className="space-y-4 pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-base font-bold flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-primary" />
+                                Signup Fee & Breakdown
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                  type="checkbox" 
+                                  id="edit-has-paid"
+                                  checked={editingUserDetails.has_paid_signup_fee}
+                                  onChange={e => setEditingUserDetails({...editingUserDetails, has_paid_signup_fee: e.target.checked})}
+                                  className="w-4 h-4 rounded border-gray-300 text-primary"
+                                />
+                                <Label htmlFor="edit-has-paid" className="text-xs font-medium">Mark as Paid</Label>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-bold text-gray-500 uppercase">Fee Items</p>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="h-6 text-[10px] font-bold"
+                                  onClick={() => {
+                                    const updated = [...editingUserDetails.fee_breakdown, { name: "", amount: 0 }]
+                                    const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
+                                    setEditingUserDetails({
+                                      ...editingUserDetails, 
+                                      fee_breakdown: updated,
+                                      signup_fee: total
+                                    })
+                                  }}
+                                >
+                                  Add Item
+                                </Button>
+                              </div>
+                              
+                              {editingUserDetails.fee_breakdown.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Input 
+                                    placeholder="Item name"
+                                    value={item.name}
+                                    onChange={e => {
+                                      const updated = [...editingUserDetails.fee_breakdown]
+                                      updated[idx] = { ...updated[idx], name: e.target.value }
+                                      setEditingUserDetails({...editingUserDetails, fee_breakdown: updated})
+                                    }}
+                                    className="flex-1 h-8 text-xs"
+                                  />
+                                  <Input 
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={item.amount}
+                                    onChange={e => {
+                                      const updated = [...editingUserDetails.fee_breakdown]
+                                      updated[idx] = { ...updated[idx], amount: Number(e.target.value) }
+                                      const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
+                                      setEditingUserDetails({
+                                        ...editingUserDetails, 
+                                        fee_breakdown: updated,
+                                        signup_fee: total
+                                      })
+                                    }}
+                                    className="w-20 h-8 text-xs"
+                                  />
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-8 w-8 p-0 text-red-400"
+                                    onClick={() => {
+                                      const updated = editingUserDetails.fee_breakdown.filter((_: any, i: number) => i !== idx)
+                                      const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
+                                      setEditingUserDetails({
+                                        ...editingUserDetails, 
+                                        fee_breakdown: updated,
+                                        signup_fee: total
+                                      })
+                                    }}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                              
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
+                                <select
+                                  value={editingUserDetails.signup_fee_currency}
+                                  onChange={e => setEditingUserDetails({...editingUserDetails, signup_fee_currency: e.target.value})}
+                                  className="h-7 text-[10px] rounded border bg-white px-1 font-bold"
+                                >
+                                  <option value="GBP">GBP (£)</option>
+                                  <option value="USD">USD ($)</option>
+                                  <option value="EUR">EUR (€)</option>
+                                </select>
+                                <p className="text-sm font-black text-primary">
+                                  Total: {editingUserDetails.signup_fee_currency === 'GBP' ? '£' : '$'}
+                                  {editingUserDetails.signup_fee}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                              <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link</Label>
+                              <Input 
+                                placeholder="https://buy.stripe.com/..."
+                                value={editingUserDetails.custom_payment_url}
+                                onChange={e => setEditingUserDetails({...editingUserDetails, custom_payment_url: e.target.value})}
+                                className="h-9 text-xs"
+                              />
+                            </div>
                           </div>
                         </div>
 
-                        <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs font-bold text-gray-500 uppercase">Fee Items</p>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-6 text-[10px] font-bold"
-                              onClick={() => {
-                                const updated = [...editingUserDetails.fee_breakdown, { name: "", amount: 0 }]
-                                const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                setEditingUserDetails({
-                                  ...editingUserDetails, 
-                                  fee_breakdown: updated,
-                                  signup_fee: total
-                                })
-                              }}
-                            >
-                              Add Item
-                            </Button>
+                        <div className="space-y-3">
+                          <Label className="text-base font-bold flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-primary" />
+                            Course Enrollments
+                          </Label>
+                          <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto p-1">
+                            {courses.length === 0 && (
+                              <p className="text-sm text-gray-500 italic">No courses available to assign.</p>
+                            )}
+                            {courses.map(course => {
+                              const isEnrolled = editingUserDetails.enrollments.includes(course.id)
+                              return (
+                                <div 
+                                  key={course.id}
+                                  onClick={() => toggleEnrollment(course.id)}
+                                  className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                                    isEnrolled 
+                                      ? 'border-primary bg-primary/5' 
+                                      : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  <span className={`text-sm font-medium ${isEnrolled ? 'text-primary' : 'text-gray-700'}`}>
+                                    {course.title}
+                                  </span>
+                                  {isEnrolled ? (
+                                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                                  ) : (
+                                    <Plus className="w-4 h-4 text-gray-400" />
+                                  )}
+                                </div>
+                              )
+                            })}
                           </div>
-                          
-                          {editingUserDetails.fee_breakdown.map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <Input 
-                                placeholder="Item name"
-                                value={item.name}
-                                onChange={e => {
-                                  const updated = [...editingUserDetails.fee_breakdown]
-                                  updated[idx] = { ...updated[idx], name: e.target.value }
-                                  setEditingUserDetails({...editingUserDetails, fee_breakdown: updated})
-                                }}
-                                className="flex-1 h-8 text-xs"
-                              />
-                              <Input 
-                                type="number"
-                                placeholder="0.00"
-                                value={item.amount}
-                                onChange={e => {
-                                  const updated = [...editingUserDetails.fee_breakdown]
-                                  updated[idx] = { ...updated[idx], amount: Number(e.target.value) }
-                                  const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                  setEditingUserDetails({
-                                    ...editingUserDetails, 
-                                    fee_breakdown: updated,
-                                    signup_fee: total
-                                  })
-                                }}
-                                className="w-20 h-8 text-xs"
-                              />
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 w-8 p-0 text-red-400"
-                                onClick={() => {
-                                  const updated = editingUserDetails.fee_breakdown.filter((_: any, i: number) => i !== idx)
-                                  const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                  setEditingUserDetails({
-                                    ...editingUserDetails, 
-                                    fee_breakdown: updated,
-                                    signup_fee: total
-                                  })
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => setIsDetailsModalOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-primary hover:bg-primary/90"
+                            onClick={handleUpdateUserDetails}
+                            disabled={isUpdatingDetails}
+                          >
+                            {isUpdatingDetails ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          {courses.filter(c => editingUserDetails.enrollments.includes(c.id)).length === 0 && (
+                            <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                              <BookOpen className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                              <p className="text-sm text-gray-500">User is not enrolled in any courses.</p>
+                            </div>
+                          )}
+                          {courses.filter(c => editingUserDetails.enrollments.includes(c.id)).map(course => (
+                            <div key={course.id} className="space-y-4">
+                              <h3 className="font-black text-lg text-primary flex items-center gap-2">
+                                <Trophy className="w-5 h-5" />
+                                {course.title}
+                              </h3>
+                              <div className="space-y-3">
+                                {allModules.filter(m => m.course_id === course.id).map(mod => {
+                                  const modLessons = allLessons.filter(l => l.module_id === mod.id)
+                                  const completedInMod = modLessons.filter(l => selectedUserForDetails.completed_lesson_ids?.includes(l.id)).length
+                                  const isModComplete = modLessons.length > 0 && completedInMod === modLessons.length
+                                  
+                                  return (
+                                    <div key={mod.id} className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                      <div className={`p-3 flex items-center justify-between ${isModComplete ? 'bg-green-50' : 'bg-gray-50'}`}>
+                                        <div className="flex items-center gap-2">
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isModComplete ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                            {isModComplete ? <CheckCircle2 className="w-4 h-4" /> : mod.order_index}
+                                          </div>
+                                          <span className={`font-bold text-sm ${isModComplete ? 'text-green-700' : 'text-gray-700'}`}>{mod.title}</span>
+                                        </div>
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{completedInMod}/{modLessons.length} Done</span>
+                                      </div>
+                                      <div className="p-2 space-y-1">
+                                        {modLessons.map(lesson => {
+                                          const isDone = selectedUserForDetails.completed_lesson_ids?.includes(lesson.id)
+                                          return (
+                                            <div key={lesson.id} className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors group">
+                                              <div className="flex items-center gap-3">
+                                                {isDone ? (
+                                                  <div className="bg-green-100 p-1 rounded-md">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                                  </div>
+                                                ) : (
+                                                  <div className="bg-gray-100 p-1 rounded-md group-hover:bg-gray-200">
+                                                    <div className="w-3.5 h-3.5" />
+                                                  </div>
+                                                )}
+                                                <span className={`text-xs font-medium ${isDone ? 'text-gray-900' : 'text-gray-500'}`}>{lesson.title}</span>
+                                              </div>
+                                              {isDone && <span className="text-[9px] font-bold text-green-500 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 uppercase tracking-tighter">Completed</span>}
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
                             </div>
                           ))}
-                          
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
-                            <select
-                              value={editingUserDetails.signup_fee_currency}
-                              onChange={e => setEditingUserDetails({...editingUserDetails, signup_fee_currency: e.target.value})}
-                              className="h-7 text-[10px] rounded border bg-white px-1 font-bold"
-                            >
-                              <option value="GBP">GBP (£)</option>
-                              <option value="USD">USD ($)</option>
-                              <option value="EUR">EUR (€)</option>
-                            </select>
-                            <p className="text-sm font-black text-primary">
-                              Total: {editingUserDetails.signup_fee_currency === 'GBP' ? '£' : '$'}
-                              {editingUserDetails.signup_fee}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 pt-2">
-                          <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link</Label>
-                          <Input 
-                            placeholder="https://buy.stripe.com/..."
-                            value={editingUserDetails.custom_payment_url}
-                            onChange={e => setEditingUserDetails({...editingUserDetails, custom_payment_url: e.target.value})}
-                            className="h-9 text-xs"
-                          />
                         </div>
                       </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <Label className="text-base font-bold flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-primary" />
-                        Course Enrollments
-                      </Label>
-                      <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto p-1">
-                        {courses.length === 0 && (
-                          <p className="text-sm text-gray-500 italic">No courses available to assign.</p>
-                        )}
-                        {courses.map(course => {
-                          const isEnrolled = editingUserDetails.enrollments.includes(course.id)
-                          return (
-                            <div 
-                              key={course.id}
-                              onClick={() => toggleEnrollment(course.id)}
-                              className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                                isEnrolled 
-                                  ? 'border-primary bg-primary/5' 
-                                  : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
-                              }`}
-                            >
-                              <span className={`text-sm font-medium ${isEnrolled ? 'text-primary' : 'text-gray-700'}`}>
-                                {course.title}
-                              </span>
-                              {isEnrolled ? (
-                                <CheckCircle2 className="w-5 h-5 text-primary" />
-                              ) : (
-                                <Plus className="w-4 h-4 text-gray-400" />
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1"
-                        onClick={() => setIsDetailsModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        className="flex-1 bg-primary hover:bg-primary/90"
-                        onClick={handleUpdateUserDetails}
-                        disabled={isUpdatingDetails}
-                      >
-                        {isUpdatingDetails ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 )}
               </DialogContent>
             </Dialog>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'progress' && (role === 'admin' || role === 'trainer') && (
+        <div className="space-y-6">
+          <Card className="border-0 shadow-sm rounded-2xl overflow-hidden">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-primary" />
+                Student Progress Matrix
+              </CardTitle>
+              <p className="text-sm text-gray-500">Track and compare student lesson completions across all courses instantly.</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead>
+                    <tr className="bg-gray-50 border-y border-gray-100">
+                      <th className="p-4 text-xs font-black text-gray-400 uppercase tracking-widest sticky left-0 bg-gray-50 z-20 border-r border-gray-100 min-w-[200px] shadow-[2px_0_5px_rgba(0,0,0,0.02)]">Student</th>
+                      {courses.map(course => (
+                        <span key={course.id} className="contents">
+                          {allModules.filter(m => m.course_id === course.id).map(mod => (
+                            allLessons.filter(l => l.module_id === mod.id).map(lesson => (
+                              <th key={lesson.id} className="p-4 text-[9px] font-black text-gray-400 uppercase tracking-widest border-r border-gray-100 min-w-[140px] text-center bg-white/50">
+                                <div className="space-y-1">
+                                  <div className="text-primary truncate" title={course.title}>{course.title}</div>
+                                  <div className="text-gray-400 truncate" title={mod.title}>{mod.title}</div>
+                                  <div className="text-gray-900 truncate" title={lesson.title}>{lesson.title}</div>
+                                </div>
+                              </th>
+                            ))
+                          ))}
+                        </span>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.filter(u => u.role === 'student').length === 0 ? (
+                      <tr>
+                        <td colSpan={100} className="p-12 text-center text-gray-400 italic bg-gray-50/30">
+                          No students found in this company.
+                        </td>
+                      </tr>
+                    ) : (
+                      users.filter(u => u.role === 'student').map(u => (
+                        <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                          <td className="p-4 sticky left-0 bg-white z-10 border-r border-gray-100 shadow-[2px_0_5_rgba(0,0,0,0.02)]">
+                            <p className="font-bold text-gray-900 text-sm">{u.full_name || 'Unknown'}</p>
+                            <p className="text-[10px] text-gray-400 truncate w-32">{u.email}</p>
+                          </td>
+                          {courses.map(course => (
+                            <span key={course.id} className="contents">
+                              {allModules.filter(m => m.course_id === course.id).map(mod => (
+                                allLessons.filter(l => l.module_id === mod.id).map(lesson => {
+                                  const isEnrolled = u.enrollments?.includes(course.id)
+                                  const isDone = u.completed_lesson_ids?.includes(lesson.id)
+                                  return (
+                                    <td key={lesson.id} className="p-4 border-r border-gray-100 text-center">
+                                      {!isEnrolled ? (
+                                        <span className="text-[10px] text-gray-200 font-medium">N/A</span>
+                                      ) : isDone ? (
+                                        <div className="flex justify-center">
+                                          <div className="bg-green-100 p-1 rounded-md shadow-sm border border-green-200">
+                                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="w-4 h-4 mx-auto border-2 border-gray-100 rounded-md bg-white" />
+                                      )}
+                                    </td>
+                                  )
+                                })
+                              ))}
+                            </span>
+                          ))}
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}

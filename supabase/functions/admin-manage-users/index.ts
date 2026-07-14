@@ -158,7 +158,9 @@ serve(async (req) => {
           last_path: presence?.last_path,
           completed_modules_count: completedModules.length,
           total_modules_count: companyModules.length,
-          completed_module_titles: completedModules.map(m => m.title)
+          completed_module_titles: completedModules.map(m => m.title),
+          completed_lesson_ids: userProgress.map(prog => prog.lesson_id),
+          passed_quiz_ids: userQuizAttempts.map(att => att.quiz_id)
         }
       })
 
