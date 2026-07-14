@@ -29,6 +29,12 @@ interface UserProfile {
   fee_breakdown?: { name: string; amount: number }[];
   accepted_legal_documents?: string[];
   custom_payment_url?: string;
+  is_online?: boolean;
+  last_seen_at?: string;
+  last_path?: string;
+  completed_modules_count?: number;
+  total_modules_count?: number;
+  completed_module_titles?: string[];
 }
 
 interface TeamMember {
@@ -1268,8 +1274,21 @@ export default function AdminPage() {
                   <div key={u.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <p className="font-bold text-gray-900 text-lg">{u.full_name || 'Unknown'}</p>
+                        <div className="relative">
+                          <p className="font-bold text-gray-900 text-lg">{u.full_name || 'Unknown'}</p>
+                          {u.is_online && (
+                            <span className="absolute -top-1 -right-2 flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white"></span>
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-gray-500 capitalize bg-white border border-gray-200 px-2 py-0.5 rounded-full font-semibold shadow-sm">{u.role}</span>
+                        {u.is_online && (
+                          <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full border border-green-200 font-bold uppercase tracking-wider">
+                            Online Now
+                          </span>
+                        )}
                         {(u.nda_signed || u.subcontractor_signed) && (
                           <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20 font-bold uppercase tracking-wider">
                             Agreements Signed
@@ -1297,6 +1316,17 @@ export default function AdminPage() {
                         {u.last_sign_in_at && (
                           <span className="text-xs text-gray-500 flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" /> Last seen {new Date(u.last_sign_in_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        {typeof u.completed_modules_count === 'number' && (
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Modules: {u.completed_modules_count}/{u.total_modules_count}</span>
+                          </div>
+                        )}
+                        {u.last_path && (
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            At: {u.last_path}
                           </span>
                         )}
                       </div>

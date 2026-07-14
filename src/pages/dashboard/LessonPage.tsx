@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, PlayCircle, FileText, Link as LinkIcon } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
@@ -15,6 +15,8 @@ interface Lesson {
   audio_url?: string;
   module_id: string;
   order_index: number;
+  has_homework: boolean;
+  homework_type?: 'link' | 'upload';
   modules: {
     title: string;
   };
@@ -26,6 +28,10 @@ export default function LessonPage() {
   const [lesson, setLesson] = useState<Lesson | null>(null)
   const [loading, setLoading] = useState(true)
   const [completed, setCompleted] = useState(false)
+  const [homeworkCompleted, setHomeworkCompleted] = useState(false)
+  const [homeworkLink, setHomeworkLink] = useState("")
+  const [homeworkFile, setHomeworkFile] = useState<File | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [quizId, setQuizId] = useState<string | null>(null)
   const [nextLessonId, setNextLessonId] = useState<string | null>(null)
@@ -43,6 +49,7 @@ export default function LessonPage() {
       setLoading(true)
       // Reset lesson-specific states for the new ID
       setCompleted(false)
+      setHomeworkCompleted(false)
       setQuizId(null)
       setNextLessonId(null)
       setModuleQuizId(null)
@@ -67,6 +74,18 @@ export default function LessonPage() {
             .maybeSingle()
           
           if (progress?.completed) setCompleted(true)
+
+          // Check if homework is completed if it's required
+          if (lessonData.has_homework) {
+            const { data: homework } = await supabase
+              .from('homework_submissions')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .eq('lesson_id', id)
+              .maybeSingle()
+            
+            if (homework) setHomeworkCompleted(true)
+          }
         }
 
         // Check if there is a quiz for this lesson
@@ -111,8 +130,79 @@ export default function LessonPage() {
     if (id) loadLesson()
   }, [id])
 
+  const handleHomeworkSubmit = async () => {
+    if (!lesson) return
+    
+    if (lesson.homework_type === 'link' && !homeworkLink) {
+      toast.error("Please paste your homework link")
+      return
+    }
+    if (lesson.homework_type === 'upload' && !homeworkFile) {
+      toast.error("Please select a file to upload")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      let submissionUrl = homeworkLink
+
+      if (lesson.homework_type === 'upload' && homeworkFile) {
+        const fileExt = homeworkFile.name.split('.').pop()
+        const fileName = `${user.id}/${lesson.id}-${Date.now()}.${fileExt}`
+        
+        const { error: uploadError } = await supabase.storage
+          .from('homework')
+          .upload(fileName, homeworkFile)
+
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('homework')
+          .getPublicUrl(fileName)
+        
+        submissionUrl = publicUrl
+      }
+
+      // Fetch company_id from lesson
+      const { data: lessonCompany } = await supabase
+        .from('lessons')
+        .select('company_id')
+        .eq('id', lesson.id)
+        .single()
+
+      const { error } = await supabase
+        .from('homework_submissions')
+        .insert({
+          lesson_id: lesson.id,
+          user_id: user.id,
+          submission_type: lesson.homework_type,
+          submission_url: submissionUrl,
+          company_id: lessonCompany?.company_id
+        })
+
+      if (error) throw error
+
+      toast.success("Homework submitted successfully!")
+      setHomeworkCompleted(true)
+      setHomeworkLink("")
+      setHomeworkFile(null)
+    } catch (err: any) {
+      console.error("Submission error:", err)
+      toast.error(err.message || "Failed to submit homework")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleComplete = async () => {
     if (completed) {
+      if (lesson?.has_homework && !homeworkCompleted) {
+        toast.error("Please complete and submit your homework before continuing.")
+        return
+      }
       handleNavigateNext()
       return
     }
@@ -121,6 +211,11 @@ export default function LessonPage() {
       setSaving(true)
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("No user found")
+
+      if (lesson?.has_homework && !homeworkCompleted) {
+        toast.error("Please complete and submit your homework before marking this lesson as complete.")
+        return
+      }
 
       const { error } = await supabase
         .from('lesson_progress')
@@ -223,6 +318,73 @@ export default function LessonPage() {
 
         {/* Right Column: Actions and Content */}
         <div className="space-y-6 lg:sticky lg:top-24">
+          {/* Homework Card */}
+          {lesson.has_homework && !homeworkCompleted && (
+            <div className="p-6 bg-orange-50 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-orange-100 flex flex-col gap-5">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg tracking-tight">Homework Required</h3>
+                </div>
+                <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
+                  This lesson has required homework. Submit it below to unlock the next steps.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {lesson.homework_type === 'link' ? (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700">Homework Link</label>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <input 
+                        type="url"
+                        placeholder="https://..."
+                        value={homeworkLink}
+                        onChange={(e) => setHomeworkLink(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-700">Upload File</label>
+                    <div className="border-2 border-dashed border-orange-200 rounded-xl p-6 text-center hover:border-orange-300 transition-colors cursor-pointer relative bg-white/50">
+                      <input 
+                        type="file"
+                        onChange={(e) => setHomeworkFile(e.target.files?.[0] || null)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-medium text-gray-600">
+                          {homeworkFile ? homeworkFile.name : "Click to select a file"}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-tight">PDF, ZIP, or Image (Max 10MB)</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <Button 
+                  onClick={handleHomeworkSubmit}
+                  disabled={isSubmitting}
+                  className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-md shadow-orange-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    "Submit Homework"
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Completion Card */}
           <div className="p-6 bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg border border-gray-50 flex flex-col gap-5">
             <div className="space-y-1">
@@ -237,6 +399,12 @@ export default function LessonPage() {
                       : "Mark as complete to finish this lesson."}
               </p>
             </div>
+            {lesson.has_homework && homeworkCompleted && (
+              <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 px-3 py-2 rounded-xl border border-green-100 mb-2">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Homework Submitted & Verified</span>
+              </div>
+            )}
             <Button 
               onClick={handleComplete}
               disabled={saving || loading}

@@ -1,11 +1,42 @@
 import { Sidebar } from "@/components/layout/Sidebar"
 import { Topbar } from "@/components/layout/Topbar"
-import AuthProvider from "@/components/providers/AuthProvider"
+import AuthProvider, { useAuth } from "@/components/providers/AuthProvider"
 import { OnboardingProvider, useOnboarding } from "@/components/providers/OnboardingProvider"
-import { Outlet } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
+import { useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 
 function DashboardContent() {
   const { isComplete, isLoading } = useOnboarding()
+  const { user } = useAuth()
+  const location = useLocation()
+
+  // Heartbeat for presence tracking
+  useEffect(() => {
+    if (!user) return
+
+    const updatePresence = async () => {
+      try {
+        await supabase
+          .from('user_presence')
+          .upsert({
+            user_id: user.id,
+            last_path: location.pathname,
+            updated_at: new Date().toISOString(),
+            last_seen_at: new Date().toISOString()
+          })
+      } catch (err) {
+        console.error('Error updating presence:', err)
+      }
+    }
+
+    // Initial update
+    updatePresence()
+
+    // Update every 2 minutes
+    const interval = setInterval(updatePresence, 2 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [user, location.pathname])
 
   if (isLoading) {
     return (

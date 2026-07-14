@@ -73,9 +73,71 @@ serve(async (req) => {
 
       const { data: enrollments } = await supabaseAdmin.from('course_enrollments').select('user_id, course_id')
       
+      // Fetch presence data
+      const { data: presenceData } = await supabaseAdmin
+        .from('user_presence')
+        .select('*')
+        .in('user_id', profileIds)
+
+      // Fetch progress data for completion tracking
+      const { data: allModules } = await supabaseAdmin.from('modules').select('id, course_id, title, company_id')
+      const { data: allLessons } = await supabaseAdmin.from('lessons').select('id, module_id, has_homework')
+      const { data: allQuizzes } = await supabaseAdmin.from('quizzes').select('id, lesson_id, module_id')
+      
+      const { data: allProgress } = await supabaseAdmin
+        .from('lesson_progress')
+        .select('user_id, lesson_id, completed')
+        .in('user_id', profileIds)
+        .eq('completed', true)
+
+      const { data: allQuizAttempts } = await supabaseAdmin
+        .from('quiz_attempts')
+        .select('user_id, quiz_id, passed')
+        .in('user_id', profileIds)
+        .eq('passed', true)
+
       const result = filteredAuthUsers.map(u => {
         const p = profiles.find(profile => profile.id === u.id)
         const userEnrollments = enrollments?.filter(e => e.user_id === u.id).map(e => e.course_id) || []
+        const presence = presenceData?.find(pres => pres.user_id === u.id)
+        
+        // Presence logic: online if last_seen_at within 5 minutes
+        const lastSeen = presence?.last_seen_at ? new Date(presence.last_seen_at) : null
+        const isOnline = lastSeen ? (Date.now() - lastSeen.getTime()) < 5 * 60 * 1000 : false
+
+        // Module completion logic
+        const userProgress = allProgress?.filter(prog => prog.user_id === u.id) || []
+        const userQuizAttempts = allQuizAttempts?.filter(att => att.user_id === u.id) || []
+        
+        // Filter modules by company and user enrollments
+        const companyModules = allModules?.filter(m => m.company_id === profile.company_id && userEnrollments.includes(m.course_id)) || []
+        
+        const completedModules = companyModules.filter(m => {
+          const moduleLessons = allLessons?.filter(l => l.module_id === m.id) || []
+          if (moduleLessons.length === 0) return false
+
+          // All lessons must be completed
+          const allLessonsDone = moduleLessons.every(l => 
+            userProgress.some(prog => prog.lesson_id === l.id)
+          )
+          if (!allLessonsDone) return false
+
+          // All lesson quizzes must be passed
+          const lessonQuizzes = allQuizzes?.filter(q => q.lesson_id && moduleLessons.some(l => l.id === q.lesson_id)) || []
+          const allLessonQuizzesPassed = lessonQuizzes.every(q => 
+            userQuizAttempts.some(att => att.quiz_id === q.id)
+          )
+          if (!allLessonQuizzesPassed) return false
+
+          // Module quiz must be passed
+          const moduleQuiz = allQuizzes?.find(q => q.module_id === m.id)
+          if (moduleQuiz && !userQuizAttempts.some(att => att.quiz_id === moduleQuiz.id)) {
+            return false
+          }
+
+          return true
+        })
+
         return {
           id: u.id,
           email: p?.email || u.email,
@@ -90,7 +152,13 @@ serve(async (req) => {
           subcontractor_signed_at: p?.subcontractor_signed_at,
           agreement_signature_name: p?.agreement_signature_name,
           custom_payment_url: p?.custom_payment_url,
-          enrollments: userEnrollments
+          enrollments: userEnrollments,
+          is_online: isOnline,
+          last_seen_at: presence?.last_seen_at,
+          last_path: presence?.last_path,
+          completed_modules_count: completedModules.length,
+          total_modules_count: companyModules.length,
+          completed_module_titles: completedModules.map(m => m.title)
         }
       })
 
