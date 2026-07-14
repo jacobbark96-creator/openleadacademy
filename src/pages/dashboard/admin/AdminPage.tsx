@@ -1853,15 +1853,29 @@ export default function AdminPage() {
                                 allLessons.filter(l => l.module_id === mod.id).map(lesson => {
                                   const isEnrolled = u.enrollments?.includes(course.id)
                                   const isDone = u.completed_lesson_ids?.includes(lesson.id)
+                                  
+                                  // Check if there is a quiz for this lesson and if it's passed
+                                  const lessonQuiz = quizzes.find(q => q.lesson_id === lesson.id)
+                                  const quizPassed = !lessonQuiz || u.passed_quiz_ids?.includes(lessonQuiz.id)
+                                  
+                                  const isFullyComplete = isDone && quizPassed
+
                                   return (
                                     <td key={lesson.id} className="p-4 border-r border-gray-100 text-center">
                                       {!isEnrolled ? (
                                         <span className="text-[10px] text-gray-200 font-medium">N/A</span>
-                                      ) : isDone ? (
+                                      ) : isFullyComplete ? (
                                         <div className="flex justify-center">
                                           <div className="bg-green-100 p-1 rounded-md shadow-sm border border-green-200">
                                             <CheckCircle2 className="w-4 h-4 text-green-600" />
                                           </div>
+                                        </div>
+                                      ) : isDone ? (
+                                        <div className="flex justify-center flex-col items-center gap-1">
+                                          <div className="bg-amber-100 p-1 rounded-md shadow-sm border border-amber-200">
+                                            <Clock className="w-4 h-4 text-amber-600" />
+                                          </div>
+                                          <span className="text-[8px] font-black text-amber-600 uppercase">Quiz Pending</span>
                                         </div>
                                       ) : (
                                         <div className="w-4 h-4 mx-auto border-2 border-gray-100 rounded-md bg-white" />
