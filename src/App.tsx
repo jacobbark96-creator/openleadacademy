@@ -80,7 +80,7 @@ export default function App() {
           <Route path="/dashboard/progress" element={<ProgressPage />} />
           <Route path="/dashboard/certificates" element={<CertificatesPage />} />
           <Route path="/dashboard/legal" element={<LegalPage />} />
-          <Route path="/dashboard/resources" element={<LibraryPage />} />
+          <Route path="/dashboard/resources" element={<ResourcesPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/help" element={<HelpPage />} />
           <Route path="/dashboard/support" element={<SupportPage />} />
