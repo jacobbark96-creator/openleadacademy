@@ -50,6 +50,20 @@ export default function SignupPage() {
 
       if (data?.user) {
         // The trigger will create the profile automatically
+        
+        // Trigger the dynamic welcome email via our custom Edge Function
+        try {
+          await supabase.functions.invoke('send-tenant-invite', {
+            body: {
+              email: email,
+              companyName: company?.name || 'Openlead Academy',
+              action: 'welcome'
+            }
+          })
+        } catch (emailError) {
+          console.error('Failed to send dynamic welcome email:', emailError)
+        }
+
         toast.success("Account created! Please sign in.")
         navigate("/login")
       }
