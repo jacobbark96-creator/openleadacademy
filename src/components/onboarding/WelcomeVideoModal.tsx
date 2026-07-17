@@ -16,13 +16,16 @@ export function WelcomeVideoModal({ isOpen, videoUrl, companyName, onContinue }:
   const getEmbedUrl = (url: string) => {
     if (!url) return ''
     if (url.includes('youtube.com/watch?v=')) {
-      return url.replace('watch?v=', 'embed/')
+      // Handle URLs like https://www.youtube.com/watch?v=VIDEO_ID&t=10s
+      const videoId = new URL(url).searchParams.get('v')
+      return `https://www.youtube.com/embed/${videoId}`
     }
     if (url.includes('youtu.be/')) {
-      return url.replace('youtu.be/', 'youtube.com/embed/')
+      return url.replace('youtu.be/', 'www.youtube.com/embed/')
     }
     if (url.includes('vimeo.com/')) {
-      return url.replace('vimeo.com/', 'player.vimeo.com/video/')
+      const vimeoId = url.split('vimeo.com/')[1].split(/[?#]/)[0]
+      return `https://player.vimeo.com/video/${vimeoId}`
     }
     return url
   }
