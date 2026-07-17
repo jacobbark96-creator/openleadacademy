@@ -27,6 +27,7 @@ import SettingsPage from "./pages/dashboard/SettingsPage"
 import SupportPage from "./pages/dashboard/SupportPage"
 import HelpPage from "./pages/dashboard/HelpPage"
 import LegalPage from "./pages/dashboard/LegalPage"
+import ResourcesPage from "./pages/dashboard/ResourcesPage"
 
 function AuthListener() {
   const navigate = useNavigate()
