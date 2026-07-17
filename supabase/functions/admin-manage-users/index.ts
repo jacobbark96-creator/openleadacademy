@@ -212,12 +212,53 @@ serve(async (req) => {
 
         console.log(`Successfully created user and profile for ${email}`)
 
+        // Get company name for the email
+        const { data: companyData } = await supabaseAdmin
+          .from('companies')
+          .select('name')
+          .eq('id', targetCompanyId)
+          .single()
+
+        const companyName = companyData?.name || 'Openlead Academy'
+
         await supabaseAdmin.from('notifications').insert({
           user_id: data.user.id,
-          title: "Welcome to Openlead Academy!",
+          title: `Welcome to ${companyName}!`,
           message: `Your account has been created.`,
           link: "/dashboard/settings"
         })
+
+        // Send dynamic welcome email via Resend API
+        const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+        if (RESEND_API_KEY) {
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${RESEND_API_KEY}`
+              },
+              body: JSON.stringify({
+                from: `${companyName} <help@openleadacademy.com>`,
+                to: [email],
+                subject: `Welcome to ${companyName}`,
+                html: `
+                  <h2>Welcome to ${companyName}!</h2>
+                  <p>Your account has been created.</p>
+                  <p><strong>Email:</strong> ${email}</p>
+                  <p><strong>Temporary Password:</strong> ${password || 'TempPass123!'}</p>
+                  <br/>
+                  <p>Please <a href="https://openleadacademy.pages.dev/login">log in here</a> and change your password immediately.</p>
+                `
+              })
+            })
+            console.log(`Sent welcome email to ${email} for company ${companyName}`)
+          } catch (emailErr) {
+            console.error('Failed to send welcome email:', emailErr)
+          }
+        } else {
+          console.warn('RESEND_API_KEY is not set. Skipping welcome email.')
+        }
       }
       
       return new Response(JSON.stringify({ success: true }), {
@@ -243,8 +284,49 @@ serve(async (req) => {
         })
       }
 
-      const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
-      if (error) throw error
+      const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+      if (RESEND_API_KEY) {
+        // Generate recovery link
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email: email
+        })
+        if (linkError) throw linkError
+
+        // Get company name
+        const { data: companyData } = await supabaseAdmin
+          .from('companies')
+          .select('name')
+          .eq('id', profile.company_id)
+          .single()
+        const companyName = companyData?.name || 'Openlead Academy'
+
+        // Send email via Resend
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: `${companyName} <help@openleadacademy.com>`,
+            to: [email],
+            subject: `Reset your password for ${companyName}`,
+            html: `
+              <h2>Password Reset</h2>
+              <p>You requested a password reset for your ${companyName} account.</p>
+              <p>Please <a href="${linkData.properties.action_link}">click here to reset your password</a>.</p>
+              <br/>
+              <p>If you didn't request this, you can safely ignore this email.</p>
+            `
+          })
+        })
+      } else {
+        // Fallback to default Supabase email
+        const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email)
+        if (error) throw error
+      }
+      
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
