@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { AgreementModal } from '@/components/onboarding/AgreementModal'
 import { PaymentModal } from '@/components/onboarding/PaymentModal'
+import { WelcomeVideoModal } from '@/components/onboarding/WelcomeVideoModal'
 import { NDA_CONTENT, SUBCONTRACTOR_CONTENT } from '@/constants/agreements'
 import { toast } from 'sonner'
 import { useTenant } from '@/providers/TenantProvider'
@@ -18,6 +19,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [profile, setProfile] = useState<any>(null)
   const [showModal, setShowModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false)
   const [currentStep, setCurrentStep] = useState(1) // 1: NDA, 2: Subcontractor
   const { company: tenant } = useTenant()
 
@@ -36,12 +38,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           email: data.email,
           signup_fee: data.signup_fee,
           has_paid: data.has_paid_signup_fee,
-          company_slug: data.companies?.slug
+          company_slug: data.companies?.slug,
+          enable_welcome_box: data.companies?.enable_welcome_box
         })
         setProfile(data)
         
+        // 0. Check Welcome Video Flow
+        const hasSeenWelcome = localStorage.getItem(`has_seen_welcome_${session.user.id}`)
+        const needsPayment = data.signup_fee > 0 && !data.has_paid_signup_fee
+        
+        if (data.companies?.enable_welcome_box && !hasSeenWelcome) {
+          setShowWelcomeVideo(true)
+          setIsLoading(false)
+          return
+        }
+
         // 1. Check for unpaid signup fee first (applies to tenants)
-        if (data.signup_fee > 0 && !data.has_paid_signup_fee) {
+        if (needsPayment) {
           setShowPaymentModal(true)
           setIsLoading(false)
           return
@@ -74,6 +87,26 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     fetchProfile()
   }, [tenant])
+
+  const handleContinueFromWelcome = () => {
+    if (profile?.id) {
+      localStorage.setItem(`has_seen_welcome_${profile.id}`, 'true')
+    }
+    setShowWelcomeVideo(false)
+    
+    // Proceed to next step in the flow
+    if (profile?.signup_fee > 0 && !profile?.has_paid_signup_fee) {
+      setShowPaymentModal(true)
+    } else if (profile?.companies?.slug === 'openlead') {
+      if (!profile.nda_signed) {
+        setCurrentStep(1)
+        setShowModal(true)
+      } else if (!profile.subcontractor_signed) {
+        setCurrentStep(2)
+        setShowModal(true)
+      }
+    }
+  }
 
   const handleSign = async (signatureName: string) => {
     try {
@@ -204,11 +237,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const acceptedTenantDocs = profile?.accepted_legal_documents || []
   const hasAcceptedAllTenantDocs = tenantDocs.length === 0 || tenantDocs.every((doc: any) => acceptedTenantDocs.includes(doc.title))
 
-  const isComplete = !isLoading && !!profile && !hasUnpaidFee && hasAcceptedAllTenantDocs && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
+  const isComplete = !isLoading && !!profile && !showWelcomeVideo && !hasUnpaidFee && hasAcceptedAllTenantDocs && ((profile?.companies?.slug !== 'openlead') || (profile?.nda_signed && profile?.subcontractor_signed))
 
   return (
     <OnboardingContext.Provider value={{ isComplete, isLoading }}>
       {children}
+      <WelcomeVideoModal
+        isOpen={showWelcomeVideo}
+        videoUrl={profile?.companies?.welcome_video_url}
+        companyName={profile?.companies?.name || 'Academy'}
+        onContinue={handleContinueFromWelcome}
+      />
       <PaymentModal
         isOpen={showPaymentModal}
         feeAmount={profile?.signup_fee || 0}

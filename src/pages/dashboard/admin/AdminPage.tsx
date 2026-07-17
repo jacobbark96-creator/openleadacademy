@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy, ShieldCheck, Search, Filter, FileText } from "lucide-react"
+import { Users, Briefcase, BookOpen, UserPlus, Video, Key, Mail, Calendar, Clock, Trash2, Plus, Settings, Phone, CheckCircle2, Trophy, ShieldCheck, Search, Filter, FileText, Info } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -175,6 +175,12 @@ export default function AdminPage() {
   const [legalDocuments, setLegalDocuments] = useState<{ title: string; content: string }[]>([])
   const [isUpdatingLegal, setIsUpdatingLegal] = useState(false)
 
+  // Company Onboarding Settings state
+  const [allowSelfOnboarding, setAllowSelfOnboarding] = useState(false)
+  const [enableWelcomeBox, setEnableWelcomeBox] = useState(false)
+  const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("")
+  const [isUpdatingOnboarding, setIsUpdatingOnboarding] = useState(false)
+
   const handleAddFeeItem = () => {
     setNewUserFeeBreakdown([...newUserFeeBreakdown, { name: "", amount: 0 }])
   }
@@ -222,6 +228,30 @@ export default function AdminPage() {
       toast.error(err.message || "Failed to update legal documents")
     } finally {
       setIsUpdatingLegal(false)
+    }
+  }
+
+  const handleSaveOnboardingSettings = async (field: 'allow_self_onboarding' | 'enable_welcome_box' | 'welcome_video_url', value: any) => {
+    if (!company?.id) return
+    
+    // Update local state optimistically
+    if (field === 'allow_self_onboarding') setAllowSelfOnboarding(value)
+    if (field === 'enable_welcome_box') setEnableWelcomeBox(value)
+    if (field === 'welcome_video_url') setWelcomeVideoUrl(value)
+
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ [field]: value })
+        .eq('id', company.id)
+      
+      if (error) throw error
+      if (field !== 'welcome_video_url') {
+        toast.success("Settings updated successfully")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update settings")
+      // Revert state if needed (not implementing full revert for brevity, toast shows error)
     }
   }
 
@@ -338,11 +368,16 @@ export default function AdminPage() {
         const { data: resData } = await scopeQuery(supabase.from('resources').select('*')).order('created_at', { ascending: false })
         if (resData && mounted) setResources(resData)
 
-        // Load Legal Documents from company
+        // Load Legal Documents and Onboarding Settings from company
         if (company?.id) {
-          const { data: compData } = await supabase.from('companies').select('legal_documents').eq('id', company.id).single()
-          if (compData?.legal_documents && mounted) {
-            setLegalDocuments(compData.legal_documents)
+          const { data: compData } = await supabase.from('companies').select('legal_documents, allow_self_onboarding, enable_welcome_box, welcome_video_url').eq('id', company.id).single()
+          if (compData && mounted) {
+            if (compData.legal_documents) {
+              setLegalDocuments(compData.legal_documents)
+            }
+            setAllowSelfOnboarding(compData.allow_self_onboarding || false)
+            setEnableWelcomeBox(compData.enable_welcome_box || false)
+            setWelcomeVideoUrl(compData.welcome_video_url || "")
           }
         }
 
@@ -1104,6 +1139,14 @@ export default function AdminPage() {
             Legal Documents
           </button>
         )}
+        {role === 'admin' && (
+          <button
+            onClick={() => setActiveTab("welcome-box")}
+            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'welcome-box' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Welcome Box
+          </button>
+        )}
         {(role === 'admin' || role === 'trainer') && (
           <button
             onClick={() => setActiveTab("modules")}
@@ -1141,11 +1184,24 @@ export default function AdminPage() {
       {activeTab === 'users' && (
         <div className="space-y-6">
           <Card className="border-0 shadow-sm rounded-2xl">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
               <CardTitle className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
                 Add New User
               </CardTitle>
+              {role === 'admin' && (
+                <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                  <Label htmlFor="self-onboard-toggle" className="text-xs font-bold text-gray-700 cursor-pointer">
+                    Allow Self Onboarding
+                  </Label>
+                  <div 
+                    className={`w-8 h-4 rounded-full transition-colors cursor-pointer relative ${allowSelfOnboarding ? 'bg-primary' : 'bg-gray-300'}`}
+                    onClick={() => handleSaveOnboardingSettings('allow_self_onboarding', !allowSelfOnboarding)}
+                  >
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${allowSelfOnboarding ? 'translate-x-4' : ''}`} />
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2254,6 +2310,69 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'welcome-box' && role === 'admin' && (
+        <div className="space-y-6">
+          <Card className="border-0 shadow-sm rounded-2xl overflow-hidden">
+            <CardHeader className="pb-4 border-b border-gray-100 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="w-5 h-5 text-primary" />
+                  Welcome Box Settings
+                </CardTitle>
+                <p className="text-sm text-gray-500 mt-1">Configure the onboarding flow for new users.</p>
+              </div>
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                <Label className="text-xs font-bold text-gray-700 cursor-pointer">
+                  Enable Welcome Box
+                </Label>
+                <div 
+                  className={`w-8 h-4 rounded-full transition-colors cursor-pointer relative ${enableWelcomeBox ? 'bg-primary' : 'bg-gray-300'}`}
+                  onClick={() => handleSaveOnboardingSettings('enable_welcome_box', !enableWelcomeBox)}
+                >
+                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${enableWelcomeBox ? 'translate-x-4' : ''}`} />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="max-w-2xl space-y-6">
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold text-gray-900">Welcome Video URL (Optional)</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="https://vimeo.com/... or https://youtube.com/..." 
+                      value={welcomeVideoUrl}
+                      onChange={(e) => setWelcomeVideoUrl(e.target.value)}
+                      className="flex-1 rounded-xl"
+                    />
+                    <Button 
+                      onClick={() => handleSaveOnboardingSettings('welcome_video_url', welcomeVideoUrl)}
+                      className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white"
+                    >
+                      Save URL
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    If provided, new users will see this video in a popup before they are asked to pay.
+                  </p>
+                </div>
+                
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                  <h4 className="font-bold text-blue-900 text-sm mb-2 flex items-center gap-2">
+                    <Info className="w-4 h-4" /> User Onboarding Flow
+                  </h4>
+                  <ol className="list-decimal list-inside text-xs text-blue-800 space-y-1 ml-1">
+                    <li>User logs in for the first time.</li>
+                    <li>If <strong>Welcome Box</strong> is enabled, they see the Welcome Video (if URL is provided).</li>
+                    <li>After the video, they are prompted to pay the Signup Fee (if configured).</li>
+                    <li>Once paid, access to the dashboard is granted.</li>
+                  </ol>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

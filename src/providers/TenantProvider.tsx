@@ -10,6 +10,9 @@ export interface Company {
   logo_height: number;
   primary_color: string | null;
   stripe_account_id: string | null;
+  allow_self_onboarding?: boolean;
+  enable_welcome_box?: boolean;
+  welcome_video_url?: string | null;
 }
 
 interface TenantContextType {

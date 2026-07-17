@@ -117,12 +117,14 @@ export default function LoginPage() {
         </form>
       </CardContent>
       <CardFooter className="flex justify-center pb-8">
-        <div className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>
-          Not a member?{" "}
-          <Link to="/signup" className="text-primary hover:text-primary/90 transition-colors ml-1">
-            Apply for Admission
-          </Link>
-        </div>
+        {(company?.allow_self_onboarding || !isTenant) && (
+          <div className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>
+            Not a member?{" "}
+            <Link to="/signup" className="text-primary hover:text-primary/90 transition-colors ml-1">
+              Apply for Admission
+            </Link>
+          </div>
+        )}
       </CardFooter>
     </Card>
   )
