@@ -45,7 +45,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         
         // 0. Check Welcome Video Flow
         const hasSeenWelcome = localStorage.getItem(`has_seen_welcome_${session.user.id}`)
-        const needsPayment = data.signup_fee > 0 && !data.has_paid_signup_fee
+        const needsPayment = data.companies?.require_payment && !data.has_paid_signup_fee
         
         if (data.companies?.enable_welcome_box && !hasSeenWelcome) {
           setShowWelcomeVideo(true)
@@ -95,7 +95,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setShowWelcomeVideo(false)
     
     // Proceed to next step in the flow
-    if (profile?.signup_fee > 0 && !profile?.has_paid_signup_fee) {
+    if (profile?.companies?.require_payment && !profile?.has_paid_signup_fee) {
       setShowPaymentModal(true)
     } else if (profile?.companies?.slug === 'openlead') {
       if (!profile.nda_signed) {
@@ -169,9 +169,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
           .eq('id', profile.id)
       }
 
-      if (profile.custom_payment_url) {
+      if (profile.companies?.payment_link) {
         toast.info("Redirecting to academy payment link...")
-        window.location.href = profile.custom_payment_url
+        window.location.href = profile.companies.payment_link
         return
       }
 
@@ -185,8 +185,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       const { data, error } = await supabase.functions.invoke('stripe', {
         body: { 
           action: 'checkout-signup-fee',
-          feeAmount: profile.signup_fee,
-          feeCurrency: profile.signup_fee_currency || 'GBP',
+          feeAmount: profile.companies?.payment_amount || 0,
+          feeCurrency: profile.companies?.payment_currency || 'GBP',
           companyId: profile.company_id
         }
       })
@@ -231,7 +231,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // 2. They don't have an unpaid signup fee AND
   // 3. They have accepted all tenant legal documents AND
   // 4. They are either a tenant user OR they've signed both NDAs
-  const hasUnpaidFee = profile?.signup_fee > 0 && !profile?.has_paid_signup_fee
+  const hasUnpaidFee = profile?.companies?.require_payment && !profile?.has_paid_signup_fee
   
   const tenantDocs = profile?.companies?.legal_documents || []
   const acceptedTenantDocs = profile?.accepted_legal_documents || []
@@ -250,9 +250,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       />
       <PaymentModal
         isOpen={showPaymentModal}
-        feeAmount={profile?.signup_fee || 0}
-        feeCurrency={profile?.signup_fee_currency || 'GBP'}
-        feeBreakdown={profile?.fee_breakdown || []}
+        feeAmount={profile?.companies?.payment_amount || 0}
+        feeCurrency={profile?.companies?.payment_currency || 'GBP'}
+        feeBreakdown={profile?.companies?.fee_breakdown || []}
         legalDocuments={profile?.companies?.legal_documents || []}
         onPay={handlePaySignupFee}
       />

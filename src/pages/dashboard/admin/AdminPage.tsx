@@ -163,13 +163,6 @@ export default function AdminPage() {
   const [newUserRole, setNewUserRole] = useState("student")
   const [newUserPassword, setNewUserPassword] = useState("")
   const [newUserName, setNewUserName] = useState("")
-  const [newUserHasFee, setNewUserHasFee] = useState(false)
-  const [newUserFeeAmount, setNewUserFeeAmount] = useState("0")
-  const [newUserFeeCurrency, setNewUserFeeCurrency] = useState("GBP")
-  const [newUserFeeBreakdown, setNewUserFeeBreakdown] = useState<{ name: string; amount: number }[]>([
-    { name: "Platform Access", amount: 0 }
-  ])
-  const [newUserPaymentUrl, setNewUserPaymentUrl] = useState("")
 
   // Tenant Legal Documents state
   const [legalDocuments, setLegalDocuments] = useState<{ title: string; content: string }[]>([])
@@ -179,24 +172,31 @@ export default function AdminPage() {
   const [allowSelfOnboarding, setAllowSelfOnboarding] = useState(false)
   const [enableWelcomeBox, setEnableWelcomeBox] = useState(false)
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("")
+  const [requirePayment, setRequirePayment] = useState(false)
+  const [paymentAmount, setPaymentAmount] = useState("0")
+  const [paymentCurrency, setPaymentCurrency] = useState("GBP")
+  const [paymentLink, setPaymentLink] = useState("")
+  const [feeBreakdown, setFeeBreakdown] = useState<{ name: string; amount: number }[]>([
+    { name: "Platform Access", amount: 0 }
+  ])
   const [isUpdatingOnboarding, setIsUpdatingOnboarding] = useState(false)
 
   const handleAddFeeItem = () => {
-    setNewUserFeeBreakdown([...newUserFeeBreakdown, { name: "", amount: 0 }])
+    setFeeBreakdown([...feeBreakdown, { name: "", amount: 0 }])
   }
 
   const handleRemoveFeeItem = (index: number) => {
-    setNewUserFeeBreakdown(newUserFeeBreakdown.filter((_, i) => i !== index))
+    setFeeBreakdown(feeBreakdown.filter((_, i) => i !== index))
   }
 
   const handleFeeItemChange = (index: number, field: 'name' | 'amount', value: string | number) => {
-    const updated = [...newUserFeeBreakdown]
+    const updated = [...feeBreakdown]
     updated[index] = { ...updated[index], [field]: field === 'amount' ? Number(value) : value }
-    setNewUserFeeBreakdown(updated)
+    setFeeBreakdown(updated)
     
     // Auto-calculate total fee amount
     const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-    setNewUserFeeAmount(total.toString())
+    setPaymentAmount(total.toString())
   }
 
   const handleAddLegalDoc = () => {
@@ -231,13 +231,14 @@ export default function AdminPage() {
     }
   }
 
-  const handleSaveOnboardingSettings = async (field: 'allow_self_onboarding' | 'enable_welcome_box' | 'welcome_video_url', value: any) => {
+  const handleSaveOnboardingSettings = async (field: 'allow_self_onboarding' | 'enable_welcome_box' | 'welcome_video_url' | 'require_payment', value: any) => {
     if (!company?.id) return
     
     // Update local state optimistically
     if (field === 'allow_self_onboarding') setAllowSelfOnboarding(value)
     if (field === 'enable_welcome_box') setEnableWelcomeBox(value)
     if (field === 'welcome_video_url') setWelcomeVideoUrl(value)
+    if (field === 'require_payment') setRequirePayment(value)
 
     try {
       const { error } = await supabase
@@ -251,7 +252,29 @@ export default function AdminPage() {
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to update settings")
-      // Revert state if needed (not implementing full revert for brevity, toast shows error)
+    }
+  }
+
+  const handleSavePaymentSettings = async () => {
+    if (!company?.id) return
+    setIsUpdatingOnboarding(true)
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          payment_amount: Number(paymentAmount),
+          payment_currency: paymentCurrency,
+          payment_link: paymentLink,
+          fee_breakdown: feeBreakdown
+        })
+        .eq('id', company.id)
+      
+      if (error) throw error
+      toast.success("Payment settings saved successfully")
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save payment settings")
+    } finally {
+      setIsUpdatingOnboarding(false)
     }
   }
 
@@ -370,7 +393,7 @@ export default function AdminPage() {
 
         // Load Legal Documents and Onboarding Settings from company
         if (company?.id) {
-          const { data: compData } = await supabase.from('companies').select('legal_documents, allow_self_onboarding, enable_welcome_box, welcome_video_url').eq('id', company.id).single()
+          const { data: compData } = await supabase.from('companies').select('legal_documents, allow_self_onboarding, enable_welcome_box, welcome_video_url, require_payment, payment_amount, payment_currency, payment_link, fee_breakdown').eq('id', company.id).single()
           if (compData && mounted) {
             if (compData.legal_documents) {
               setLegalDocuments(compData.legal_documents)
@@ -378,6 +401,13 @@ export default function AdminPage() {
             setAllowSelfOnboarding(compData.allow_self_onboarding || false)
             setEnableWelcomeBox(compData.enable_welcome_box || false)
             setWelcomeVideoUrl(compData.welcome_video_url || "")
+            setRequirePayment(compData.require_payment || false)
+            setPaymentAmount(compData.payment_amount?.toString() || "0")
+            setPaymentCurrency(compData.payment_currency || "GBP")
+            setPaymentLink(compData.payment_link || "")
+            if (compData.fee_breakdown && compData.fee_breakdown.length > 0) {
+              setFeeBreakdown(compData.fee_breakdown)
+            }
           }
         }
 
@@ -519,12 +549,7 @@ export default function AdminPage() {
       fullName: newUserName,
       role: newUserRole,
       password: newUserPassword,
-      signupFee: newUserHasFee ? parseFloat(newUserFeeAmount) : 0,
-      signupFeeCurrency: newUserFeeCurrency,
-      hasPaidSignupFee: !newUserHasFee,
       companyId: company?.id,
-      feeBreakdown: newUserHasFee ? newUserFeeBreakdown : [],
-      paymentUrl: newUserPaymentUrl
     }
     
     console.log("SENDING CREATE USER PAYLOAD:", payload)
@@ -810,11 +835,7 @@ export default function AdminPage() {
     phone: "",
     role: "",
     enrollments: [] as string[],
-    signup_fee: 0,
-    signup_fee_currency: "GBP",
     has_paid_signup_fee: true,
-    fee_breakdown: [] as { name: string; amount: number }[],
-    custom_payment_url: ""
   })
   const [isUpdatingDetails, setIsUpdatingDetails] = useState(false)
 
@@ -865,11 +886,7 @@ export default function AdminPage() {
       phone: user.phone || "",
       role: user.role || 'student',
       enrollments: user.enrollments || [],
-      signup_fee: user.signup_fee || 0,
-      signup_fee_currency: user.signup_fee_currency || 'GBP',
       has_paid_signup_fee: user.has_paid_signup_fee ?? true,
-      fee_breakdown: user.fee_breakdown || [],
-      custom_payment_url: user.custom_payment_url || ""
     })
     setIsDetailsModalOpen(true)
   }
@@ -887,11 +904,7 @@ export default function AdminPage() {
           phone: editingUserDetails.phone,
           role: editingUserDetails.role,
           enrollments: editingUserDetails.enrollments,
-          signupFee: editingUserDetails.signup_fee,
-          signupFeeCurrency: editingUserDetails.signup_fee_currency,
-          hasPaidSignupFee: editingUserDetails.has_paid_signup_fee,
-          feeBreakdown: editingUserDetails.fee_breakdown,
-          customPaymentUrl: editingUserDetails.custom_payment_url
+          hasPaidSignupFee: editingUserDetails.has_paid_signup_fee
         }
       })
 
@@ -1229,109 +1242,6 @@ export default function AdminPage() {
                     {role === 'admin' && <option value="admin">Admin</option>}
                   </select>
                 </div>
-                <div className="space-y-4 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <input 
-                      type="checkbox" 
-                      id="fee-toggle"
-                      checked={newUserHasFee}
-                      onChange={(e) => setNewUserHasFee(e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="fee-toggle" className="font-semibold cursor-pointer">Require Sign Up Fee</Label>
-                  </div>
-                  {newUserHasFee && (
-                    <div className="space-y-4 pl-7">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-sm font-bold text-gray-700">Fee Breakdown</Label>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleAddFeeItem}
-                          className="h-7 text-[10px] font-bold"
-                        >
-                          <Plus className="w-3 h-3 mr-1" /> Add Line Item
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {newUserFeeBreakdown.map((item, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <Input 
-                              placeholder="Item Name (e.g. Platform Access)"
-                              value={item.name}
-                              onChange={e => handleFeeItemChange(index, 'name', e.target.value)}
-                              className="flex-1 h-8 text-xs"
-                            />
-                            <div className="flex items-center gap-1 w-32">
-                              <span className="text-xs text-gray-400 font-bold">
-                                {newUserFeeCurrency === 'GBP' ? '£' : 
-                                 newUserFeeCurrency === 'USD' ? '$' : 
-                                 newUserFeeCurrency === 'EUR' ? '€' : '$'}
-                              </span>
-                              <Input 
-                                type="number"
-                                placeholder="0.00"
-                                value={item.amount}
-                                onChange={e => handleFeeItemChange(index, 'amount', e.target.value)}
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            {newUserFeeBreakdown.length > 1 && (
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleRemoveFeeItem(index)}
-                                className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-xs font-bold text-gray-500">Currency</Label>
-                          <select
-                            value={newUserFeeCurrency}
-                            onChange={e => setNewUserFeeCurrency(e.target.value)}
-                            className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background w-24"
-                          >
-                            <option value="GBP">GBP (£)</option>
-                            <option value="USD">USD ($)</option>
-                            <option value="EUR">EUR (€)</option>
-                            <option value="AUD">AUD ($)</option>
-                            <option value="CAD">CAD ($)</option>
-                          </select>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Signup Fee</p>
-                          <p className="text-lg font-black text-primary">
-                            {newUserFeeCurrency === 'GBP' ? '£' : 
-                             newUserFeeCurrency === 'USD' ? '$' : 
-                             newUserFeeCurrency === 'EUR' ? '€' : '$'}
-                            {newUserFeeAmount}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-gray-100 space-y-2">
-                        <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link (Optional)</Label>
-                        <Input 
-                          placeholder="https://buy.stripe.com/..."
-                          value={newUserPaymentUrl}
-                          onChange={e => setNewUserPaymentUrl(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                        <p className="text-[10px] text-gray-400">If provided, the student will be redirected here instead of the default platform checkout.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <div className="md:col-span-2 pt-2">
                   <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">Create User</Button>
                 </div>
@@ -1622,7 +1532,7 @@ export default function AdminPage() {
                             <div className="flex items-center justify-between">
                               <Label className="text-base font-bold flex items-center gap-2">
                                 <ShieldCheck className="w-4 h-4 text-primary" />
-                                Signup Fee & Breakdown
+                                Signup Fee Status
                               </Label>
                               <div className="flex items-center gap-2">
                                 <input 
@@ -1635,101 +1545,7 @@ export default function AdminPage() {
                                 <Label htmlFor="edit-has-paid" className="text-xs font-medium">Mark as Paid</Label>
                               </div>
                             </div>
-
-                            <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-xs font-bold text-gray-500 uppercase">Fee Items</p>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="h-6 text-[10px] font-bold"
-                                  onClick={() => {
-                                    const updated = [...editingUserDetails.fee_breakdown, { name: "", amount: 0 }]
-                                    const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                    setEditingUserDetails({
-                                      ...editingUserDetails, 
-                                      fee_breakdown: updated,
-                                      signup_fee: total
-                                    })
-                                  }}
-                                >
-                                  Add Item
-                                </Button>
-                              </div>
-                              
-                              {editingUserDetails.fee_breakdown.map((item: any, idx: number) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <Input 
-                                    placeholder="Item name"
-                                    value={item.name}
-                                    onChange={e => {
-                                      const updated = [...editingUserDetails.fee_breakdown]
-                                      updated[idx] = { ...updated[idx], name: e.target.value }
-                                      setEditingUserDetails({...editingUserDetails, fee_breakdown: updated})
-                                    }}
-                                    className="flex-1 h-8 text-xs"
-                                  />
-                                  <Input 
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={item.amount}
-                                    onChange={e => {
-                                      const updated = [...editingUserDetails.fee_breakdown]
-                                      updated[idx] = { ...updated[idx], amount: Number(e.target.value) }
-                                      const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                      setEditingUserDetails({
-                                        ...editingUserDetails, 
-                                        fee_breakdown: updated,
-                                        signup_fee: total
-                                      })
-                                    }}
-                                    className="w-20 h-8 text-xs"
-                                  />
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 w-8 p-0 text-red-400"
-                                    onClick={() => {
-                                      const updated = editingUserDetails.fee_breakdown.filter((_: any, i: number) => i !== idx)
-                                      const total = updated.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0)
-                                      setEditingUserDetails({
-                                        ...editingUserDetails, 
-                                        fee_breakdown: updated,
-                                        signup_fee: total
-                                      })
-                                    }}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                </div>
-                              ))}
-                              
-                              <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
-                                <select
-                                  value={editingUserDetails.signup_fee_currency}
-                                  onChange={e => setEditingUserDetails({...editingUserDetails, signup_fee_currency: e.target.value})}
-                                  className="h-7 text-[10px] rounded border bg-white px-1 font-bold"
-                                >
-                                  <option value="GBP">GBP (£)</option>
-                                  <option value="USD">USD ($)</option>
-                                  <option value="EUR">EUR (€)</option>
-                                </select>
-                                <p className="text-sm font-black text-primary">
-                                  Total: {editingUserDetails.signup_fee_currency === 'GBP' ? '£' : '$'}
-                                  {editingUserDetails.signup_fee}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                              <Label className="text-xs font-bold text-gray-500 uppercase">Manual Payment Link</Label>
-                              <Input 
-                                placeholder="https://buy.stripe.com/..."
-                                value={editingUserDetails.custom_payment_url}
-                                onChange={e => setEditingUserDetails({...editingUserDetails, custom_payment_url: e.target.value})}
-                                className="h-9 text-xs"
-                              />
-                            </div>
+                            <p className="text-[10px] text-gray-500">If the company requires a signup fee, you can manually override it here.</p>
                           </div>
                         </div>
 
@@ -2368,9 +2184,123 @@ export default function AdminPage() {
                   <ol className="list-decimal list-inside text-xs text-blue-800 space-y-1 ml-1">
                     <li>User logs in for the first time.</li>
                     <li>If <strong>Welcome Box</strong> is enabled, they see the Welcome Video (if URL is provided).</li>
-                    <li>After the video, they are prompted to pay the Signup Fee (if configured).</li>
+                    <li>After the video, they are prompted to pay the Signup Fee (if configured below).</li>
                     <li>Once paid, access to the dashboard is granted.</li>
                   </ol>
+                </div>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="fee-toggle"
+                      checked={requirePayment}
+                      onChange={(e) => handleSaveOnboardingSettings('require_payment', e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <Label htmlFor="fee-toggle" className="font-semibold cursor-pointer">Require Sign Up Fee for All New Users</Label>
+                  </div>
+                  {requirePayment && (
+                    <div className="space-y-4 pl-7">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-bold text-gray-700">Fee Breakdown</Label>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleAddFeeItem}
+                          className="h-7 text-[10px] font-bold"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add Line Item
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {feeBreakdown.map((item, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Input 
+                              placeholder="Item Name (e.g. Platform Access)"
+                              value={item.name}
+                              onChange={e => handleFeeItemChange(index, 'name', e.target.value)}
+                              className="flex-1 h-8 text-xs bg-white"
+                            />
+                            <div className="flex items-center gap-1 w-32">
+                              <span className="text-xs text-gray-400 font-bold">
+                                {paymentCurrency === 'GBP' ? '£' : 
+                                 paymentCurrency === 'USD' ? '$' : 
+                                 paymentCurrency === 'EUR' ? '€' : '$'}
+                              </span>
+                              <Input 
+                                type="number"
+                                placeholder="0.00"
+                                value={item.amount}
+                                onChange={e => handleFeeItemChange(index, 'amount', e.target.value)}
+                                className="h-8 text-xs bg-white"
+                              />
+                            </div>
+                            {feeBreakdown.length > 1 && (
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleRemoveFeeItem(index)}
+                                className="h-8 w-8 p-0 text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 border-t border-gray-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs font-bold text-gray-500">Currency</Label>
+                          <select
+                            value={paymentCurrency}
+                            onChange={e => setPaymentCurrency(e.target.value)}
+                            className="flex h-8 rounded-md border border-input bg-white px-2 py-1 text-xs ring-offset-background w-24"
+                          >
+                            <option value="GBP">GBP (£)</option>
+                            <option value="USD">USD ($)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="AUD">AUD ($)</option>
+                            <option value="CAD">CAD ($)</option>
+                          </select>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Total Signup Fee</p>
+                          <p className="text-lg font-black text-primary">
+                            {paymentCurrency === 'GBP' ? '£' : 
+                             paymentCurrency === 'USD' ? '$' : 
+                             paymentCurrency === 'EUR' ? '€' : '$'}
+                            {paymentAmount}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-200 space-y-2">
+                        <Label className="text-xs font-bold text-gray-500 uppercase">Payment Link URL (e.g. Stripe)</Label>
+                        <Input 
+                          placeholder="https://buy.stripe.com/..."
+                          value={paymentLink}
+                          onChange={e => setPaymentLink(e.target.value)}
+                          className="h-9 text-xs bg-white font-mono"
+                        />
+                        <p className="text-[10px] text-gray-400">Users will be redirected to this link to pay the fee.</p>
+                      </div>
+
+                      <div className="pt-4 flex justify-end">
+                        <Button 
+                          onClick={handleSavePaymentSettings}
+                          disabled={isUpdatingOnboarding}
+                          className="bg-primary hover:bg-primary/90 text-white min-w-[150px]"
+                        >
+                          {isUpdatingOnboarding ? 'Saving...' : 'Save Fee Settings'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

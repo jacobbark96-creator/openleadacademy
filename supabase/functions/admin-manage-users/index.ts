@@ -201,12 +201,8 @@ serve(async (req) => {
           role,
           email,
           company_id: targetCompanyId,
-          signup_fee: signupFee || 0,
-          signup_fee_currency: signupFeeCurrency || 'GBP',
-          has_paid_signup_fee: hasPaidSignupFee ?? true,
-          full_name: fullName, // Ensure name is also set
-          fee_breakdown: feeBreakdown || [],
-          custom_payment_url: paymentUrl
+          has_paid_signup_fee: false, // Default to false, onboarding flow will check if company requires payment
+          full_name: fullName // Ensure name is also set
         })
         
         if (profileError) {
@@ -281,7 +277,7 @@ serve(async (req) => {
     }
 
     if (action === 'update-profile') {
-      const { userId, role, fullName, phone, enrollments, signupFee, signupFeeCurrency, hasPaidSignupFee, feeBreakdown, customPaymentUrl } = payload
+      const { userId, role, fullName, phone, enrollments, hasPaidSignupFee } = payload
       
       // Verify user belongs to same company
       const { data: targetProfile, error: targetProfileError } = await supabaseAdmin
@@ -297,7 +293,7 @@ serve(async (req) => {
         })
       }
       
-      console.log('Updating profile for user:', userId, { customPaymentUrl })
+      console.log('Updating profile for user:', userId)
 
       // Update profile
       const { error: profileUpdateError } = await supabaseAdmin
@@ -306,11 +302,7 @@ serve(async (req) => {
           role, 
           full_name: fullName, 
           phone,
-          signup_fee: signupFee,
-          signup_fee_currency: signupFeeCurrency,
-          has_paid_signup_fee: hasPaidSignupFee,
-          fee_breakdown: feeBreakdown,
-          custom_payment_url: customPaymentUrl
+          has_paid_signup_fee: hasPaidSignupFee
         })
         .eq('id', userId)
       
