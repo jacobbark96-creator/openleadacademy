@@ -116,12 +116,31 @@ export default function LoginPage() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center pb-8">
+      <CardFooter className="flex flex-col items-center pb-8 w-full">
         {(company?.allow_self_onboarding || !isTenant) && (
-          <div className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>
-            Not a member?{" "}
-            <Link to="/signup" className="text-primary hover:text-primary/90 transition-colors ml-1">
-              Apply for Admission
+          <div className="w-full mt-4">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className={`w-full border-t transition-colors ${isTenant ? 'border-slate-200' : 'border-white/10'}`} />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className={`px-4 font-bold uppercase tracking-widest transition-colors ${isTenant ? 'bg-white/80 text-slate-400' : 'bg-[#020617] text-slate-500'}`}>
+                  New to {company?.name || 'the Academy'}?
+                </span>
+              </div>
+            </div>
+            <Link to="/signup" className="block w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className={`w-full rounded-2xl h-14 font-black text-sm uppercase tracking-[0.2em] transition-all ${
+                  isTenant 
+                    ? 'border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900' 
+                    : 'border-white/20 text-white hover:bg-white/10'
+                }`}
+              >
+                Apply for Admission
+              </Button>
             </Link>
           </div>
         )}

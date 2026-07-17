@@ -34,9 +34,6 @@ export default function AuthLayout() {
           className="text-center mb-10 flex flex-col items-center"
         >
           <Logo />
-          <p className={`mt-6 text-sm font-bold uppercase tracking-[0.3em] transition-colors ${isTenant ? 'text-slate-500' : 'text-slate-400'}`}>
-            {isTenant ? company.name : 'The Elite Arsenal'}
-          </p>
         </motion.div>
         
         <motion.div
