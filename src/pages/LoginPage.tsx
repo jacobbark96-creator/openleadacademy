@@ -66,16 +66,17 @@ export default function LoginPage() {
           </div>
         </div>
       )}
-      <CardHeader className="space-y-2 pb-8 pt-6">
-        <CardTitle className={`text-2xl font-black text-center uppercase tracking-wider transition-colors ${isTenant ? 'text-slate-900' : 'text-white'}`}>
-          {isTenant ? `${company?.name} Access` : 'Member Access'}
-        </CardTitle>
-        <CardDescription className={`text-center font-medium transition-colors ${isTenant ? 'text-slate-500' : 'text-slate-400'}`}>
-          {isTenant 
-            ? `Secure portal for ${company?.name} students`
-            : "Secure portal for elite revenue leaders"}
-        </CardDescription>
-      </CardHeader>
+      {!isTenant && (
+        <CardHeader className="space-y-2 pb-8 pt-6">
+          <CardTitle className="text-2xl font-black text-center uppercase tracking-wider text-white">
+            Member Access
+          </CardTitle>
+          <CardDescription className="text-center font-medium text-slate-400">
+            Secure portal for elite revenue leaders
+          </CardDescription>
+        </CardHeader>
+      )}
+      {isTenant && <div className="pt-6" />}
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-6">
           {errorMsg && (
