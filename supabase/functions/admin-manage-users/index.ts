@@ -186,7 +186,7 @@ serve(async (req) => {
           role: role,
           signup_fee: signupFee || 0,
           signup_fee_currency: signupFeeCurrency || 'GBP',
-          has_paid_signup_fee: hasPaidSignupFee ?? true,
+          has_paid_signup_fee: hasPaidSignupFee ?? false,
           fee_breakdown: feeBreakdown || [],
           custom_payment_url: paymentUrl
         }
