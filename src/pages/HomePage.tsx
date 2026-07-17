@@ -10,9 +10,9 @@ import { useTenant } from "@/providers/TenantProvider"
 export default function HomePage() {
   const { company } = useTenant()
 
-  // If this is a tenant subdomain, redirect directly to login
+  // If this is a tenant subdomain, redirect directly to signup (or login if closed)
   if (company && company.slug !== 'openlead') {
-    return <Navigate to="/login" replace />
+    return <Navigate to={company.allow_self_onboarding ? "/signup" : "/login"} replace />
   }
 
   return (

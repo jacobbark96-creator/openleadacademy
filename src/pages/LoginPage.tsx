@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Loader2, Mail, Lock, ArrowRight } from "lucide-react"
 import { useTenant } from "@/providers/TenantProvider"
@@ -47,7 +47,26 @@ export default function LoginPage() {
 
   return (
     <Card className={`backdrop-blur-xl rounded-[32px] overflow-hidden shadow-2xl transition-all duration-500 ${isTenant ? 'bg-white/80 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-      <CardHeader className="space-y-2 pb-8">
+      {(company?.allow_self_onboarding || !isTenant) && (
+        <div className={`flex p-1 mx-6 mt-6 rounded-2xl ${isTenant ? 'bg-slate-100' : 'bg-[#020617]/50'}`}>
+          <Link 
+            to="/signup" 
+            className={`flex-1 text-center py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+              isTenant ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Sign Up
+          </Link>
+          <div 
+            className={`flex-1 text-center py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm ${
+              isTenant ? 'bg-white text-slate-900' : 'bg-white/10 text-white'
+            }`}
+          >
+            Login
+          </div>
+        </div>
+      )}
+      <CardHeader className="space-y-2 pb-8 pt-6">
         <CardTitle className={`text-2xl font-black text-center uppercase tracking-wider transition-colors ${isTenant ? 'text-slate-900' : 'text-white'}`}>
           {isTenant ? `${company?.name} Access` : 'Member Access'}
         </CardTitle>
@@ -116,35 +135,6 @@ export default function LoginPage() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex flex-col items-center pb-8 w-full">
-        {(company?.allow_self_onboarding || !isTenant) && (
-          <div className="w-full mt-4">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className={`w-full border-t transition-colors ${isTenant ? 'border-slate-200' : 'border-white/10'}`} />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className={`px-4 font-bold uppercase tracking-widest transition-colors ${isTenant ? 'bg-white/80 text-slate-400' : 'bg-[#020617] text-slate-500'}`}>
-                  New to {company?.name || 'the Academy'}?
-                </span>
-              </div>
-            </div>
-            <Link to="/signup" className="block w-full">
-              <Button
-                type="button"
-                variant="outline"
-                className={`w-full rounded-2xl h-14 font-black text-sm uppercase tracking-[0.2em] transition-all ${
-                  isTenant 
-                    ? 'border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900' 
-                    : 'border-white/20 text-white hover:bg-white/10'
-                }`}
-              >
-                Apply for Admission
-              </Button>
-            </Link>
-          </div>
-        )}
-      </CardFooter>
     </Card>
   )
 }

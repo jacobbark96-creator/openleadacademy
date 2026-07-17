@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { useTenant } from "@/providers/TenantProvider"
@@ -63,7 +63,26 @@ export default function SignupPage() {
 
   return (
     <Card className={`backdrop-blur-xl rounded-[32px] overflow-hidden shadow-2xl transition-all duration-500 ${isTenant ? 'bg-white/80 border-slate-200' : 'bg-white/5 border-white/10'}`}>
-      <CardHeader className="space-y-2 pb-8">
+      {(company?.allow_self_onboarding || !isTenant) && (
+        <div className={`flex p-1 mx-6 mt-6 rounded-2xl ${isTenant ? 'bg-slate-100' : 'bg-[#020617]/50'}`}>
+          <div 
+            className={`flex-1 text-center py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm ${
+              isTenant ? 'bg-white text-slate-900' : 'bg-white/10 text-white'
+            }`}
+          >
+            Sign Up
+          </div>
+          <Link 
+            to="/login" 
+            className={`flex-1 text-center py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+              isTenant ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Login
+          </Link>
+        </div>
+      )}
+      <CardHeader className="space-y-2 pb-8 pt-6">
         <CardTitle className={`text-2xl font-black text-center uppercase tracking-wider transition-colors ${isTenant ? 'text-slate-900' : 'text-white'}`}>
           {isTenant ? `${company?.name} Application` : 'Candidate Application'}
         </CardTitle>
@@ -121,14 +140,6 @@ export default function SignupPage() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center pb-8">
-        <div className={`text-xs font-bold uppercase tracking-widest transition-colors ${isTenant ? 'text-slate-400' : 'text-slate-500'}`}>
-          Already a member?{" "}
-          <Link to="/login" className="text-primary hover:text-primary/90 transition-colors ml-1">
-            Access Portal
-          </Link>
-        </div>
-      </CardFooter>
     </Card>
   )
 }
