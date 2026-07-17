@@ -53,13 +53,18 @@ export default function SignupPage() {
         
         // Trigger the dynamic welcome email via our custom Edge Function
         try {
-          await supabase.functions.invoke('send-tenant-invite', {
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('send-tenant-invite', {
             body: {
               email: email,
               companyName: company?.name || 'Openlead Academy',
               action: 'welcome'
             }
           })
+          if (emailError) {
+             console.error('Edge Function Error:', emailError)
+          } else {
+             console.log('Edge Function Success:', emailData)
+          }
         } catch (emailError) {
           console.error('Failed to send dynamic welcome email:', emailError)
         }
