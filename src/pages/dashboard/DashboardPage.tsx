@@ -147,19 +147,60 @@ export default function DashboardPage() {
         }
 
         if (mounted) {
-          // Fetch user role
-          const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+          // Fetch user role and company_id
+          const { data: profile } = await supabase.from('profiles').select('role, company_id').eq('id', session.user.id).single()
           if (profile) {
             setRole(profile.role)
           }
 
           // Fetch enrolled courses for the current user
-          const { data: enrollmentData, error: enrollError } = await supabase
+          let { data: enrollmentData, error: enrollError } = await supabase
             .from('course_enrollments')
             .select('course_id, courses(*)')
             .eq('user_id', session.user.id)
           
           if (enrollError) throw enrollError
+
+          // Auto-enrollment logic
+          if (profile?.company_id && profile.role !== 'admin') {
+            const { data: autoCourses } = await supabase
+              .from('courses')
+              .select('*')
+              .eq('company_id', profile.company_id)
+              .eq('auto_assign', true)
+              .order('auto_assign_rank', { ascending: true })
+
+            if (autoCourses && autoCourses.length > 0) {
+              const enrolledCourseIds = enrollmentData?.map(e => e.course_id) || []
+              let shouldEnrollIn = null
+
+              if (enrolledCourseIds.length === 0) {
+                // Not enrolled in any course, enroll in the first auto-assigned course
+                shouldEnrollIn = autoCourses[0]
+              } else {
+                // Check if the latest enrolled auto-course is completed
+                // Actually, doing this fully here requires knowing if the current course is complete.
+                // We'll calculate course completion below, and if complete, we can trigger the next enrollment.
+              }
+
+              if (shouldEnrollIn) {
+                const { error: insertError } = await supabase
+                  .from('course_enrollments')
+                  .insert({
+                    user_id: session.user.id,
+                    course_id: shouldEnrollIn.id
+                  })
+                if (!insertError) {
+                  // Refresh enrollment data
+                  const { data: newEnrollmentData } = await supabase
+                    .from('course_enrollments')
+                    .select('course_id, courses(*)')
+                    .eq('user_id', session.user.id)
+                  if (newEnrollmentData) enrollmentData = newEnrollmentData
+                }
+              }
+            }
+          }
 
           // If user is enrolled in at least one course
           if (enrollmentData && enrollmentData.length > 0 && mounted) {
@@ -286,9 +327,41 @@ export default function DashboardPage() {
                    })
 
                    setModules(processedModules)
-                   setProgressData(progress)
-                   setQuizAttempts(quizResults)
-                 }
+                  setProgressData(progress)
+                  setQuizAttempts(quizResults)
+
+                  // Auto-enroll in next course if current course is completed
+                  if (allModulesCompleted && enrolledCourse.auto_assign && profile?.company_id && profile.role !== 'admin') {
+                    const { data: nextCourses } = await supabase
+                      .from('courses')
+                      .select('*')
+                      .eq('company_id', profile.company_id)
+                      .eq('auto_assign', true)
+                      .gt('auto_assign_rank', enrolledCourse.auto_assign_rank || 0)
+                      .order('auto_assign_rank', { ascending: true })
+                      .limit(1)
+
+                    if (nextCourses && nextCourses.length > 0) {
+                      const nextCourse = nextCourses[0]
+                      const { data: existingEnrollment } = await supabase
+                        .from('course_enrollments')
+                        .select('id')
+                        .eq('user_id', session.user.id)
+                        .eq('course_id', nextCourse.id)
+                        .maybeSingle()
+
+                      if (!existingEnrollment) {
+                        await supabase
+                          .from('course_enrollments')
+                          .insert({
+                            user_id: session.user.id,
+                            course_id: nextCourse.id
+                          })
+                        toast.success(`Congratulations! You have completed ${enrolledCourse.title} and have been automatically enrolled in ${nextCourse.title}.`)
+                      }
+                    }
+                  }
+                }
               }
             }
           } else {

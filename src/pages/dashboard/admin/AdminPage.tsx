@@ -65,6 +65,8 @@ interface Course {
   description: string;
   image_url?: string;
   created_at: string;
+  auto_assign?: boolean;
+  auto_assign_rank?: number;
 }
 
 interface Module {
@@ -607,7 +609,7 @@ export default function AdminPage() {
     }
   }
 
-  const handleUpdateCourse = async (id: string, field: string, value: string) => {
+  const handleUpdateCourse = async (id: string, field: string, value: string | number | boolean | null) => {
     const { error } = await supabase.from('courses').update({ [field]: value }).eq('id', id)
     if (error) {
       toast.error(`Failed to update ${field}`)
@@ -2394,6 +2396,32 @@ export default function AdminPage() {
                       defaultValue={courses.find(c => c.id === selectedCourseId)?.description || ''}
                       onBlur={(e) => handleUpdateCourse(selectedCourseId, 'description', e.target.value)}
                     />
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox"
+                        id={`auto-assign-${selectedCourseId}`}
+                        checked={courses.find(c => c.id === selectedCourseId)?.auto_assign || false}
+                        onChange={(e) => handleUpdateCourse(selectedCourseId, 'auto_assign', e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor={`auto-assign-${selectedCourseId}`} className="text-xs cursor-pointer">
+                        Auto-assign Course
+                      </Label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Auto-assign Rank</Label>
+                      <Input 
+                        type="number"
+                        key={`${selectedCourseId}-rank`}
+                        placeholder="e.g. 1, 2, 3"
+                        className="h-8 text-xs"
+                        defaultValue={courses.find(c => c.id === selectedCourseId)?.auto_assign_rank || ''}
+                        onBlur={(e) => handleUpdateCourse(selectedCourseId, 'auto_assign_rank', parseInt(e.target.value) || null)}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
