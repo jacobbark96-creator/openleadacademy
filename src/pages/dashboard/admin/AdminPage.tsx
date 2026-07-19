@@ -104,6 +104,7 @@ interface Lesson {
   video_url?: string;
   audio_url?: string;
   image_url?: string;
+  presentation_url?: string;
   order_index: number;
   week_number: number;
   has_homework: boolean;
@@ -2627,6 +2628,34 @@ export default function AdminPage() {
                                         ) : (
                                           <p className="text-xs text-gray-500">Upload an audio file to show it in the lesson course content.</p>
                                         )}
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2 pr-8">
+                                      <Label className="text-xs">Lesson Presentation File</Label>
+                                      <div className="flex flex-col gap-2 rounded-lg border border-dashed border-gray-200 bg-white p-3">
+                                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                                          <Input
+                                            type="file"
+                                            className="text-[10px]"
+                                            disabled={uploadingImage === lesson.id}
+                                            onChange={(e) => {
+                                              if (e.target.files?.[0]) {
+                                                handleFileUpload('resources', lesson.id, e.target.files[0], 'lessons', 'presentation_url')
+                                              }
+                                            }}
+                                          />
+                                          {lesson.presentation_url && (
+                                            <a
+                                              href={lesson.presentation_url}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="text-xs font-medium text-primary hover:underline"
+                                            >
+                                              Open presentation file
+                                            </a>
+                                          )}
+                                        </div>
+                                        <p className="text-xs text-gray-500">Upload a presentation file (PDF, PPTX, etc.) to show it in the course content box.</p>
                                       </div>
                                     </div>
                                     <div className="space-y-2 pr-8">

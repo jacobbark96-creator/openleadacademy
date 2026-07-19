@@ -13,6 +13,7 @@ interface Lesson {
   description: string;
   video_url: string;
   audio_url?: string;
+  presentation_url?: string;
   module_id: string;
   order_index: number;
   has_homework: boolean;
@@ -466,8 +467,32 @@ export default function LessonPage() {
                   </div>
                 )}
                 <div className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
-                  {lesson.description || "No additional notes or content available for this lesson."}
-                </div>
+                    {lesson.description || "No additional notes or content available for this lesson."}
+                  </div>
+                  
+                  {lesson.presentation_url && (
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">Lesson Presentation</p>
+                            <p className="text-xs text-gray-500">Download the presentation file</p>
+                          </div>
+                        </div>
+                        <a 
+                          href={lesson.presentation_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors shadow-sm"
+                        >
+                          Download File
+                        </a>
+                      </div>
+                    </div>
+                  )}
               </div>
             </CardContent>
           </Card>
