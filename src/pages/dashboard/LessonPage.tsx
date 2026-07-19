@@ -204,11 +204,31 @@ export default function LessonPage() {
 
       if (error) throw error
 
-      toast.success("Homework submitted successfully!")
-      setHomeworkCompleted(true)
-      setHomeworkLink("")
-      setHomeworkFile(null)
-    } catch (err: any) {
+        setHomeworkCompleted(true)
+        setHomeworkLink("")
+        setHomeworkFile(null)
+        
+        // Auto-complete the lesson after successful homework submission
+        if (!completed) {
+          const { error: progressError } = await supabase
+            .from('lesson_progress')
+            .upsert({
+              lesson_id: lesson.id,
+              user_id: user.id,
+              completed: true,
+              completed_at: new Date().toISOString()
+            }, { onConflict: 'user_id,lesson_id' })
+            
+          if (!progressError) {
+            setCompleted(true)
+            toast.success("Homework submitted and lesson completed!")
+          } else {
+            toast.error("Homework submitted, but failed to complete lesson.")
+          }
+        } else {
+          toast.success("Homework submitted successfully!")
+        }
+      } catch (err: any) {
       console.error("Submission error:", err)
       toast.error(err.message || "Failed to submit homework")
     } finally {
@@ -336,137 +356,29 @@ export default function LessonPage() {
         </div>
 
         {/* Right Column: Actions and Content */}
-        <div className="space-y-6 lg:sticky lg:top-24">
-          {/* Homework Card */}
-          {lesson.has_homework && !homeworkCompleted && (
-            <div className="p-6 bg-orange-50 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-orange-100 flex flex-col gap-5">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                    <BookOpen className="w-3.5 h-3.5" />
+          <div className="lg:sticky lg:top-24">
+            {/* Consolidated Action and Content Card */}
+            <Card className="border-0 shadow-lg rounded-[1.5rem] overflow-hidden bg-white flex flex-col lg:max-h-[calc(100vh-6rem)]">
+              {/* Scrollable Content Area */}
+              <div className="flex-1 overflow-y-auto p-5 md:p-6">
+                <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-gray-50">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm">
+                    <FileText className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-lg tracking-tight">Homework Required</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
                 </div>
-                <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
-                  This lesson has required homework. Submit it below to unlock the next steps.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {lesson.homework_type === 'link' ? (
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-700">Homework Link</label>
-                    <div className="relative">
-                      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                      <input 
-                        type="url"
-                        placeholder="https://..."
-                        value={homeworkLink}
-                        onChange={(e) => setHomeworkLink(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none bg-white transition-all"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-700">Upload File</label>
-                    <div className="border-2 border-dashed border-orange-200 rounded-xl p-6 text-center hover:border-orange-300 transition-colors cursor-pointer relative bg-white/50">
-                      <input 
-                        type="file"
-                        onChange={(e) => setHomeworkFile(e.target.files?.[0] || null)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <p className="text-xs font-medium text-gray-600">
-                          {homeworkFile ? homeworkFile.name : "Click to select a file"}
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-tight">PDF, ZIP, or Image (Max 10MB)</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
-                <Button 
-                  onClick={handleHomeworkSubmit}
-                  disabled={isSubmitting}
-                  className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold shadow-md shadow-orange-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    "Submit Homework"
+                <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-primary">
+                  {lesson.audio_url && (
+                    <div className="mb-5 rounded-2xl border border-primary/10 bg-primary/10 p-4">
+                      <p className="mb-3 text-sm font-semibold text-primary/90">Lesson Audio</p>
+                      <audio controls preload="metadata" className="w-full">
+                        <source src={lesson.audio_url} />
+                        Your browser does not support the audio player.
+                      </audio>
+                    </div>
                   )}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Completion Card */}
-          <div className="p-6 bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg border border-gray-50 flex flex-col gap-5">
-            <div className="space-y-1">
-              <h3 className="font-bold text-gray-900 text-lg tracking-tight">Finished watching?</h3>
-              <p className="text-[13px] text-gray-500 font-medium leading-relaxed">
-                {quizId 
-                  ? "Mark as complete to start the lesson quiz." 
-                  : nextLessonId 
-                    ? "Mark as complete to move to the next lesson." 
-                    : moduleQuizId 
-                      ? "Mark as complete to start the final module test." 
-                      : "Mark as complete to finish this lesson."}
-              </p>
-            </div>
-            {lesson.has_homework && homeworkCompleted && (
-              <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 px-3 py-2 rounded-xl border border-green-100 mb-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Homework Submitted & Verified</span>
-              </div>
-            )}
-            <Button 
-              onClick={handleComplete}
-              disabled={saving || loading}
-              className={`rounded-xl h-12 w-full text-sm font-bold shadow-md transition-all ${
-                completed 
-                  ? "bg-green-600 hover:bg-green-700 text-white hover:scale-[1.02] active:scale-[0.98]" 
-                  : "bg-primary hover:bg-primary/90 text-white hover:scale-[1.02] active:scale-[0.98]"
-              }`}
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : completed ? (
-                <>
-                  {quizId ? "Start Lesson Quiz" : nextLessonId ? "Move to Next Lesson" : moduleQuizId ? "Start Module Test" : "Back to Dashboard"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                "Mark as Complete"
-              )}
-            </Button>
-          </div>
-
-          {/* Course Content Card */}
-          <Card className="border-0 shadow-lg rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-gray-50">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-sm">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Course Content</h3>
-              </div>
-              
-              <div className="prose prose-slate prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-900 prose-a:text-primary">
-                {lesson.audio_url && (
-                  <div className="mb-5 rounded-2xl border border-primary/10 bg-primary/10 p-4">
-                    <p className="mb-3 text-sm font-semibold text-primary/90">Lesson Audio</p>
-                    <audio controls preload="metadata" className="w-full">
-                      <source src={lesson.audio_url} />
-                      Your browser does not support the audio player.
-                    </audio>
-                  </div>
-                )}
-                <div className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
+                  <div className="text-[15px] leading-relaxed whitespace-pre-wrap font-medium text-gray-600/90">
                     {lesson.description || "No additional notes or content available for this lesson."}
                   </div>
                   
@@ -493,10 +405,93 @@ export default function LessonPage() {
                       </div>
                     </div>
                   )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+
+              {/* Fixed Action Area */}
+              <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex flex-col gap-4 shrink-0">
+                {lesson.has_homework && !homeworkCompleted && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 text-lg tracking-tight">Homework Required</h3>
+                    </div>
+                    {lesson.homework_type === 'link' ? (
+                      <div className="relative">
+                        <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                        <input 
+                          type="url"
+                          placeholder="Paste your homework link here..."
+                          value={homeworkLink}
+                          onChange={(e) => setHomeworkLink(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none bg-white transition-all shadow-sm"
+                        />
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-orange-200 rounded-xl p-4 text-center hover:border-orange-300 transition-colors cursor-pointer relative bg-white shadow-sm">
+                        <input 
+                          type="file"
+                          onChange={(e) => setHomeworkFile(e.target.files?.[0] || null)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <p className="text-xs font-medium text-gray-600">
+                            {homeworkFile ? homeworkFile.name : "Click to select a file"}
+                          </p>
+                          <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-tight">Max 10MB</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {lesson.has_homework && homeworkCompleted && (
+                  <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 px-4 py-3 rounded-xl border border-green-100">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Homework Submitted & Verified</span>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={() => {
+                    if (lesson.has_homework && !homeworkCompleted) {
+                      handleHomeworkSubmit()
+                    } else if (!completed) {
+                      handleComplete()
+                    } else {
+                      handleNavigateNext()
+                    }
+                  }}
+                  disabled={isSubmitting || saving || loading || (lesson.has_homework && !homeworkCompleted && (lesson.homework_type === 'link' ? !homeworkLink : !homeworkFile))}
+                  className={`w-full h-12 text-sm font-bold shadow-md transition-all rounded-xl ${
+                    completed || (lesson.has_homework && homeworkCompleted)
+                      ? "bg-green-600 hover:bg-green-700 text-white hover:scale-[1.02] active:scale-[0.98]"
+                      : lesson.has_homework
+                        ? "bg-orange-500 hover:bg-orange-600 text-white hover:scale-[1.02] active:scale-[0.98] shadow-orange-200"
+                        : "bg-primary hover:bg-primary/90 text-white hover:scale-[1.02] active:scale-[0.98]"
+                  }`}
+                >
+                  {isSubmitting || saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : lesson.has_homework && !homeworkCompleted ? (
+                    "Submit Homework"
+                  ) : completed ? (
+                    <>
+                      {quizId ? "Start Lesson Quiz" : nextLessonId ? "Next Lesson" : moduleQuizId ? "Start Module Test" : "Back to Dashboard"}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  ) : (
+                    "Complete & Continue"
+                  )}
+                </Button>
+              </div>
+            </Card>
+          </div>
       </div>
     </div>
   )
