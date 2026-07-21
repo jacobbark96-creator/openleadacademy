@@ -15,6 +15,7 @@ interface Lesson {
   audio_url?: string;
   presentation_url?: string;
   module_id: string;
+  company_id: string;
   order_index: number;
   has_homework: boolean;
   homework_type?: 'link' | 'upload';
@@ -185,13 +186,7 @@ export default function LessonPage() {
         submissionUrl = publicUrl
       }
 
-      // Fetch company_id from lesson
-      const { data: lessonCompany } = await supabase
-        .from('lessons')
-        .select('company_id')
-        .eq('id', lesson.id)
-        .single()
-
+      // Submit homework
       const { error } = await supabase
         .from('homework_submissions')
         .insert({
@@ -199,7 +194,7 @@ export default function LessonPage() {
           user_id: user.id,
           submission_type: lesson.homework_type,
           submission_url: submissionUrl,
-          company_id: lessonCompany?.company_id
+          company_id: lesson.company_id
         })
 
       if (error) throw error
@@ -215,6 +210,7 @@ export default function LessonPage() {
             .upsert({
               lesson_id: lesson.id,
               user_id: user.id,
+              company_id: lesson.company_id,
               completed: true,
               completed_at: new Date().toISOString()
             }, { onConflict: 'user_id,lesson_id' })
@@ -261,6 +257,7 @@ export default function LessonPage() {
         .upsert({
           user_id: user.id,
           lesson_id: id,
+          company_id: lesson?.company_id,
           completed: true,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,lesson_id' })
